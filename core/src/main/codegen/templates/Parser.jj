@@ -4943,8 +4943,8 @@ SqlNamedParam NamedParam() :
 {
 }
 {
-    <ATSYM> {}
-    <PYTHON_IDENTIFIER> {
+    <ATSYM>
+    <IDENTIFIER> {
         return new SqlNamedParam(unquotedIdentifier(), getPos());
     }
 }
@@ -8317,13 +8317,6 @@ MORE :
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
-}
-
-// This may not be necessary but this defines a Python
-// identifier for use in namedParameters
-<DEFAULT> TOKEN :
-{
-    < PYTHON_IDENTIFIER: (<LETTER>|"_") (<LETTER>|<DIGIT>|"_")* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :

@@ -7561,6 +7561,17 @@ public class SqlParserTest {
         .ok("(1 <=> 2)");
   }
 
+  @Test void testNamedParameterOperators() {
+    expr("@q")
+        .ok("@Q");
+    expr("a > @Q")
+        .ok("(`A` > @Q)");
+    expr("a + @Q")
+        .ok("(`A` + @Q)");
+    expr("1 <=> @Q")
+        .ok("(1 <=> @Q)");
+  }
+
   @Test void testCastToInterval() {
     expr("cast(x as interval year)")
         .ok("CAST(`X` AS INTERVAL YEAR)");
