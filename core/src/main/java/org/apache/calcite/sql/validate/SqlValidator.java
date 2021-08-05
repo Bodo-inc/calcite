@@ -34,6 +34,7 @@ import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlMerge;
+import org.apache.calcite.sql.SqlNamedParam;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
@@ -272,6 +273,13 @@ public interface SqlValidator {
    * @param dynamicParam Dynamic parameter
    */
   void validateDynamicParam(SqlDynamicParam dynamicParam);
+
+  /**
+   * Validates a named parameter.
+   *
+   * @param namedParam Named parameter
+   */
+  void validateNamedParam(SqlNamedParam namedParam);
 
   /**
    * Validates the right-hand side of an OVER expression. It might be either

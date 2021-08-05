@@ -60,6 +60,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlMerge;
+import org.apache.calcite.sql.SqlNamedParam;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
@@ -1784,6 +1785,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (node instanceof SqlIdentifier) {
       return getCatalogReader().getNamedType((SqlIdentifier) node);
     }
+    // TODO: Add support for namedParameters
     return null;
   }
 
@@ -5228,6 +5230,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   @Override public void validateDynamicParam(SqlDynamicParam dynamicParam) {
   }
 
+  // TODO: Do any necessary validation here.
+  @Override public void validateNamedParam(SqlNamedParam namedParam) {
+  }
+
   /**
    * Throws a validator exception with access to the validator context.
    * The exception is determined when an instance is created.
@@ -6069,7 +6075,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             }
             return param;
           }
+          @Override public SqlNode visit(SqlNamedParam param) {
+            RelDataType type = getValidatedNodeType(param);
+            types.add(type);
+            return param;
+          }
         });
+    // TODO: Figure out if we need to make changes for Named Parameters
     return typeFactory.createStructType(
         types,
         new AbstractList<String>() {
@@ -6230,6 +6242,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw Util.needToImplement(param);
     }
 
+    @Override public Void visit(SqlNamedParam param) {
+      throw Util.needToImplement(param);
+    }
+
     @Override public Void visit(SqlIntervalQualifier intervalQualifier) {
       throw Util.needToImplement(intervalQualifier);
     }
@@ -6360,6 +6376,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     @Override public RelDataType visit(SqlDynamicParam param) {
+      return unknownType;
+    }
+
+    // TODO: Fix DataType
+    @Override public RelDataType visit(SqlNamedParam param) {
       return unknownType;
     }
 
@@ -6992,6 +7013,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     @Override public Set<String> visit(SqlDynamicParam param) {
+      return ImmutableSet.of();
+    }
+
+    @Override public Set<String> visit(SqlNamedParam param) {
       return ImmutableSet.of();
     }
   }

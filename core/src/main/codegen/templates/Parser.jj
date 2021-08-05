@@ -79,6 +79,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlMerge;
+import org.apache.calcite.sql.SqlNamedParam;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlNumericLiteral;
@@ -3850,6 +3851,8 @@ SqlNode UnsignedNumericLiteralOrParam() :
         e = UnsignedNumericLiteral()
     |
         e = DynamicParam()
+    |
+        e = NamedParam()
     )
     { return e; }
 }
@@ -3975,6 +3978,8 @@ SqlNode AtomicRowExpression() :
         e = LiteralOrIntervalExpression()
     |
         e = DynamicParam()
+    |
+        e = NamedParam()
     |
         LOOKAHEAD(2)
         e = BuiltinFunctionCall()
@@ -4928,6 +4933,19 @@ SqlDynamicParam DynamicParam() :
 {
     <HOOK> {
         return new SqlDynamicParam(nDynamicParams++, getPos());
+    }
+}
+
+/**
+ * Parses a named parameter marker.
+ */
+SqlNamedParam NamedParam() :
+{
+}
+{
+    <ATSYM> {}
+    <PYTHON_IDENTIFIER> {
+        return new SqlNamedParam(unquotedIdentifier(), getPos());
     }
 }
 
@@ -8108,6 +8126,7 @@ void NonReservedKeyWord2of3() :
 |   < GT: ">" >
 |   < LT: "<" >
 |   < HOOK: "?" >
+|   < ATSYM: "@" >
 |   < COLON: ":" >
 |   < LE: "<=" >
 |   < GE: ">=" >
@@ -8298,6 +8317,13 @@ MORE :
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+}
+
+// This may not be necessary but this defines a Python
+// identifier for use in namedParameters
+<DEFAULT> TOKEN :
+{
+    < PYTHON_IDENTIFIER: (<LETTER>|"_") (<LETTER>|<DIGIT>|"_")* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
