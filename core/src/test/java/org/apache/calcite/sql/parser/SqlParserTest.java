@@ -7572,6 +7572,34 @@ public class SqlParserTest {
         .ok("(1 <=> @Q)");
   }
 
+  @Test void testNamedParameterWhere() {
+//    String sql = "SELECT B from table1 where A > @B";
+//    String expected = "";
+//    sql(sql).ok(expected);
+//    // Why doesn't @a work?
+//    sql = "SELECT B from table1 where A = @a";
+//    expected = "";
+//    sql(sql).ok(expected);
+//    // Should this be case insensitive
+//    sql = "SELECT B from table1 where A <> @b";
+//    expected = "";
+//    sql(sql).ok(expected);
+  }
+
+  @Test void testNamedParameterLimit() {
+//    String sql = "SELECT B from table1 limit @B";
+//    String expected = "";
+//    sql(sql).ok(expected);
+//    // Why doesn't @a work?
+//    sql = "SELECT B from table1 limit @a";
+//    expected = "";
+//    sql(sql).ok(expected);
+//    // Should this be case insensitive
+//    sql = "SELECT B from table1 limit @b";
+//    expected = "";
+//    sql(sql).ok(expected);
+  }
+
   @Test void testCastToInterval() {
     expr("cast(x as interval year)")
         .ok("CAST(`X` AS INTERVAL YEAR)");
