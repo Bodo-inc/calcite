@@ -275,6 +275,10 @@ JAVACODE String unquotedIdentifier() {
     return SqlParserUtil.toCase(getToken(0).image, unquotedCasing);
 }
 
+JAVACODE String pythonUnquotedIdentifier() {
+    return SqlParserUtil.toCase(getToken(0).image, Casing.UNCHANGED);
+}
+
 /**
  * Allows parser to be extended with new types of table references.  The
  * default implementation of this production is empty.
@@ -641,7 +645,8 @@ SqlNode OrderedQueryOrExpr(ExprContext exprContext) :
         <LIMIT>
         (
             // MySQL-style syntax. "LIMIT start, count"
-            LOOKAHEAD(2)
+            // Update lookahead to 3 because NamedParam is 2 tokens
+            LOOKAHEAD(3)
             start = UnsignedNumericLiteralOrParam()
             <COMMA> count = UnsignedNumericLiteralOrParam() {
                 if (!this.conformance.isLimitStartCountAllowed()) {
@@ -4945,7 +4950,7 @@ SqlNamedParam NamedParam() :
 {
     <ATSYM>
     <IDENTIFIER> {
-        return new SqlNamedParam(unquotedIdentifier(), getPos());
+        return new SqlNamedParam(pythonUnquotedIdentifier(), getPos());
     }
 }
 

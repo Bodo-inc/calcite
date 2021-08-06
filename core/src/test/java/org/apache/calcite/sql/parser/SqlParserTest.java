@@ -7563,41 +7563,58 @@ public class SqlParserTest {
 
   @Test void testNamedParameterOperators() {
     expr("@q")
-        .ok("@Q");
+        .ok("@q");
     expr("a > @Q")
         .ok("(`A` > @Q)");
     expr("a + @Q")
         .ok("(`A` + @Q)");
-    expr("1 <=> @Q")
-        .ok("(1 <=> @Q)");
+    expr("1 <=> @WeWon")
+        .ok("(1 <=> @WeWon)");
   }
 
   @Test void testNamedParameterWhere() {
-//    String sql = "SELECT B from table1 where A > @B";
-//    String expected = "";
-//    sql(sql).ok(expected);
+    // Name matches a column name
+    String sql = "SELECT B from table1 where A > @B";
+    String expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "WHERE (`A` > @B)";
+    sql(sql).ok(expected);
+    // Name doesn't match a column name + case insensitive
+    sql = "SELECT B from table1 where A = @GoBears";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "WHERE (`A` = @GoBears)";
+    sql(sql).ok(expected);
+
 //    // Why doesn't @a work?
-//    sql = "SELECT B from table1 where A = @a";
-//    expected = "";
-//    sql(sql).ok(expected);
-//    // Should this be case insensitive
-//    sql = "SELECT B from table1 where A <> @b";
+//    sql = "SELECT B from table1 where A is not @a";
 //    expected = "";
 //    sql(sql).ok(expected);
   }
 
   @Test void testNamedParameterLimit() {
-//    String sql = "SELECT B from table1 limit @B";
-//    String expected = "";
-//    sql(sql).ok(expected);
+    String sql = "SELECT B from table1 limit @B";
+    String expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "FETCH NEXT @B ROWS ONLY";
+    sql(sql).ok(expected);
 //    // Why doesn't @a work?
 //    sql = "SELECT B from table1 limit @a";
 //    expected = "";
 //    sql(sql).ok(expected);
-//    // Should this be case insensitive
-//    sql = "SELECT B from table1 limit @b";
-//    expected = "";
-//    sql(sql).ok(expected);
+    // Test for case insensitive
+    sql = "SELECT B from table1 limit @RuDy";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "FETCH NEXT @RuDy ROWS ONLY";
+    sql(sql).ok(expected);
+    // Test for offset
+    sql = "SELECT B from table1 limit @alpha offset @beta";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "OFFSET @beta ROWS\n"
+        + "FETCH NEXT @alpha ROWS ONLY";
+    sql(sql).ok(expected);
   }
 
   @Test void testCastToInterval() {
