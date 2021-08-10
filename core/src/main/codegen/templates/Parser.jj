@@ -4946,11 +4946,23 @@ SqlDynamicParam DynamicParam() :
  */
 SqlNamedParam NamedParam() :
 {
+    final String name;
+    final SqlParserPos pos;
 }
 {
     <ATSYM>
-    <IDENTIFIER> {
-        return new SqlNamedParam(pythonUnquotedIdentifier(), getPos());
+    (
+      <IDENTIFIER> {
+        name = pythonUnquotedIdentifier();
+        pos = getPos();
+      }
+    |
+     name = NonReservedKeyWordPythonIdentifier() {
+       pos = getPos();
+      }
+    )
+    {
+      return new SqlNamedParam(name, getPos());
     }
 }
 
@@ -7297,6 +7309,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < ASSIGNMENT: "ASSIGNMENT" >
 |   < ASYMMETRIC: "ASYMMETRIC" >
 |   < AT: "AT" >
+|   < ATSYM: "@" >
 |   < ATOMIC: "ATOMIC" >
 |   < ATTRIBUTE: "ATTRIBUTE" >
 |   < ATTRIBUTES: "ATTRIBUTES" >
@@ -7986,6 +7999,24 @@ String NonReservedKeyWord() :
     }
 }
 
+/**
+ * Parses a non-reserved keyword for use as an identifier. This
+ * is used to match a Python identifier.
+ */
+String NonReservedKeyWordPythonIdentifier() :
+{
+}
+{
+    (
+        NonReservedKeyWord0of3()
+    |   NonReservedKeyWord1of3()
+    |   NonReservedKeyWord2of3()
+    )
+    {
+        return pythonUnquotedIdentifier();
+    }
+}
+
 /** @see #NonReservedKeyWord */
 void NonReservedKeyWord0of3() :
 {
@@ -8131,7 +8162,6 @@ void NonReservedKeyWord2of3() :
 |   < GT: ">" >
 |   < LT: "<" >
 |   < HOOK: "?" >
-|   < ATSYM: "@" >
 |   < COLON: ":" >
 |   < LE: "<=" >
 |   < GE: ">=" >

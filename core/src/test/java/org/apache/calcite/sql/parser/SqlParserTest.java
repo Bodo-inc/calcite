@@ -7586,10 +7586,26 @@ public class SqlParserTest {
         + "WHERE (`A` = @GoBears)";
     sql(sql).ok(expected);
 
-//    // Why doesn't @a work?
-//    sql = "SELECT B from table1 where A is not @a";
-//    expected = "";
-//    sql(sql).ok(expected);
+    // Test the boundary of letters?
+    sql = "SELECT B from table1 where A between @a and @z";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "WHERE (`A` BETWEEN ASYMMETRIC @a AND @z)";
+    sql(sql).ok(expected);
+
+    // Test the boundary of letters? + AND
+    sql = "SELECT B from table1 where @A < A and C >= @Z";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "WHERE ((@A < `A`) AND (`C` >= @Z))";
+    sql(sql).ok(expected);
+
+    // Test underscore
+    sql = "SELECT B from table1 where @_1 < A or C >= @_";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "WHERE ((@_1 < `A`) OR (`C` >= @_))";
+    sql(sql).ok(expected);
   }
 
   @Test void testNamedParameterLimit() {
@@ -7598,10 +7614,12 @@ public class SqlParserTest {
         + "FROM `TABLE1`\n"
         + "FETCH NEXT @B ROWS ONLY";
     sql(sql).ok(expected);
-//    // Why doesn't @a work?
-//    sql = "SELECT B from table1 limit @a";
-//    expected = "";
-//    sql(sql).ok(expected);
+    // Why doesn't @a work?
+    sql = "SELECT B from table1 limit @a";
+    expected = "SELECT `B`\n"
+        + "FROM `TABLE1`\n"
+        + "FETCH NEXT @a ROWS ONLY";
+    sql(sql).ok(expected);
     // Test for case insensitive
     sql = "SELECT B from table1 limit @RuDy";
     expected = "SELECT `B`\n"
