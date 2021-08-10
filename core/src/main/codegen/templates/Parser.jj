@@ -276,7 +276,8 @@ JAVACODE String unquotedIdentifier() {
 }
 
 JAVACODE String pythonUnquotedIdentifier() {
-    return SqlParserUtil.toCase(getToken(0).image, Casing.UNCHANGED);
+    // Strip the @ from the name
+    return SqlParserUtil.toCase(getToken(0).image.substring(1), Casing.UNCHANGED);
 }
 
 /**
@@ -645,8 +646,7 @@ SqlNode OrderedQueryOrExpr(ExprContext exprContext) :
         <LIMIT>
         (
             // MySQL-style syntax. "LIMIT start, count"
-            // Update lookahead to 3 because NamedParam is 2 tokens
-            LOOKAHEAD(3)
+            LOOKAHEAD(2)
             start = UnsignedNumericLiteralOrParam()
             <COMMA> count = UnsignedNumericLiteralOrParam() {
                 if (!this.conformance.isLimitStartCountAllowed()) {
@@ -4950,15 +4950,11 @@ SqlNamedParam NamedParam() :
     final SqlParserPos pos;
 }
 {
-    <ATSYM>
+    <PARAM_IDENTIFIER>
     (
-      <IDENTIFIER> {
+      {
         name = pythonUnquotedIdentifier();
         pos = getPos();
-      }
-    |
-     name = NonReservedKeyWordPythonIdentifier() {
-       pos = getPos();
       }
     )
     {
@@ -7999,24 +7995,6 @@ String NonReservedKeyWord() :
     }
 }
 
-/**
- * Parses a non-reserved keyword for use as an identifier. This
- * is used to match a Python identifier.
- */
-String NonReservedKeyWordPythonIdentifier() :
-{
-}
-{
-    (
-        NonReservedKeyWord0of3()
-    |   NonReservedKeyWord1of3()
-    |   NonReservedKeyWord2of3()
-    )
-    {
-        return pythonUnquotedIdentifier();
-    }
-}
-
 /** @see #NonReservedKeyWord */
 void NonReservedKeyWord0of3() :
 {
@@ -8352,6 +8330,11 @@ MORE :
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+}
+
+<DEFAULT, DQID, BTID, BQID> TOKEN :
+{
+    < PARAM_IDENTIFIER: "@" (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :

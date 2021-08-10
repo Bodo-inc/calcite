@@ -7647,9 +7647,9 @@ public class SqlParserTest {
   @Test void testNamedParameterCase() {
     String sql = "SELECT Case WHEN @e IS NULL THEN @a"
         + " WHEN @_3424 IS NOT NULL THEN 1"
-      + " WHEN -@FWEFW < 0 THEN CAST(@_NONINT as int)"
-      + " ELSE @FWEFW - 1 "
-      + "END from table1";
+        + " WHEN -@FWEFW < 0 THEN CAST(@_NONINT as int)"
+        + " ELSE @FWEFW - 1 "
+        + "END from table1";
     String expected = "SELECT (CASE WHEN (@e IS NULL) THEN @a"
         + " WHEN (@_3424 IS NOT NULL) THEN 1"
         + " WHEN ((- @FWEFW) < 0)"

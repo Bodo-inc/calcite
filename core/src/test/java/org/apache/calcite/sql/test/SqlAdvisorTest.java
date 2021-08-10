@@ -123,7 +123,6 @@ class SqlAdvisorTest extends SqlValidatorTestCase {
           "KEYWORD(+)",
           "KEYWORD(-)",
           "KEYWORD(?)",
-          "KEYWORD(@)",
           "KEYWORD(ABS)",
           "KEYWORD(ARRAY)",
           "KEYWORD(AVG)",
