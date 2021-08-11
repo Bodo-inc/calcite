@@ -63,6 +63,13 @@ public interface FrameworkConfig {
   @Nullable SchemaPlus getDefaultSchema();
 
   /**
+   * Returns the schema that that named parameters should use.
+   * Returns null if no schema is provided (which means namedParameters
+   * should not be used).
+   */
+  @Nullable SchemaPlus getNamedParamSchema();
+
+  /**
    * Returns the executor used to evaluate constant expressions.
    */
   @Nullable RexExecutor getExecutor();

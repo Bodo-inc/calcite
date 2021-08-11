@@ -79,6 +79,7 @@ import org.apache.calcite.rex.RexFieldAccess;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNamedParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
 import org.apache.calcite.rex.RexRangeRef;
@@ -3372,6 +3373,21 @@ public class SqlToRelConverter {
   }
 
   /**
+   * Converts a SQLNamedParam to a RexNamedParam.
+   */
+  public RexNode convertNamedParam(SqlNamedParam namedParam) {
+    // Get the namespace for all
+    final SqlValidatorNamespace ns = getNamespace(namedParam);
+    String name = namedParam.getName();
+    if (!ns.fieldExists(name)) {
+      throw new RuntimeException("SQL query contains a unregistered parameter: @" + name);
+    }
+    // Get the type of the parameter. This stored as a column in a parameter table.
+    RelDataType paramType = ns.getType().getField(name, true, false).getType();
+    return new RexNamedParam(paramType, name);
+  }
+
+  /**
    * Creates a list of collations required to implement the ORDER BY clause,
    * if there is one. Populates <code>extraOrderExprs</code> with any sort
    * expressions which are not in the select clause.
@@ -5287,9 +5303,8 @@ public class SqlToRelConverter {
       return convertDynamicParam(param);
     }
 
-    // TODO: FIXME
     @Override public RexNode visit(SqlNamedParam param) {
-      throw new UnsupportedOperationException();
+      return convertNamedParam(param);
     }
 
     @Override public RexNode visit(SqlIntervalQualifier intervalQualifier) {

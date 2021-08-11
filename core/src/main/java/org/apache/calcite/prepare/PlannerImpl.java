@@ -94,6 +94,8 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   // set in STATE_2_READY
   private @Nullable SchemaPlus defaultSchema;
+  // Bodo Specific Feature
+  private @Nullable SchemaPlus namedParamSchema;
   private @Nullable JavaTypeFactory typeFactory;
   private @Nullable RelOptPlanner planner;
   private @Nullable RexExecutor executor;
@@ -108,6 +110,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   public PlannerImpl(FrameworkConfig config) {
     this.costFactory = config.getCostFactory();
     this.defaultSchema = config.getDefaultSchema();
+    this.namedParamSchema = config.getNamedParamSchema();
     this.operatorTable = config.getOperatorTable();
     this.programs = config.getPrograms();
     this.parserConfig = config.getParserConfig();
