@@ -1787,7 +1787,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             + "register a table name in the configuration.");
       }
       CalciteSchema defaultSchema = reader.getRootSchema();
-      CalciteSchema.TableEntry entry = defaultSchema.getTable(tableName, true);
+      // TODO: Set caseSensitive?
+      CalciteSchema.TableEntry entry = defaultSchema.getTable(tableName, false);
       if (entry == null) {
         throw new RuntimeException("Named Parameter table is registered with "
             + "the name " + tableName + " but no table exists with that name."
@@ -1796,7 +1797,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       Table table = entry.getTable();
       RelDataType rowStruct = table.getRowType(typeFactory);
       String name = namedParam.getName();
-      RelDataTypeField typeField = rowStruct.getField(name, true, false);
+      // TODO: Set caseSensitive?
+      RelDataTypeField typeField = rowStruct.getField(name, false, false);
       if (typeField == null) {
         throw new RuntimeException("SQL query contains a unregistered parameter: @" + name);
       }
