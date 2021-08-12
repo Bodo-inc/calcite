@@ -63,13 +63,6 @@ public interface FrameworkConfig {
   @Nullable SchemaPlus getDefaultSchema();
 
   /**
-   * Returns the name of the table that holds named parameters within the default
-   * schema. Returns null if no named parameters table is registered
-   * (which means namedParameters should not be used).
-   */
-  @Nullable String getNamedParamTableName();
-
-  /**
    * Returns the executor used to evaluate constant expressions.
    */
   @Nullable RexExecutor getExecutor();

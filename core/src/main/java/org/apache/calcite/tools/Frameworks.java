@@ -224,16 +224,6 @@ public class Frameworks {
     private SqlValidator.Config sqlValidatorConfig;
     private SqlToRelConverter.Config sqlToRelConverterConfig;
     private @Nullable SchemaPlus defaultSchema;
-    /**
-     * Bodo Specific Feature:
-     *
-     * Table Name within the default schema
-     * that contains Named Parameters. Null
-     * if there is no named Parameter Table,
-     * which means that named paramters should
-     * not be used.
-     */
-    private @Nullable String namedParamTableName;
     private @Nullable RexExecutor executor;
     private @Nullable RelOptCostFactory costFactory;
     private RelDataTypeSystem typeSystem;
@@ -266,7 +256,6 @@ public class Frameworks {
       sqlValidatorConfig = config.getSqlValidatorConfig();
       sqlToRelConverterConfig = config.getSqlToRelConverterConfig();
       defaultSchema = config.getDefaultSchema();
-      namedParamTableName = config.getNamedParamTableName();
       executor = config.getExecutor();
       costFactory = config.getCostFactory();
       typeSystem = config.getTypeSystem();
@@ -277,7 +266,7 @@ public class Frameworks {
     public FrameworkConfig build() {
       return new StdFrameworkConfig(context, convertletTable, operatorTable,
           programs, traitDefs, parserConfig, sqlValidatorConfig, sqlToRelConverterConfig,
-          defaultSchema, namedParamTableName, costFactory, typeSystem, executor, evolveLattice,
+          defaultSchema, costFactory, typeSystem, executor, evolveLattice,
           statisticProvider, viewExpander);
     }
 
@@ -397,16 +386,6 @@ public class Frameworks {
     private final SqlValidator.Config sqlValidatorConfig;
     private final SqlToRelConverter.Config sqlToRelConverterConfig;
     private final @Nullable SchemaPlus defaultSchema;
-    /**
-     * Bodo Specific Feature:
-     *
-     * Table Name within the default schema
-     * that contains Named Parameters. Null
-     * if there is no named Parameter Table,
-     * which means that named paramters should
-     * not be used.
-     */
-    private final @Nullable String namedParamTableName;
     private final @Nullable RelOptCostFactory costFactory;
     private final RelDataTypeSystem typeSystem;
     private final @Nullable RexExecutor executor;
@@ -423,7 +402,6 @@ public class Frameworks {
         SqlValidator.Config sqlValidatorConfig,
         SqlToRelConverter.Config sqlToRelConverterConfig,
         @Nullable SchemaPlus defaultSchema,
-        @Nullable String namedParamTableName,
         @Nullable RelOptCostFactory costFactory,
         RelDataTypeSystem typeSystem,
         @Nullable RexExecutor executor,
@@ -439,7 +417,6 @@ public class Frameworks {
       this.sqlValidatorConfig = sqlValidatorConfig;
       this.sqlToRelConverterConfig = sqlToRelConverterConfig;
       this.defaultSchema = defaultSchema;
-      this.namedParamTableName = namedParamTableName;
       this.costFactory = costFactory;
       this.typeSystem = typeSystem;
       this.executor = executor;
@@ -462,10 +439,6 @@ public class Frameworks {
 
     @Override public @Nullable SchemaPlus getDefaultSchema() {
       return defaultSchema;
-    }
-
-    @Override public @Nullable String getNamedParamTableName() {
-      return namedParamTableName;
     }
 
     @Override public @Nullable RexExecutor getExecutor() {

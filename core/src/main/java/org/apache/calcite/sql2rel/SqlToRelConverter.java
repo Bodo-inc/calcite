@@ -17,7 +17,6 @@
 package org.apache.calcite.sql2rel;
 
 import org.apache.calcite.avatica.util.Spaces;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
@@ -161,7 +160,6 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableMacro;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorCatalogReader;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
@@ -6363,13 +6361,6 @@ public class SqlToRelConverter {
   @Deprecated // to be removed before 2.0
   public static class ConfigBuilder {
     private Config config;
-    /**
-     * Named of the table used by namedParameters.
-     * Null if no table is registered.
-     *
-     * TODO: Should this be moved to the config?
-     */
-    private @Nullable String namedParamTableName;
 
     private ConfigBuilder() {
       config = CONFIG;
