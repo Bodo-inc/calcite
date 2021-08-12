@@ -114,6 +114,10 @@ import java.util.function.UnaryOperator;
  * names in a particular clause of a SQL statement.</p>
  */
 public interface SqlValidator {
+
+  /** Table Name that indicates no named Parameter table was provided. */
+  String NAMED_PARAM_TABLE_NAME_EMPTY = "";
+
   //~ Methods ----------------------------------------------------------------
 
   /**
@@ -926,5 +930,15 @@ public interface SqlValidator {
 
     /** Sets up the sql conformance of the validator. */
     Config withSqlConformance(SqlConformance conformance);
+
+    /** Returns the name of the table used to determine
+     * named parameters' types. Default is
+     * "". */
+    @ImmutableBeans.Property
+    @ImmutableBeans.StringDefault(NAMED_PARAM_TABLE_NAME_EMPTY)
+    String namedParamTableName();
+
+    /** Sets {@link #namedParamTableName()}. */
+    Config withNamedParamTableName(String namedParamTable);
   }
 }

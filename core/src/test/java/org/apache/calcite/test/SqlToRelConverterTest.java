@@ -106,6 +106,37 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+//  /*
+//   * Tests that a named param can be properly converted to
+//   * a RexNode.
+//   */
+//  @Test void testBasicNamedParam() {
+//    final String sql = "select deptno from emp where deptno > @b";
+//    // TODO: Update the validator Config
+//    sql(sql).ok();
+//  }
+//
+//  /*
+//   * Tests that a named param without the parameter properly
+//   * registered in the table throws an appropriate exception.
+//   */
+//  @Test void testNamedParamNoParam() {
+//    final String sql = "select deptno from emp where deptno > @b";
+//    // TODO: Update the validator Config
+//    // TODO: Determine how to check failure
+//    sql(sql).ok();
+//  }
+//
+//  /*
+//   * Tests that a named param without a registered table throws
+//   * an appropriate exception.
+//   */
+//  @Test void testNamedParamNoTable() {
+//    final String sql = "select deptno from emp where deptno > @b";
+//    // TODO: Determine how to check failure
+//    sql(sql).ok();
+//  }
+
   @Test void testRowValueConstructorWithSubquery() {
     final String sql = "select ROW("
         + "(select deptno\n"

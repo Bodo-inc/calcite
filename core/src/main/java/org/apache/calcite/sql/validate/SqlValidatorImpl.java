@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.validate;
 
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Functions;
 import org.apache.calcite.plan.RelOptTable;
@@ -151,6 +152,7 @@ import static org.apache.calcite.sql.type.NonNullableAccessors.getCharset;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getCollation;
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getCondition;
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getTable;
+import static org.apache.calcite.sql.validate.SqlValidator.NAMED_PARAM_TABLE_NAME_EMPTY;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 import static java.util.Objects.requireNonNull;
@@ -1773,6 +1775,33 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final RelDataType type = nodeToTypeMap.get(node);
     if (type != null) {
       return type;
+    }
+    if (node instanceof SqlNamedParam) {
+      SqlNamedParam namedParam = (SqlNamedParam) node;
+      SqlValidatorCatalogReader reader = getCatalogReader();
+      // Named Param is always in the default schema with the encoded table name.
+      String tableName = config().namedParamTableName();
+      if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
+        throw new RuntimeException("Named Parameter table is not registered. "
+            + "To use named parameters in a query please "
+            + "register a table name in the configuration.");
+      }
+      CalciteSchema defaultSchema = reader.getRootSchema();
+      CalciteSchema.TableEntry entry = defaultSchema.getTable(tableName, true);
+      if (entry == null) {
+        throw new RuntimeException("Named Parameter table is registered with "
+            + "the name " + tableName + " but no table exists with that name."
+            + "To use namedParameters you must supply a namedParameters table.");
+      }
+      Table table = entry.getTable();
+      RelDataType rowStruct = table.getRowType(typeFactory);
+      String name = namedParam.getName();
+      RelDataTypeField typeField = rowStruct.getField(name, true, false);
+      if (typeField == null) {
+        throw new RuntimeException("SQL query contains a unregistered parameter: @" + name);
+      }
+      // Get the type of the parameter. This stored as a column in a parameter table.
+      return typeField.getType();
     }
     final SqlValidatorNamespace ns = getNamespace(node);
     if (ns != null) {

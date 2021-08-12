@@ -64,6 +64,9 @@ public class SqlValidatorTestCase {
   private static final SqlTestFactory EXTENDED_TEST_FACTORY =
       SqlTestFactory.INSTANCE.withCatalogReader(MockCatalogReaderExtended::new);
 
+  private static final SqlTestFactory NAMED_PARAM_TEST_FACTORY =
+      SqlTestFactory.INSTANCE.validatorConfigWithNamedParamTable("BodoNamedParams");
+
   static final SqlTester EXTENDED_CATALOG_TESTER =
       new SqlValidatorTester(EXTENDED_TEST_FACTORY);
 
@@ -74,6 +77,9 @@ public class SqlValidatorTestCase {
   static final SqlTester EXTENDED_CATALOG_TESTER_LENIENT =
       new SqlValidatorTester(EXTENDED_TEST_FACTORY)
           .withConformance(SqlConformanceEnum.LENIENT);
+
+  static final SqlTester NAMED_PARAMS_TESTER =
+      new SqlValidatorTester(NAMED_PARAM_TEST_FACTORY);
 
   protected SqlTester tester;
 
@@ -291,6 +297,10 @@ public class SqlValidatorTestCase {
 
     Sql withExtendedCatalog() {
       return withTester(tester -> EXTENDED_CATALOG_TESTER);
+    }
+
+    public Sql withNamedParamters() {
+      return withTester(tester -> NAMED_PARAMS_TESTER);
     }
 
     public Sql withQuoting(Quoting quoting) {

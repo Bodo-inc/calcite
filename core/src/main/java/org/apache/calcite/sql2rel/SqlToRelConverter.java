@@ -17,7 +17,6 @@
 package org.apache.calcite.sql2rel;
 
 import org.apache.calcite.avatica.util.Spaces;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
@@ -161,7 +160,6 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableMacro;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorCatalogReader;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
@@ -237,9 +235,6 @@ public class SqlToRelConverter {
   protected static final Logger SQL2REL_LOGGER =
       CalciteTrace.getSqlToRelTracer();
 
-  /** Table Name that indicates no named Parameter table was provided. */
-  public static final String NAMED_PARAM_TABLE_NAME_EMPTY = "";
-
   /** Size of the smallest IN list that will be converted to a semijoin to a
    * static table. */
   public static final int DEFAULT_IN_SUB_QUERY_THRESHOLD = 20;
@@ -264,12 +259,6 @@ public class SqlToRelConverter {
   private int explainParamCount;
   public final SqlToRelConverter.Config config;
   private final RelBuilder relBuilder;
-  /**
-   * The name of the table that holds named parameters within the default
-   * schema. Returns null if no named parameters table is registered
-   * (which means namedParameters should not be used).
-   */
-  private final @Nullable String namedParamTableName;
 
   /**
    * Fields used in name resolution for correlated sub-queries.
@@ -351,7 +340,6 @@ public class SqlToRelConverter {
     this.relBuilder = config.getRelBuilderFactory().create(cluster, null)
         .transform(config.getRelBuilderConfigTransform());
     this.hintStrategies = config.getHintStrategyTable();
-    this.namedParamTableName = config.getNamedParamTableName();
 
     cluster.setHintStrategies(this.hintStrategies);
     this.cluster = requireNonNull(cluster, "cluster");
@@ -3388,26 +3376,8 @@ public class SqlToRelConverter {
    * Converts a SQLNamedParam to a RexNamedParam.
    */
   public RexNode convertNamedParam(SqlNamedParam namedParam) {
-    // TODO: Replace this code with higher level code. This code seems
-    // far too low level for this module but I couldn't figure out the
-    // proper API to support.
-    SqlValidatorCatalogReader reader = validator().getCatalogReader();
-    // Named Param is always in the default schema with the encoded table name.
-    if (namedParamTableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
-      throw new RuntimeException("Named Parameter table is not registered. "
-          + "To use named parameters in a query please "
-          + "register a table name in the configuration.");
-    }
-    CalciteSchema defaultSchema = reader.getRootSchema();
-    Table table = defaultSchema.getTable(namedParamTableName, true).getTable();
-    RelDataType rowStruct = table.getRowType(typeFactory);
+    RelDataType paramType = validator().getValidatedNodeType(namedParam);
     String name = namedParam.getName();
-    RelDataTypeField typeField = rowStruct.getField(name, true, false);
-    if (typeField == null) {
-      throw new RuntimeException("SQL query contains a unregistered parameter: @" + name);
-    }
-    // Get the type of the parameter. This stored as a column in a parameter table.
-    RelDataType paramType = typeField.getType();
     return new RexNamedParam(paramType, name);
   }
 
@@ -6347,16 +6317,6 @@ public class SqlToRelConverter {
     /** Sets {@link #getHintStrategyTable()}. */
     Config withHintStrategyTable(HintStrategyTable hintStrategyTable);
 
-    /** Returns the name of the table used to determine
-     * named parameters' types. Default is
-     * "". */
-    @ImmutableBeans.Property
-    @ImmutableBeans.StringDefault(NAMED_PARAM_TABLE_NAME_EMPTY)
-    String getNamedParamTableName();
-
-    /** Sets {@link #getNamedParamTableName()}. */
-    Config withNamedParamTableName(String namedParamTable);
-
   }
 
   /** Builder for a {@link Config}. */
@@ -6425,11 +6385,6 @@ public class SqlToRelConverter {
     public ConfigBuilder withHintStrategyTable(
         HintStrategyTable hintStrategyTable) {
       return withConfig(config.withHintStrategyTable(hintStrategyTable));
-    }
-
-    public ConfigBuilder withNamedParamTableName(
-        String namedParamTableName) {
-      return withConfig(config.withNamedParamTableName(namedParamTableName));
     }
 
     /** Builds a {@link Config}. */
