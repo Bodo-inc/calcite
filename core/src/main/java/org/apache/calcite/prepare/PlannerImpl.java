@@ -94,8 +94,16 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   // set in STATE_2_READY
   private @Nullable SchemaPlus defaultSchema;
-  // Bodo Specific Feature
-  private @Nullable SchemaPlus namedParamSchema;
+  /**
+   * Bodo Specific Feature:
+   *
+   * Table Name within the default schema
+   * that contains Named Parameters. Null
+   * if there is no named Parameter Table,
+   * which means that named paramters should
+   * not be used.
+   */
+  private @Nullable String namedParamTableName;
   private @Nullable JavaTypeFactory typeFactory;
   private @Nullable RelOptPlanner planner;
   private @Nullable RexExecutor executor;
@@ -110,7 +118,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   public PlannerImpl(FrameworkConfig config) {
     this.costFactory = config.getCostFactory();
     this.defaultSchema = config.getDefaultSchema();
-    this.namedParamSchema = config.getNamedParamSchema();
+    this.namedParamTableName = config.getNamedParamTableName();
     this.operatorTable = config.getOperatorTable();
     this.programs = config.getPrograms();
     this.parserConfig = config.getParserConfig();
@@ -327,10 +335,12 @@ public class PlannerImpl implements Planner, ViewExpander {
     SchemaPlus defaultSchema = requireNonNull(this.defaultSchema, "defaultSchema");
     final SchemaPlus rootSchema = rootSchema(defaultSchema);
 
-    return new CalciteCatalogReader(
+    CalciteCatalogReader reader = new CalciteCatalogReader(
         CalciteSchema.from(rootSchema),
         CalciteSchema.from(defaultSchema).path(null),
         getTypeFactory(), connectionConfig);
+    reader.setNamedParamTableName(this.namedParamTableName);
+    return reader;
   }
 
   private SqlValidator createSqlValidator(CalciteCatalogReader catalogReader) {
