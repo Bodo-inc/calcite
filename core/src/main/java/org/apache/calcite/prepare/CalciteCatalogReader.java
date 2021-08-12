@@ -84,9 +84,6 @@ import java.util.function.Predicate;
  */
 public class CalciteCatalogReader implements Prepare.CatalogReader {
   protected final CalciteSchema rootSchema;
-  // Name for the named parameter table. This is allowed to be null if
-  // no schema is provided.
-  protected @Nullable String namedParamTableName;
   protected final RelDataTypeFactory typeFactory;
   private final List<List<String>> schemaPaths;
   protected final SqlNameMatcher nameMatcher;
@@ -431,14 +428,6 @@ public class CalciteCatalogReader implements Prepare.CatalogReader {
 
   @Override public CalciteSchema getRootSchema() {
     return rootSchema;
-  }
-
-  public void setNamedParamTableName(String namedParamTableName) {
-    this.namedParamTableName = namedParamTableName;
-  }
-
-  public @Nullable String getNamedParamTableName() {
-    return namedParamTableName;
   }
 
   @Override public RelDataTypeFactory getTypeFactory() {

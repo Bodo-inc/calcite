@@ -63,7 +63,7 @@ public interface FrameworkConfig {
   @Nullable SchemaPlus getDefaultSchema();
 
   /**
-   * Returns the of the table that holds named parameters within the default
+   * Returns the name of the table that holds named parameters within the default
    * schema. Returns null if no named parameters table is registered
    * (which means namedParameters should not be used).
    */

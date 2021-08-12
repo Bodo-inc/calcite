@@ -339,7 +339,6 @@ public class PlannerImpl implements Planner, ViewExpander {
         CalciteSchema.from(rootSchema),
         CalciteSchema.from(defaultSchema).path(null),
         getTypeFactory(), connectionConfig);
-    reader.setNamedParamTableName(this.namedParamTableName);
     return reader;
   }
 
