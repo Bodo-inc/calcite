@@ -1791,7 +1791,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           SqlValidatorUtil.getTableEntry(getCatalogReader(), ImmutableList.of(tableName));
       if (entry == null) {
         throw new RuntimeException("Named Parameter table is registered with "
-            + "the name " + tableName + " but no table exists with that name."
+            + "the name " + tableName + " but no table exists with that name. "
             + "To use namedParameters you must supply a namedParameters table.");
       }
       Table table = entry.getTable();
