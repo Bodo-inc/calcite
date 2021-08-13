@@ -1778,20 +1778,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
     if (node instanceof SqlNamedParam) {
       SqlNamedParam namedParam = (SqlNamedParam) node;
-      SqlValidatorCatalogReader reader = getCatalogReader();
       // Named Param is always in the default schema with the encoded table name.
       String tableName = config().namedParamTableName();
+
       if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
         throw new RuntimeException("Named Parameter table is not registered. "
             + "To use named parameters in a query please "
             + "register a table name in the configuration.");
       }
-
-      CalciteSchema defaultSchema = reader.getRootSchema();
-      System.out.println(defaultSchema.getName());
-      System.out.println(defaultSchema.getTableNames());
       // TODO: Set caseSensitive?
-      CalciteSchema.TableEntry entry = defaultSchema.getTable(tableName, false);
+      CalciteSchema.TableEntry entry =
+          SqlValidatorUtil.getTableEntry(getCatalogReader(), ImmutableList.of(tableName));
       if (entry == null) {
         throw new RuntimeException("Named Parameter table is registered with "
             + "the name " + tableName + " but no table exists with that name."
