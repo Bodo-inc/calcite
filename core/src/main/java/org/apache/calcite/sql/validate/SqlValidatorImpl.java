@@ -1786,7 +1786,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             + "To use named parameters in a query please "
             + "register a table name in the configuration.");
       }
+
       CalciteSchema defaultSchema = reader.getRootSchema();
+      System.out.println(defaultSchema.getName());
       System.out.println(defaultSchema.getTableNames());
       // TODO: Set caseSensitive?
       CalciteSchema.TableEntry entry = defaultSchema.getTable(tableName, false);
