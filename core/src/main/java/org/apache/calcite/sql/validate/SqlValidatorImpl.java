@@ -1780,8 +1780,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNamedParam namedParam = (SqlNamedParam) node;
       // Named Param is always in the default schema with the encoded table name.
       String tableName = config().namedParamTableName();
-      tableName = "EMP";
-
       if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
         throw new RuntimeException("Named Parameter table is not registered. "
             + "To use named parameters in a query please "
