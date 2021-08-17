@@ -107,6 +107,15 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
 //  /*
+//   * Tests that a named param can be typed in a select.
+//   */
+//  @Test void testSelectNamedParam() {
+//    final String sql = "select @a, @b from emp";
+//    // TODO: Update the validator Config
+//    sql(sql).ok();
+//  }
+
+//  /*
 //   * Tests that a named param can be properly converted to
 //   * a RexNode.
 //   */

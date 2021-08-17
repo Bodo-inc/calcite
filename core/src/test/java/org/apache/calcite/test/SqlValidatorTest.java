@@ -12167,6 +12167,16 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .withOperatorTable(operatorTable)
         .type("RecordType(BIGINT NOT NULL A, BIGINT B) NOT NULL");
   }
+  /*
+   * Tests that a named param can be typed in a select.
+   */
+  @Test void testSelectNamedParam() {
+    final String sql = "select @a, @b from emp";
+    // TODO: Update the validator Config
+    sql(sql).withNamedParamters().ok();
+  }
+
+
 //
 //  /*
 //   * Tests that a named param can be properly typed.

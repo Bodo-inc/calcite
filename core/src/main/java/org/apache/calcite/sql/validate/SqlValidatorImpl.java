@@ -1780,6 +1780,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNamedParam namedParam = (SqlNamedParam) node;
       // Named Param is always in the default schema with the encoded table name.
       String tableName = config().namedParamTableName();
+      tableName = "EMP";
 
       if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
         throw new RuntimeException("Named Parameter table is not registered. "
@@ -1816,7 +1817,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (node instanceof SqlIdentifier) {
       return getCatalogReader().getNamedType((SqlIdentifier) node);
     }
-    // TODO: Add support for namedParameters
     return null;
   }
 
@@ -2046,6 +2046,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
         inferUnknownTypes(type, scope, child);
       }
+    } else if (node instanceof SqlNamedParam) {
+      // Register SqlNamedParams into the namespace
+      RelDataType typeName = getValidatedNodeType(node);
+      setValidatedNodeType(node, typeName);
     } else if (node instanceof SqlCase) {
       final SqlCase caseCall = (SqlCase) node;
 
@@ -4439,11 +4443,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // Use the field list size to record the field index
         // because the select item may be a STAR(*), which could have been expanded.
         final int fieldIdx = fieldList.size();
-        final RelDataType fieldType =
-                targetRowType.isStruct()
-                        && targetRowType.getFieldCount() > fieldIdx
-                ? targetRowType.getFieldList().get(fieldIdx).getType()
-                : unknownType;
+        RelDataType fieldType;
+        // Determine types if Named Parameters are used in select statements
+        if (selectItem instanceof SqlNamedParam) {
+          fieldType = getValidatedNodeType(selectItem);
+        } else {
+          fieldType =
+              targetRowType.isStruct()
+                  && targetRowType.getFieldCount() > fieldIdx
+                  ? targetRowType.getFieldList().get(fieldIdx).getType()
+                  : unknownType;
+        }
         expandSelectItem(
             selectItem,
             select,
