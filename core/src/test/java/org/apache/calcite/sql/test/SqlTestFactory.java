@@ -69,6 +69,7 @@ public class SqlTestFactory {
                   .with(
                       new CalciteAssert.AddSchemaSpecPostProcessor(
                           CalciteAssert.SchemaSpec.HR)))
+          .put("namedParamTable", "")
           .build();
 
   public static final SqlTestFactory INSTANCE =
@@ -108,21 +109,18 @@ public class SqlTestFactory {
     final boolean lenientOperatorLookup =
         (boolean) options.get("lenientOperatorLookup");
     final boolean enableTypeCoercion = (boolean) options.get("enableTypeCoercion");
+    final String namedParamTable = (String) options.get("namedParamTable");
     this.config = SqlValidator.Config.DEFAULT
         .withSqlConformance(conformance)
         .withTypeCoercionEnabled(enableTypeCoercion)
-        .withLenientOperatorLookup(lenientOperatorLookup);
+        .withLenientOperatorLookup(lenientOperatorLookup)
+        .withNamedParamTableName(namedParamTable);
   }
 
   private static SqlOperatorTable createOperatorTable(SqlOperatorTable opTab0) {
     MockSqlOperatorTable opTab = new MockSqlOperatorTable(opTab0);
     MockSqlOperatorTable.addRamp(opTab);
     return opTab;
-  }
-
-  public SqlTestFactory validatorConfigWithNamedParamTable(String namedParamTable) {
-    this.config.withNamedParamTableName(namedParamTable);
-    return this;
   }
 
   public SqlParser.Config getParserConfig() {
@@ -143,6 +141,7 @@ public class SqlTestFactory {
   }
 
   public SqlValidator getValidator() {
+    String tableName = config.namedParamTableName();
     return validatorFactory.create(operatorTable.get(),
         catalogReader.get(),
         typeFactory.get(),

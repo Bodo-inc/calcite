@@ -12168,51 +12168,47 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .type("RecordType(BIGINT NOT NULL A, BIGINT B) NOT NULL");
   }
 
-//  /**
-//   * Tests that a named param can be typed in a select.
-//   */
-//  @Test void testSelectNamedParam() {
-//    final String sql = "select @a, @b from emp";
-//    // TODO: Update the validator Config
-//    sql(sql).withNamedParamters().ok();
-//  }
-//
-//
-//  /**
-//   * Tests that a named param can be properly typed.
-//   */
-//  @Test void testBasicNamedParam() {
-//    final String sql = "select deptno from emp where deptno > @b";
-//    // TODO: Update the validator Config
-//    sql(sql).withNamedParamters().ok();
-//  }
-//
-//  /**
-//   * Tests that a named param without the parameter properly
-//   * registered in the table throws an appropriate exception.
-//   */
-//  @Test void testNamedParamNoParam() {
-//    final String sql = "select deptno from emp where deptno > @b";
-//
-//    // TODO: Update the validator Config
-//    sql(sql).withNamedParamters().fails("Fewfew");
-//  }
-//
-//  /**
-//   * Tests that a named param with no table matching the
-//   * registered name throws an appropriate exception.
-//   */
-//  @Test void testNamedParamWrongTable() {
-//    final String sql = "select deptno from emp where deptno > @b";
-//    sql(sql).withNamedParamters().fails(".*no table exists with that name.*");
-//  }
-//
-//  /**
-//   * Tests that a named param without a registered table throws
-//   * an appropriate exception.
-//   */
-//  @Test void testNamedParamNoTable() {
-//    final String sql = "select deptno from emp where deptno > @b";
-//    sql(sql).fails("Named Parameter table is not registered. .*");
-//  }
+  /**
+   * Tests that a named param can be typed in a select.
+   */
+  @Test void testSelectNamedParam() {
+    final String sql = "select @a, @b from emp";
+    sql(sql).withNamedParamters().ok();
+  }
+
+
+  /**
+   * Tests that a named param can be properly typed.
+   */
+  @Test void testBasicNamedParam() {
+    final String sql = "select deptno from emp where deptno > @b";
+    sql(sql).withNamedParamters().ok();
+  }
+
+  /**
+   * Tests that a named param without the parameter properly
+   * registered in the table throws an appropriate exception.
+   */
+  @Test void testNamedParamNoParam() {
+    final String sql = "select deptno from emp where deptno > @C";
+    sql(sql).withNamedParamters().fails("SQL query contains a unregistered parameter: @C");
+  }
+
+  /**
+   * Tests that a named param with no table matching the
+   * registered name throws an appropriate exception.
+   */
+  @Test void testNamedParamWrongTable() {
+    final String sql = "select deptno from emp where deptno > @b";
+    sql(sql).withNamedParametersNoSchema().fails(".*no table exists with that name.*");
+  }
+
+  /**
+   * Tests that a named param without a registered table throws
+   * an appropriate exception.
+   */
+  @Test void testNamedParamNoTable() {
+    final String sql = "select deptno from emp where deptno > @b";
+    sql(sql).fails("Named Parameter table is not registered. .*");
+  }
 }
