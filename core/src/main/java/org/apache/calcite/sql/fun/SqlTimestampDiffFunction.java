@@ -30,7 +30,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
  * The <code>TIMESTAMPDIFF</code> function, which calculates the difference
  * between two timestamps.
  *
- * <p>The SQL syntax is
+ * <p>The SQL syntax is 
  *
  * <blockquote>
  * <code>TIMESTAMPDIFF(<i>timestamp interval</i>, <i>timestamp</i>,
