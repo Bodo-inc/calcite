@@ -728,7 +728,6 @@ public class RexUtil {
     }
 
     @Override public Boolean visitNamedParam(RexNamedParam namedParam) {
-      // TODO: Confirm this is correct
       // Named parameters should not be considered constant because we cannot
       // support using the variable where values must be constants
       return false;

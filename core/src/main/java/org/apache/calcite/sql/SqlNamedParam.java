@@ -67,17 +67,14 @@ public class SqlNamedParam extends SqlNode {
     writer.namedParam(name);
   }
 
-  // TODO: Does this need extra validation code?
   @Override public void validate(SqlValidator validator, SqlValidatorScope scope) {
     validator.validateNamedParam(this);
   }
 
-  // TODO: Does this need to change
   @Override public SqlMonotonicity getMonotonicity(@Nullable SqlValidatorScope scope) {
     return SqlMonotonicity.CONSTANT;
   }
 
-  // TODO: FIXME
   @Override public <R> R accept(SqlVisitor<R> visitor) {
     return visitor.visit(this);
   }

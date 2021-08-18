@@ -7305,7 +7305,6 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < ASSIGNMENT: "ASSIGNMENT" >
 |   < ASYMMETRIC: "ASYMMETRIC" >
 |   < AT: "AT" >
-|   < ATSYM: "@" >
 |   < ATOMIC: "ATOMIC" >
 |   < ATTRIBUTE: "ATTRIBUTE" >
 |   < ATTRIBUTES: "ATTRIBUTES" >

@@ -34,7 +34,7 @@ public class RexNamedParam extends RexVariable {
   //~ Constructors -----------------------------------------------------------
 
   /**
-   * Creates a dynamic parameter.
+   * Creates a named parameter.
    *
    * @param type  type of parameter
    * @param name Name of the Python variable

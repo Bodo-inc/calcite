@@ -215,7 +215,6 @@ public abstract class ProjectToWindowRule
               return true;
             }
 
-            // TODO: Is this correct?
             @Override protected boolean canImplement(RexNamedParam param) {
               return true;
             }
@@ -246,7 +245,6 @@ public abstract class ProjectToWindowRule
             return false;
           }
 
-          // TODO: Is this correct?
           @Override protected boolean canImplement(RexNamedParam param) {
             return false;
           }

@@ -1781,17 +1781,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // Named Param is always in the default schema with the encoded table name.
       String tableName = config().namedParamTableName();
       if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
-        throw new RuntimeException("Named Parameter table is not registered. "
-            + "To use named parameters in a query please "
-            + "register a table name in the configuration.");
+        throw newValidationError(node, RESOURCE.namedParamTableNotRegistered());
       }
       // TODO: Set caseSensitive?
       CalciteSchema.TableEntry entry =
           SqlValidatorUtil.getTableEntry(getCatalogReader(), ImmutableList.of(tableName));
       if (entry == null) {
-        throw new RuntimeException("Named Parameter table is registered with "
-            + "the name " + tableName + " but no table exists with that name. "
-            + "To use namedParameters you must supply a namedParameters table.");
+        throw newValidationError(node, RESOURCE.namedParamTableNotFound(tableName));
       }
       Table table = entry.getTable();
       RelDataType rowStruct = table.getRowType(typeFactory);
@@ -1799,7 +1795,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // TODO: Set caseSensitive?
       RelDataTypeField typeField = rowStruct.getField(name, false, false);
       if (typeField == null) {
-        throw new RuntimeException("SQL query contains a unregistered parameter: @" + name);
+        throw newValidationError(node, RESOURCE.namedParamParameterNotFound(name));
       }
       // Get the type of the parameter. This stored as a column in a parameter table.
       return typeField.getType();

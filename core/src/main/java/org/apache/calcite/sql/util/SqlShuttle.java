@@ -58,7 +58,6 @@ public class SqlShuttle extends SqlBasicVisitor<@Nullable SqlNode> {
     return param;
   }
 
-  // TODO: FIXME?
   @Override public @Nullable SqlNode visit(SqlNamedParam param) {
     return param;
   }

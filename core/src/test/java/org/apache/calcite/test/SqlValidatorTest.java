@@ -12190,8 +12190,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
    * registered in the table throws an appropriate exception.
    */
   @Test void testNamedParamNoParam() {
-    final String sql = "select deptno from emp where deptno > @C";
-    sql(sql).withNamedParamters().fails("SQL query contains a unregistered parameter: @C");
+    final String sql = "select deptno from emp where deptno > ^@C^";
+    sql(sql).withNamedParamters().fails("SQL query contains a unregistered parameter: '@C'");
   }
 
   /**
@@ -12199,7 +12199,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
    * registered name throws an appropriate exception.
    */
   @Test void testNamedParamWrongTable() {
-    final String sql = "select deptno from emp where deptno > @b";
+    final String sql = "select deptno from emp where deptno > ^@b^";
     sql(sql).withNamedParametersNoSchema().fails(".*no table exists with that name.*");
   }
 
@@ -12208,7 +12208,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
    * an appropriate exception.
    */
   @Test void testNamedParamNoTable() {
-    final String sql = "select deptno from emp where deptno > @b";
+    final String sql = "select deptno from emp where deptno > ^@b^";
     sql(sql).fails("Named Parameter table is not registered. .*");
   }
 }
