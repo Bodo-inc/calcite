@@ -6859,6 +6859,8 @@ String NonReservedJdbcFunctionName() :
 {
     (
         <SUBSTRING>
+    |
+        <CHAR>
     )
     {
         return unquotedIdentifier();
