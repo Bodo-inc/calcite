@@ -4240,6 +4240,7 @@ SqlNode NonIntervalLiteral() :
     |
         e = SpecialLiteral()
     |
+        LOOKAHEAD(2)
         e = DateTimeLiteral()
 <#-- additional literal parser methods are included here -->
 <#list (parser.literalParserMethods!default.parser.literalParserMethods) as method>
@@ -6859,9 +6860,6 @@ String NonReservedJdbcFunctionName() :
 {
     (
         <SUBSTRING>
-    |
-        <CHAR>
-    )
     {
         return unquotedIdentifier();
     }
