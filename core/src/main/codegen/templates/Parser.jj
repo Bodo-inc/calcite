@@ -3972,7 +3972,6 @@ SqlNode AtomicRowExpression() :
 }
 {
     (
-        LOOKAHEAD(2)
         e = LiteralOrIntervalExpression()
     |
         e = DynamicParam()
@@ -4518,6 +4517,7 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimestampLiteral(p, s.end(this));
     }
 |
+    LOOKAHEAD(3)
     <DATE> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
     }
@@ -4526,6 +4526,7 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimeLiteral(token.image, s.end(this));
     }
 |
+    LOOKAHEAD(3)
     <TIMESTAMP> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseTimestampLiteral(token.image, s.end(this));
     }
