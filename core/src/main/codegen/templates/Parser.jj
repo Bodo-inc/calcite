@@ -79,6 +79,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlMerge;
+import org.apache.calcite.sql.SqlNamedParam;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlNumericLiteral;
@@ -272,6 +273,11 @@ void debug_message1() {
 
 JAVACODE String unquotedIdentifier() {
     return SqlParserUtil.toCase(getToken(0).image, unquotedCasing);
+}
+
+JAVACODE String pythonUnquotedIdentifier() {
+    // Strip the @ from the name
+    return SqlParserUtil.toCase(getToken(0).image.substring(1), Casing.UNCHANGED);
 }
 
 /**
@@ -3850,6 +3856,8 @@ SqlNode UnsignedNumericLiteralOrParam() :
         e = UnsignedNumericLiteral()
     |
         e = DynamicParam()
+    |
+        e = NamedParam()
     )
     { return e; }
 }
@@ -3975,6 +3983,8 @@ SqlNode AtomicRowExpression() :
         e = LiteralOrIntervalExpression()
     |
         e = DynamicParam()
+    |
+        e = NamedParam()
     |
         LOOKAHEAD(2)
         e = BuiltinFunctionCall()
@@ -4240,7 +4250,6 @@ SqlNode NonIntervalLiteral() :
     |
         e = SpecialLiteral()
     |
-        LOOKAHEAD(2)
         e = DateTimeLiteral()
 <#-- additional literal parser methods are included here -->
 <#list (parser.literalParserMethods!default.parser.literalParserMethods) as method>
@@ -4517,7 +4526,6 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimestampLiteral(p, s.end(this));
     }
 |
-    LOOKAHEAD(3)
     <DATE> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
     }
@@ -4526,7 +4534,6 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimeLiteral(token.image, s.end(this));
     }
 |
-    LOOKAHEAD(3)
     <TIMESTAMP> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseTimestampLiteral(token.image, s.end(this));
     }
@@ -4931,6 +4938,27 @@ SqlDynamicParam DynamicParam() :
 {
     <HOOK> {
         return new SqlDynamicParam(nDynamicParams++, getPos());
+    }
+}
+
+/**
+ * Parses a named parameter marker.
+ */
+SqlNamedParam NamedParam() :
+{
+    final String name;
+    final SqlParserPos pos;
+}
+{
+    <PARAM_IDENTIFIER>
+    (
+      {
+        name = pythonUnquotedIdentifier();
+        pos = getPos();
+      }
+    )
+    {
+      return new SqlNamedParam(name, getPos());
     }
 }
 
@@ -6862,6 +6890,7 @@ String NonReservedJdbcFunctionName() :
 {
     (
         <SUBSTRING>
+    )
     {
         return unquotedIdentifier();
     }
@@ -6898,7 +6927,6 @@ SqlIdentifier ReservedFunctionName() :
     |   <AVG>
     |   <CARDINALITY>
     |   <CEILING>
-    |   <CHAR>
     |   <CHAR_LENGTH>
     |   <CHARACTER_LENGTH>
     |   <COALESCE>
@@ -8301,6 +8329,11 @@ MORE :
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+}
+
+<DEFAULT, DQID, BTID, BQID> TOKEN :
+{
+    < PARAM_IDENTIFIER: "@" (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
