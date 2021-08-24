@@ -3522,7 +3522,7 @@ List<Object> Expression2(ExprContext exprContext) :
                     checkNonQueryExpression(exprContext);
                 }
                 (
-                    <NOT> <IN> { op = SqlStdOperatorTable.NOT_IN; }
+                    LOOKAHEAD(2) <NOT> <IN> { op = SqlStdOperatorTable.NOT_IN; }
                 |
                     <IN> { op = SqlStdOperatorTable.IN; }
                 |
@@ -3544,15 +3544,15 @@ List<Object> Expression2(ExprContext exprContext) :
                     |
                         <ALL> { op = SqlStdOperatorTable.ALL_LIKE; }
                     )
-//                |
-//                    <NOT> <LIKE>
-//                    (
-//                        <SOME> { op = SqlStdOperatorTable.SOME_NOT_LIKE(k); }
-//                    |
-//                        <ANY> { op = SqlStdOperatorTable.SOME_NOT_LIKE(k); }
-//                    |
-//                        <ALL> { op = SqlStdOperatorTable.ALL_NOT_LIKE(k); }
-//                    )
+                |
+                    <NOT> <LIKE>
+                    (
+                        <SOME> { op = SqlStdOperatorTable.SOME_NOT_LIKE; }
+                    |
+                        <ANY> { op = SqlStdOperatorTable.SOME_NOT_LIKE; }
+                    |
+                        <ALL> { op = SqlStdOperatorTable.ALL_NOT_LIKE; }
+                    )
                 )
                 { s.clear().add(this); }
                 nodeList = ParenthesizedQueryOrCommaList(ExprContext.ACCEPT_NONCURSOR)

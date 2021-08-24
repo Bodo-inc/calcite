@@ -3813,6 +3813,18 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).withConfig(c -> c.withExpand(false)).ok();
   }
 
+  /** Tests WHERE X NOT LIKE SOME (a,b,c) case. */
+  @Test protected void testSomeNotLikeNonNullTuple() {
+    final String sql = "SELECT ename from emp where ename NOT LIKE SOME ('bob', 'alex', 'john')";
+    sql(sql).withConfig(c -> c.withExpand(false)).ok();
+  }
+
+  /** Tests WHERE X NOT LIKE ALL (a,b,c) case. */
+  @Test protected void testAllNotLikeNonNullTuple() {
+    final String sql = "SELECT ename from emp where ename NOT LIKE ALL ('bob', 'alex', 'john')";
+    sql(sql).withConfig(c -> c.withExpand(false)).ok();
+  }
+
   @Test void testJsonValueExpressionOperator() {
     final String sql = "select ename format json,\n"
         + "ename format json encoding utf8,\n"

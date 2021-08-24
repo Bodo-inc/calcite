@@ -327,6 +327,18 @@ LogicalProject(ENAME=[$1])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testAllNotLikeNonNullTuple">
+    <Resource name="sql">
+      <![CDATA[SELECT ename from emp where ename NOT LIKE All ('bob', 'alex', 'john')]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ENAME=[$1])
+  LogicalFilter(condition=[AND(NOT LIKE($1, 'bob'), NOT LIKE($1, 'alex'), NOT LIKE($1, 'john'))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testAllNullEqNonNullTuple">
     <Resource name="sql">
       <![CDATA[SELECT ename from emp where sal <=> ALL (1000, 2000, 3000)]]>
@@ -5755,6 +5767,18 @@ LogicalProject(SOMEEMPNOEXISTS=[$1], EVERYEMPNOGTZERO=[$2])
       <![CDATA[
 LogicalProject(ENAME=[$1])
   LogicalFilter(condition=[OR(LIKE($1, 'bob'), LIKE($1, 'alex'), LIKE($1, 'john'))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSomeNotLikeNonNullTuple">
+    <Resource name="sql">
+      <![CDATA[SELECT ename from emp where ename NOT LIKE SOME ('bob', 'alex', 'john')]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ENAME=[$1])
+  LogicalFilter(condition=[OR(NOT LIKE($1, 'bob'), NOT LIKE($1, 'alex'), NOT LIKE($1, 'john'))])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
