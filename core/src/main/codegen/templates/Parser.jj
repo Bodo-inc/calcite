@@ -3518,11 +3518,16 @@ List<Object> Expression2(ExprContext exprContext) :
             (
                 // Special case for "IN", because RHS of "IN" is the only place
                 // that an expression-list is allowed ("exp IN (exp1, exp2)").
-                LOOKAHEAD(2) {
+
+                //In default calcite, this is LR(2). We need this to be at least LR(3)
+                //else we get conflicts due to .... NOT LIKE <Const string> vs NOT LIKE SOME
+                LOOKAHEAD(3) {
                     checkNonQueryExpression(exprContext);
                 }
                 (
-                    LOOKAHEAD(2) <NOT> <IN> { op = SqlStdOperatorTable.NOT_IN; }
+                    //Need this lookahed here, so we we can parse both NOT IN and NOT LIKE
+                    LOOKAHEAD(2)
+                    <NOT> <IN> { op = SqlStdOperatorTable.NOT_IN; }
                 |
                     <IN> { op = SqlStdOperatorTable.IN; }
                 |
