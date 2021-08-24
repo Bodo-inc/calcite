@@ -444,6 +444,15 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlQuantifyOperator SOME_NE =
       new SqlQuantifyOperator(SqlKind.SOME, SqlKind.NOT_EQUALS);
 
+  public static final SqlQuantifyOperator SOME_NULLEQ =
+      new SqlQuantifyOperator(SqlKind.SOME, SqlKind.NULL_EQUALS);
+
+  public static final SqlQuantifyOperator SOME_LIKE =
+      new SqlQuantifyOperator(SqlKind.SOME, SqlKind.LIKE);
+
+  public static final SqlQuantifyOperator SOME_NOT_LIKE =
+      new SqlQuantifyOperator(SqlKind.SOME, SqlKind.NOT_LIKE);
+
   /**
    * The <code>&lt; ALL</code> operator.
    */
@@ -464,6 +473,15 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
 
   public static final SqlQuantifyOperator ALL_NE =
       new SqlQuantifyOperator(SqlKind.ALL, SqlKind.NOT_EQUALS);
+
+  public static final SqlQuantifyOperator ALL_NULLEQ =
+      new SqlQuantifyOperator(SqlKind.ALL, SqlKind.NULL_EQUALS);
+
+  public static final SqlQuantifyOperator ALL_LIKE =
+      new SqlQuantifyOperator(SqlKind.ALL, SqlKind.LIKE);
+
+  public static final SqlQuantifyOperator ALL_NOT_LIKE =
+      new SqlQuantifyOperator(SqlKind.ALL, SqlKind.NOT_LIKE);
 
   /**
    * Logical less-than operator, '<code>&lt;</code>'.
@@ -2595,6 +2613,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       return SOME_GT;
     case GREATER_THAN_OR_EQUAL:
       return SOME_GE;
+    case NULL_EQUALS:
+        return SOME_NULLEQ;
     default:
       throw new AssertionError(comparisonKind);
     }
@@ -2615,6 +2635,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       return ALL_GT;
     case GREATER_THAN_OR_EQUAL:
       return ALL_GE;
+    case NULL_EQUALS:
+      return ALL_NULLEQ;
     default:
       throw new AssertionError(comparisonKind);
     }

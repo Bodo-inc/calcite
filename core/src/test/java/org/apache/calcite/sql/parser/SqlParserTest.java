@@ -9721,6 +9721,67 @@ public class SqlParserTest {
     assertThat(hoisted.substitute(SqlParserTest::varToStr), is(expected2));
   }
 
+  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  @Test protected void testSomeNullEq() {
+    final String sql = "SELECT name from emp where sal <=> SOME (1000, 2000, 3000)";
+    final String expected = "SELECT `NAME`\n"
+        + "FROM `EMP`\n"
+        + "WHERE (`SAL` <=> SOME (1000, 2000, 3000))";
+
+    sql(sql).ok(expected);
+  }
+
+  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  @Test protected void testALLLNullEq() {
+    final String sql = "SELECT name from emp where sal <=> ALL (1000, 2000, 3000)";
+    final String expected = "SELECT `NAME`\n"
+        + "FROM `EMP`\n"
+        + "WHERE (`SAL` <=> ALL (1000, 2000, 3000))";
+    sql(sql).ok(expected);
+  }
+
+  /** Tests WHERE X LIKE SOME (a,b,c) case. */
+  @Test protected void testSomeLike() {
+    final String sql = "SELECT name from emp where name LIKE SOME ('bob', 'alex')";
+    final String expected = "SELECT `NAME`\n"
+        + "FROM `EMP`\n"
+        + "WHERE (`NAME` LIKE SOME ('bob', 'alex'))";
+
+    sql(sql).ok(expected);
+  }
+
+  /** Tests WHERE X LIKE SOME (a,b,c) case. */
+  @Test protected void testALLLike() {
+    final String sql = "SELECT name from emp where name LIKE ALL ('bob', 'alex')";
+    final String expected = "SELECT `NAME`\n"
+        + "FROM `EMP`\n"
+        + "WHERE (`NAME` LIKE ALL ('bob', 'alex'))";
+
+    sql(sql).ok(expected);
+  }
+
+//  /** Tests WHERE X NOT LIKE SOME (a,b,c) case. */
+//  @Test protected void testSomeNotLike() {
+//    final String sql = "SELECT name from emp where name NOT LIKE SOME ('bob', 'alex')";
+//    final String expected = "SELECT `NAME`\n"
+//        + "FROM `EMP`\n"
+//        + "WHERE (`NAME` NOT LIKE SOME ('bob', 'alex'))";
+//
+//    sql(sql).ok(expected);
+//  }
+//
+//  /** Tests WHERE X LIKE SOME (a,b,c) case. */
+//  @Test protected void testALLNotLike() {
+//    final String sql = "SELECT name from emp where name NOT LIKE ALL ('bob', 'alex')";
+//    final String expected = "SELECT `NAME`\n"
+//        + "FROM `EMP`\n"
+//        + "WHERE (`NAME` NOT LIKE ALL ('bob', 'alex'))";
+//
+//    sql(sql).ok(expected);
+//  }
+
+
+
   protected static String varToStr(Hoist.Variable v) {
     if (v.node instanceof SqlLiteral) {
       SqlLiteral literal = (SqlLiteral) v.node;
