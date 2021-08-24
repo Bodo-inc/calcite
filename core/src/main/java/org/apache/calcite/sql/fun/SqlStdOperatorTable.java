@@ -2614,7 +2614,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
     case GREATER_THAN_OR_EQUAL:
       return SOME_GE;
     case NULL_EQUALS:
-        return SOME_NULLEQ;
+      return SOME_NULLEQ;
     default:
       throw new AssertionError(comparisonKind);
     }
