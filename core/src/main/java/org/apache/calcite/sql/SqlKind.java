@@ -362,7 +362,7 @@ public enum SqlKind {
   LIKE,
 
   /** {@code NOT LIKE} operator. */
-  NOT_LIKE,
+  NOT_LIKE("NOT LIKE"),
 
   /** {@code RLIKE} operator. */
   RLIKE,

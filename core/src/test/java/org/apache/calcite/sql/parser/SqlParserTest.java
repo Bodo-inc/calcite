@@ -9766,7 +9766,7 @@ public class SqlParserTest {
     final String sql = "SELECT name from emp where name NOT LIKE SOME ('bob', 'alex')";
     final String expected = "SELECT `NAME`\n"
         + "FROM `EMP`\n"
-        + "WHERE (`NAME` NOT_LIKE SOME ('bob', 'alex'))";
+        + "WHERE (`NAME` NOT LIKE SOME ('bob', 'alex'))";
 
     sql(sql).ok(expected);
   }
@@ -9776,7 +9776,7 @@ public class SqlParserTest {
     final String sql = "SELECT name from emp where name NOT LIKE ALL ('bob', 'alex')";
     final String expected = "SELECT `NAME`\n"
         + "FROM `EMP`\n"
-        + "WHERE (`NAME` NOT_LIKE ALL ('bob', 'alex'))";
+        + "WHERE (`NAME` NOT LIKE ALL ('bob', 'alex'))";
 
     sql(sql).ok(expected);
   }
