@@ -36,6 +36,8 @@ public class SqlQuantifyOperator extends SqlInOperator {
   //~ Instance fields --------------------------------------------------------
 
   public final SqlKind comparisonKind;
+  //Only used for "LIKE"
+  public final boolean isNegated;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -48,7 +50,8 @@ public class SqlQuantifyOperator extends SqlInOperator {
    *   <code>=</code> or <code>&lt;&gt;</code>.
    */
   SqlQuantifyOperator(String name, SqlKind kind, SqlKind comparisonKind, boolean isNegated) {
-    super(name, kind, isNegated);
+    super(name, kind);
+    this.isNegated = isNegated;
     this.comparisonKind = Objects.requireNonNull(comparisonKind, "comparisonKind");
     Preconditions.checkArgument(comparisonKind == SqlKind.EQUALS
         || comparisonKind == SqlKind.NOT_EQUALS
@@ -60,5 +63,30 @@ public class SqlQuantifyOperator extends SqlInOperator {
         || comparisonKind == SqlKind.LIKE);
     Preconditions.checkArgument(kind == SqlKind.SOME
         || kind == SqlKind.ALL);
+  }
+
+  /**
+   * Returns a negated SqlQuantifyOperator.
+   */
+  public SqlQuantifyOperator negated() {
+    if (this.kind == SqlKind.LIKE) {
+      String name;
+      if (isNegated) {
+        name = "NOT LIKE " + this.comparisonKind;
+      } else {
+        name = "LIKE " + this.comparisonKind;
+      }
+      if (this.kind == SqlKind.ALL) {
+        return new SqlQuantifyOperator(name, SqlKind.LIKE, SqlKind.SOME, !this.isNegated);
+      } else {
+        return new SqlQuantifyOperator(name, SqlKind.LIKE, SqlKind.ALL, !this.isNegated);
+      }
+    } else {
+      if (this.kind == SqlKind.ALL) {
+        return SqlStdOperatorTable.some(this.comparisonKind.negateNullSafe());
+      } else {
+        return SqlStdOperatorTable.all(this.comparisonKind.negateNullSafe());
+      }
+    }
   }
 }

@@ -52,8 +52,6 @@ import static org.apache.calcite.util.Static.RESOURCE;
 public class SqlInOperator extends SqlBinaryOperator {
   //~ Instance fields --------------------------------------------------------
 
-  //Only used for "LIKE"
-  public final boolean isNegated;
   //~ Constructors -----------------------------------------------------------
 
   /**
@@ -62,19 +60,18 @@ public class SqlInOperator extends SqlBinaryOperator {
    * @param kind IN or NOT IN
    */
   SqlInOperator(SqlKind kind) {
-    this(kind.sql, kind, false);
+    this(kind.sql, kind);
     assert kind == SqlKind.IN || kind == SqlKind.NOT_IN
         || kind == SqlKind.DRUID_IN || kind == SqlKind.DRUID_NOT_IN;
   }
 
-  protected SqlInOperator(String name, SqlKind kind, boolean isNegated) {
+  protected SqlInOperator(String name, SqlKind kind) {
     super(name, kind,
         32,
         true,
         ReturnTypes.BOOLEAN_NULLABLE,
         InferTypes.FIRST_KNOWN,
         null);
-    this.isNegated = isNegated;
   }
 
   //~ Methods ----------------------------------------------------------------

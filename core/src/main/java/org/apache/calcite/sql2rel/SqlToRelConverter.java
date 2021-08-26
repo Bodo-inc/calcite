@@ -135,7 +135,11 @@ import org.apache.calcite.sql.SqlValuesOperator;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
-import org.apache.calcite.sql.fun.*;
+import org.apache.calcite.sql.fun.SqlCase;
+import org.apache.calcite.sql.fun.SqlInOperator;
+import org.apache.calcite.sql.fun.SqlQuantifyOperator;
+import org.apache.calcite.sql.fun.SqlRowOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -1564,9 +1568,11 @@ public class SqlToRelConverter {
       comparisons.add(rexComparison);
     }
 
+    SqlQuantifyOperator quantifyOp;
     switch (op.kind) {
     case ALL:
-      if (op.isNegated) {
+      quantifyOp = (SqlQuantifyOperator) op;
+      if (quantifyOp.isNegated) {
         return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
             RexUtil.composeDisjunction(rexBuilder, comparisons, true));
       } else {
@@ -1577,10 +1583,11 @@ public class SqlToRelConverter {
           RexUtil.composeDisjunction(rexBuilder, comparisons));
     case IN:
     case SOME:
-      if (op.isNegated){
+      quantifyOp = (SqlQuantifyOperator) op;
+      if (quantifyOp.isNegated) {
         return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
             RexUtil.composeConjunction(rexBuilder, comparisons, true));
-      } else{
+      } else {
         return RexUtil.composeDisjunction(rexBuilder, comparisons, true);
       }
     default:
@@ -5019,23 +5026,11 @@ public class SqlToRelConverter {
               return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
                   RexSubQuery.in(root.rel, list));
             case SOME:
-              quantifyOperator = (SqlQuantifyOperator) call.getOperator();
-              if (quantifyOperator.isNegated){
-                return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
-                    RexSubQuery.some(root.rel, list,
-                      negate(quantifyOperator)));
-              } else {
-                return RexSubQuery.some(root.rel, list, quantifyOperator);
-              }
+              return RexSubQuery.some(root.rel, list, (SqlQuantifyOperator) call.getOperator());
             case ALL:
-              quantifyOperator = (SqlQuantifyOperator) call.getOperator();
-              if (quantifyOperator.isNegated){
-                return RexSubQuery.some(root.rel, list, quantifyOperator);
-              } else {
-                return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
+              return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
                     RexSubQuery.some(root.rel, list,
-                        negate(quantifyOperator)));
-              }
+                        negate( (SqlQuantifyOperator) call.getOperator())));
             default:
               throw new AssertionError(kind);
             }
@@ -5332,7 +5327,7 @@ public class SqlToRelConverter {
 
   private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
     assert operator.kind == SqlKind.ALL;
-    return SqlStdOperatorTable.some(operator.comparisonKind.negateNullSafe());
+    return operator.negated();
   }
 
   /** Deferred lookup. */
