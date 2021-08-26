@@ -334,7 +334,7 @@ LogicalProject(ENAME=[$1])
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ENAME=[$1])
-  LogicalFilter(condition=[AND(NOT LIKE($1, 'bob'), NOT LIKE($1, 'alex'), NOT LIKE($1, 'john'))])
+  LogicalFilter(condition=[NOT(OR(LIKE($1, 'bob'), LIKE($1, 'alex'), LIKE($1, 'john')))])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -5778,7 +5778,7 @@ LogicalProject(ENAME=[$1])
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ENAME=[$1])
-  LogicalFilter(condition=[OR(NOT LIKE($1, 'bob'), NOT LIKE($1, 'alex'), NOT LIKE($1, 'john'))])
+  LogicalFilter(condition=[NOT(AND(LIKE($1, 'bob'), LIKE($1, 'alex'), LIKE($1, 'john')))])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>

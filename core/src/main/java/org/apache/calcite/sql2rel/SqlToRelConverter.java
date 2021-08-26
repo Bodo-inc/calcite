@@ -5330,7 +5330,7 @@ public class SqlToRelConverter {
 
   private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
     assert operator.kind == SqlKind.ALL;
-    if (operator.comparisonKind == SqlKind.LIKE || operator.comparisonKind == SqlKind.NULL_EQUALS){
+    if (operator.comparisonKind == SqlKind.LIKE || operator.comparisonKind == SqlKind.NULL_EQUALS) {
       throw new AssertionError("TODO! Needed for full subquerry support, See BS-552");
     }
     return SqlStdOperatorTable.some(operator.comparisonKind.negateNullSafe());

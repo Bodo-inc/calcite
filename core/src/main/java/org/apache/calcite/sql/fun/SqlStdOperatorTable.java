@@ -430,7 +430,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new SqlQuantifyOperator("< SOME", SqlKind.SOME, SqlKind.LESS_THAN, false);
 
   public static final SqlQuantifyOperator SOME_LE =
-      new SqlQuantifyOperator("<=SOME", SqlKind.SOME, SqlKind.LESS_THAN_OR_EQUAL, false);
+      new SqlQuantifyOperator("<= SOME", SqlKind.SOME, SqlKind.LESS_THAN_OR_EQUAL, false);
 
   public static final SqlQuantifyOperator SOME_GT =
       new SqlQuantifyOperator("> SOME", SqlKind.SOME, SqlKind.GREATER_THAN, false);
@@ -472,7 +472,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new SqlQuantifyOperator("= ALL", SqlKind.ALL, SqlKind.EQUALS, false);
 
   public static final SqlQuantifyOperator ALL_NE =
-      new SqlQuantifyOperator("<=> ALL", SqlKind.ALL, SqlKind.NOT_EQUALS, false);
+      new SqlQuantifyOperator("<> ALL", SqlKind.ALL, SqlKind.NOT_EQUALS, false);
 
   public static final SqlQuantifyOperator ALL_NULLEQ =
       new SqlQuantifyOperator("<=> ALL", SqlKind.ALL, SqlKind.NULL_EQUALS, false);

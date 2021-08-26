@@ -9343,7 +9343,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
    * need to change
    * <a href="http://calcite.apache.org/docs/reference.html#operator-precedence">
    * the documentation</a>. */
-  @Test void testOperatorsSortedByPrecedence() {
+  @Test void  testOperatorsSortedByPrecedence() {
     final StringBuilder b = new StringBuilder();
     final Comparator<SqlOperator> comparator = (o1, o2) -> {
       int c = Integer.compare(prec(o1), prec(o2));
