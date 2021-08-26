@@ -188,6 +188,9 @@ public class SqlLikeOperator extends SqlSpecialOperator {
   }
 
   @Override public boolean validRexOperands(int count, Litmus litmus) {
+    if (negated) {
+      litmus.fail("unsupported negated operator {}", this);
+    }
     return super.validRexOperands(count, litmus);
   }
 

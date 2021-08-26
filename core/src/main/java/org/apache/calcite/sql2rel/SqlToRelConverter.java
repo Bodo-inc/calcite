@@ -1582,6 +1582,7 @@ public class SqlToRelConverter {
       return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
           RexUtil.composeDisjunction(rexBuilder, comparisons));
     case IN:
+      return RexUtil.composeDisjunction(rexBuilder, comparisons, true);
     case SOME:
       quantifyOp = (SqlQuantifyOperator) op;
       if (quantifyOp.isNegated) {
@@ -5005,7 +5006,6 @@ public class SqlToRelConverter {
             root = convertQueryRecursive(query, false, null);
             final SqlNode operand = call.operand(0);
             List<SqlNode> nodes;
-            SqlQuantifyOperator quantifyOperator;
             switch (operand.getKind()) {
             case ROW:
               nodes = ((SqlCall) operand).getOperandList();
@@ -5025,12 +5025,15 @@ public class SqlToRelConverter {
             case NOT_IN:
               return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
                   RexSubQuery.in(root.rel, list));
+            //TODO: Both of these cases will need to be updated to support NULL EQ and
+            // LIKE/NOT LIKE when it comes to supporting full subqueries
             case SOME:
-              return RexSubQuery.some(root.rel, list, (SqlQuantifyOperator) call.getOperator());
+              return RexSubQuery.some(root.rel, list,
+                  (SqlQuantifyOperator) call.getOperator());
             case ALL:
               return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
-                    RexSubQuery.some(root.rel, list,
-                        negate( (SqlQuantifyOperator) call.getOperator())));
+                  RexSubQuery.some(root.rel, list,
+                      negate((SqlQuantifyOperator) call.getOperator())));
             default:
               throw new AssertionError(kind);
             }
@@ -5327,7 +5330,10 @@ public class SqlToRelConverter {
 
   private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
     assert operator.kind == SqlKind.ALL;
-    return operator.negated();
+    if (operator.comparisonKind == SqlKind.LIKE || operator.comparisonKind == SqlKind.NULL_EQUALS){
+      throw new AssertionError("TODO! Needed for full subquerry support, See BS-552");
+    }
+    return SqlStdOperatorTable.some(operator.comparisonKind.negateNullSafe());
   }
 
   /** Deferred lookup. */

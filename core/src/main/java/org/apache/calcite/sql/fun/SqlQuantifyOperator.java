@@ -64,29 +64,4 @@ public class SqlQuantifyOperator extends SqlInOperator {
     Preconditions.checkArgument(kind == SqlKind.SOME
         || kind == SqlKind.ALL);
   }
-
-  /**
-   * Returns a negated SqlQuantifyOperator.
-   */
-  public SqlQuantifyOperator negated() {
-    if (this.kind == SqlKind.LIKE) {
-      String name;
-      if (isNegated) {
-        name = "NOT LIKE " + this.comparisonKind;
-      } else {
-        name = "LIKE " + this.comparisonKind;
-      }
-      if (this.kind == SqlKind.ALL) {
-        return new SqlQuantifyOperator(name, SqlKind.LIKE, SqlKind.SOME, !this.isNegated);
-      } else {
-        return new SqlQuantifyOperator(name, SqlKind.LIKE, SqlKind.ALL, !this.isNegated);
-      }
-    } else {
-      if (this.kind == SqlKind.ALL) {
-        return SqlStdOperatorTable.some(this.comparisonKind.negateNullSafe());
-      } else {
-        return SqlStdOperatorTable.all(this.comparisonKind.negateNullSafe());
-      }
-    }
-  }
 }
