@@ -47,8 +47,8 @@ public class SqlQuantifyOperator extends SqlInOperator {
    *   <code>&gt;</code>, <code>&ge;</code>,
    *   <code>=</code> or <code>&lt;&gt;</code>.
    */
-  SqlQuantifyOperator(SqlKind kind, SqlKind comparisonKind) {
-    super(comparisonKind.sql + " " + kind, kind);
+  SqlQuantifyOperator(String name, SqlKind kind, SqlKind comparisonKind, boolean isNegated) {
+    super(name, kind, isNegated);
     this.comparisonKind = Objects.requireNonNull(comparisonKind, "comparisonKind");
     Preconditions.checkArgument(comparisonKind == SqlKind.EQUALS
         || comparisonKind == SqlKind.NOT_EQUALS
@@ -57,8 +57,7 @@ public class SqlQuantifyOperator extends SqlInOperator {
         || comparisonKind == SqlKind.GREATER_THAN_OR_EQUAL
         || comparisonKind == SqlKind.GREATER_THAN
         || comparisonKind == SqlKind.NULL_EQUALS
-        || comparisonKind == SqlKind.LIKE
-        || comparisonKind == SqlKind.NOT_LIKE);
+        || comparisonKind == SqlKind.LIKE);
     Preconditions.checkArgument(kind == SqlKind.SOME
         || kind == SqlKind.ALL);
   }

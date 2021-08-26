@@ -1514,8 +1514,6 @@ public abstract class RelOptUtil {
       return SqlStdOperatorTable.IS_DISTINCT_FROM;
     case IS_NOT_DISTINCT_FROM:
       return SqlStdOperatorTable.IS_NOT_DISTINCT_FROM;
-    case NOT_LIKE:
-      return SqlStdOperatorTable.NOT_LIKE;
     case LIKE:
       return SqlStdOperatorTable.LIKE;
     default:
