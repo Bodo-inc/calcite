@@ -137,6 +137,7 @@ public class RelFieldCollation {
       if (isSparkLike) {
         ascendingDirection = NullDirection.FIRST;
         descendingDirection = NullDirection.LAST;
+        System.out.println("Is Spark Like");
       }
       switch (this) {
       case ASCENDING:
