@@ -82,6 +82,8 @@ public class RelFieldCollation {
      */
     CLUSTERED("CLU");
 
+    public static boolean isSparkLike = false;
+
     public final String shortString;
 
     Direction(String shortString) {
@@ -125,16 +127,24 @@ public class RelFieldCollation {
       }
     }
 
-    /** Returns the null direction if not specified. Consistent with Oracle,
-     * NULLS are sorted as if they were positive infinity. */
+    /** Returns the null direction if not specified. Consistent with Oracle
+     * or Spark behavior depending on the isSparkLike class variable.
+     * IF isSparkLike NULLS are sorted as if they were negative infinity,
+     * else positive infinity. */
     public NullDirection defaultNullDirection() {
+      NullDirection ascendingDirection = NullDirection.LAST;
+      NullDirection descendingDirection = NullDirection.FIRST;
+      if (isSparkLike) {
+        ascendingDirection = NullDirection.FIRST;
+        descendingDirection = NullDirection.LAST;
+      }
       switch (this) {
       case ASCENDING:
       case STRICTLY_ASCENDING:
-        return NullDirection.LAST;
+        return ascendingDirection;
       case DESCENDING:
       case STRICTLY_DESCENDING:
-        return NullDirection.FIRST;
+        return descendingDirection;
       default:
         return NullDirection.UNSPECIFIED;
       }
