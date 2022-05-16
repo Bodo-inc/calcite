@@ -44,7 +44,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlDelegatingConformance;
-import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.calcite.sql2rel.StandardConvertletTableConfig;
 import org.apache.calcite.test.catalog.MockCatalogReaderExtended;
@@ -3656,38 +3655,39 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test public void testConvertletConfigNoWindowedAggDecomposeAvgSimple() {
     String query = "SELECT AVG(emp.sal) OVER (PARTITION BY emp.deptno) from emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
 
   @Test public void testConvertletConfigNoWindowedAggDecomposeAvg() {
     String query = "SELECT emp.sal, AVG(emp.sal) OVER (PARTITION BY emp.deptno ORDER BY emp.sal"
         +
         " ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) FROM emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    //with(getNoWindowedAggDecompositionTester())
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
   @Test public void testConvertletConfigNoWindowedAggDecomposeStd() {
     String query = "SELECT emp.sal, STDDEV(emp.sal) OVER (PARTITION BY emp.deptno ORDER BY emp.sal"
         +
         " ROWS BETWEEN 1 PRECEDING and 1 FOLLOWING) FROM emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
   @Test public void testConvertletConfigNoWindowedAggDecomposeStdPop() {
     String query = "SELECT emp.sal, STDDEV_POP(emp.sal) OVER (PARTITION BY emp.deptno "
         +
         "ORDER BY emp.sal ROWS BETWEEN 1 PRECEDING and 1 FOLLOWING) FROM emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
   @Test public void testConvertletConfigNoWindowedAggDecomposeVar() {
     String query = "SELECT emp.sal, VARIANCE(emp.sal) OVER (PARTITION BY emp.deptno ORDER BY"
         +
         " emp.sal ROWS BETWEEN 1 PRECEDING and 1 FOLLOWING) FROM emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
   @Test public void testConvertletConfigNoWindowedAggDecomposeVarPop() {
     String query = "SELECT emp.sal, VAR_POP(emp.sal) OVER (PARTITION BY emp.deptno ORDER BY emp.sal"
         +
         " ROWS BETWEEN 1 PRECEDING and 1 FOLLOWING) FROM emp";
-    sql(query).with(getNoWindowedAggDecompositionTester()).ok();
+    sql(query).withNoWindowedAggDecompositionTester().ok();
   }
 
   @Test public void testConvertletConfigTimestampdiffDecompose() {
@@ -3696,7 +3696,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
   @Test public void testConvertletConfigNoTimestampdiffDecompose() {
     String query = "SELECT TIMESTAMPDIFF(DAY, TIMESTAMP '2021-02-02', TIMESTAMP '2022-02-01')";
-    sql(query).with(getNoTimestampdiffDecompositionTester()).ok();
+    sql(query).withNoTimestampdiffDecompositionTester().ok();
   }
 
 

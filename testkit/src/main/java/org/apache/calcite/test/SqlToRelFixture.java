@@ -159,6 +159,16 @@ public class SqlToRelFixture {
     return withCatalogReader(MockCatalogReaderExtended::create);
   }
 
+  public SqlToRelFixture withNoWindowedAggDecompositionTester() {
+    //TODO!
+    return withCatalogReader(MockCatalogReaderExtended::create);
+  }
+
+  public SqlToRelFixture withNoTimestampdiffDecompositionTester() {
+    //TODO!
+    return withCatalogReader(MockCatalogReaderExtended::create);
+  }
+
   public SqlToRelFixture withDynamicTable() {
     return withCatalogReader(MockCatalogReaderDynamic::create);
   }
