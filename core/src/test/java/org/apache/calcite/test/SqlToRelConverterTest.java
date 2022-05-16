@@ -44,9 +44,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlDelegatingConformance;
-import org.apache.calcite.sql2rel.StandardConvertletTable;
-import org.apache.calcite.sql2rel.StandardConvertletTableConfig;
-import org.apache.calcite.test.catalog.MockCatalogReaderExtended;
 import org.apache.calcite.util.Bug;
 import org.apache.calcite.util.TestUtil;
 import org.apache.calcite.util.Util;
@@ -3718,23 +3715,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + " every(empno > 0) as everyempnogtzero\n"
         + " FROM emp AS e group by e.sal";
     sql(sql).ok();
-  }
-
-
-  private Tester getExtendedTester() {
-    return tester.withCatalogReaderFactory(MockCatalogReaderExtended::new);
-  }
-
-  private Tester getNoWindowedAggDecompositionTester() {
-    //changes the sql2rel config to not decompose windowed aggregations
-    return tester.withConvertletTable(
-        new StandardConvertletTable(new StandardConvertletTableConfig(false, true)));
-  }
-
-  private Tester getNoTimestampdiffDecompositionTester() {
-    //changes the sql2rel config to not decompose windowed aggregations
-    return tester.withConvertletTable(
-        new StandardConvertletTable(new StandardConvertletTableConfig(true, false)));
   }
 
   @Test void testLarge() {
