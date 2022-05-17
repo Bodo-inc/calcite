@@ -163,13 +163,15 @@ public class SqlToRelFixture {
 
   public SqlToRelFixture withNoWindowedAggDecompositionTester() {
     return withFactory(
-        f -> f.withConvertletTable(t -> new StandardConvertletTable(
+        f -> f.withConvertletTable(
+            t -> new StandardConvertletTable(
             new StandardConvertletTableConfig(false, true))));
   }
 
   public SqlToRelFixture withNoTimestampdiffDecompositionTester() {
     return withFactory(
-        f -> f.withConvertletTable(t -> new StandardConvertletTable(
+        f -> f.withConvertletTable(
+            t -> new StandardConvertletTable(
             new StandardConvertletTableConfig(true, false))));
   }
 
