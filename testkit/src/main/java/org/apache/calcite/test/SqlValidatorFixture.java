@@ -180,7 +180,7 @@ public class SqlValidatorFixture {
   public SqlValidatorFixture withLenientOperatorLookup(boolean lenient) {
     return withValidatorConfig(c -> c.withLenientOperatorLookup(lenient));
   }
-  
+
   public SqlValidatorFixture withNamedParamters() {
     return withCatalogReader(MockCatalogReaderSimpleNamedParam::new).withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams"));
   }

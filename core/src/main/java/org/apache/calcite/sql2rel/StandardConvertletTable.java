@@ -101,7 +101,7 @@ import static java.util.Objects.requireNonNull;
 public class StandardConvertletTable extends ReflectiveConvertletTable {
 
   /** Singleton instance. */
-  public static final StandardConvertletTable DEFAULT =
+  public static final StandardConvertletTable INSTANCE =
       new StandardConvertletTable(StandardConvertletTableConfig.DEFAULT);
 
   //~ Constructors -----------------------------------------------------------

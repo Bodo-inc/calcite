@@ -37,7 +37,7 @@ public class MockCatalogReaderSimpleNamedParam extends MockCatalogReaderSimple {
     super(typeFactory, caseSensitive);
   }
 
-  @Override public MockCatalogReader init() {
+  @Override public MockCatalogReaderSimple init() {
     super.init();
     final Fixture fixture = new Fixture(typeFactory);
 
