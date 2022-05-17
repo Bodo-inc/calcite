@@ -43,6 +43,7 @@ import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.test.catalog.MockCatalogReaderExtended;
+import org.apache.calcite.test.catalog.MockCatalogReaderSimpleNamedParam;
 import org.apache.calcite.util.TestUtil;
 import org.apache.calcite.util.Util;
 
@@ -178,6 +179,14 @@ public class SqlValidatorFixture {
    */
   public SqlValidatorFixture withLenientOperatorLookup(boolean lenient) {
     return withValidatorConfig(c -> c.withLenientOperatorLookup(lenient));
+  }
+  
+  public SqlValidatorFixture withNamedParamters() {
+    return withCatalogReader(MockCatalogReaderSimpleNamedParam::new).withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams"));
+  }
+
+  public SqlValidatorFixture withNamedParametersNoSchema() {
+    return withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams"));
   }
 
   SqlValidatorFixture withWhole(boolean whole) {
