@@ -182,7 +182,9 @@ public class SqlValidatorFixture {
   }
 
   public SqlValidatorFixture withNamedParamters() {
-    return withCatalogReader(MockCatalogReaderSimpleNamedParam::new).withValidatorConfig(c ->
+    //return withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams")); //This works
+//    return withCatalogReader(MockCatalogReaderSimpleNamedParam::create); // this doesn't.
+    return withCatalogReader(MockCatalogReaderSimpleNamedParam::create).withValidatorConfig(c ->
         c.withNamedParamTableName("BodoNamedParams"));
   }
 

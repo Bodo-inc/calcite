@@ -20,6 +20,8 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 import com.google.common.collect.ImmutableList;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 /**
  * Simple catalog reader for testing.
  */
@@ -37,7 +39,13 @@ public class MockCatalogReaderSimpleNamedParam extends MockCatalogReaderSimple {
     super(typeFactory, caseSensitive);
   }
 
-  @Override public MockCatalogReaderSimple init() {
+  /** Creates and initializes a MockCatalogReaderSimpleNamedParam. */
+  public static @NonNull MockCatalogReaderSimpleNamedParam create(
+      RelDataTypeFactory typeFactory, boolean caseSensitive) {
+    return new MockCatalogReaderSimpleNamedParam(typeFactory, caseSensitive).init();
+  }
+
+  @Override public MockCatalogReaderSimpleNamedParam init() {
     super.init();
     final Fixture fixture = new Fixture(typeFactory);
 

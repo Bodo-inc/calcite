@@ -12248,7 +12248,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
    */
   @Test void testBasicNamedParam() {
     final String sql = "select deptno from emp where deptno > 1"; //@b
-    sql(sql).ok(); //.withNamedParamters()
+//    assert false; //This causes exception
+    sql(sql).withNamedParamters().ok(); //
   }
 
   /**
