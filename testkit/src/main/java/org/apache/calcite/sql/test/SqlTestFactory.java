@@ -75,7 +75,9 @@ public class SqlTestFactory {
           SqlParser.Config.DEFAULT,
           SqlValidator.Config.DEFAULT,
           SqlToRelConverter.CONFIG,
-          SqlStdOperatorTable.instance())
+          SqlStdOperatorTable.instance(),
+          StandardConvertletTable.INSTANCE
+          )
       .withOperatorTable(o -> {
         MockSqlOperatorTable opTab = new MockSqlOperatorTable(o);
         MockSqlOperatorTable.addRamp(opTab);
@@ -97,13 +99,16 @@ public class SqlTestFactory {
   public final SqlValidator.Config validatorConfig;
   public final SqlToRelConverter.Config sqlToRelConfig;
 
+  public final StandardConvertletTable convertletTable;
+
   protected SqlTestFactory(CatalogReaderFactory catalogReaderFactory,
       TypeFactoryFactory typeFactoryFactory, PlannerFactory plannerFactory,
       Context plannerContext, UnaryOperator<RelOptCluster> clusterTransform,
       ValidatorFactory validatorFactory,
       ConnectionFactory connectionFactory,
       SqlParser.Config parserConfig, SqlValidator.Config validatorConfig,
-      SqlToRelConverter.Config sqlToRelConfig, SqlOperatorTable operatorTable) {
+      SqlToRelConverter.Config sqlToRelConfig, SqlOperatorTable operatorTable,
+      StandardConvertletTable convertletTable) {
     this.catalogReaderFactory =
         requireNonNull(catalogReaderFactory, "catalogReaderFactory");
     this.typeFactoryFactory =
@@ -125,6 +130,8 @@ public class SqlTestFactory {
             parserConfig.caseSensitive()))::get;
     this.parserConfig = parserConfig;
     this.validatorConfig = validatorConfig;
+    //Don't know if this Null check is needed, but it can't hurt
+    this.convertletTable = requireNonNull(convertletTable, "convertletTable");
   }
 
   /** Creates a parser. */
@@ -156,7 +163,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withPlannerFactory(PlannerFactory plannerFactory) {
@@ -166,7 +173,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withPlannerContext(
@@ -178,7 +185,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withCluster(UnaryOperator<RelOptCluster> transform) {
@@ -187,7 +194,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withCatalogReader(
@@ -198,7 +205,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withValidator(ValidatorFactory validatorFactory) {
@@ -208,7 +215,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withValidatorConfig(
@@ -221,7 +228,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withSqlToRelConfig(
@@ -234,7 +241,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   private static RelDataTypeFactory createTypeFactory(SqlConformance conformance) {
@@ -258,7 +265,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withConnectionFactory(
@@ -271,7 +278,7 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
   }
 
   public SqlTestFactory withOperatorTable(
@@ -284,7 +291,20 @@ public class SqlTestFactory {
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
-        operatorTable);
+        operatorTable, convertletTable);
+  }
+
+  public SqlTestFactory withConvertletTable(
+      UnaryOperator<StandardConvertletTable> transform) {
+    final StandardConvertletTable newConvertletTable =
+        transform.apply(this.convertletTable);
+    if (newConvertletTable.equals(this.convertletTable)) {
+      return this;
+    }
+    return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
+        plannerFactory, plannerContext, clusterTransform, validatorFactory,
+        connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
+        operatorTable, newConvertletTable);
   }
 
   public SqlParser.Config parserConfig() {
@@ -307,8 +327,9 @@ public class SqlTestFactory {
     RelOptTable.ViewExpander viewExpander =
         new MockViewExpander(validator, catalogReader, cluster,
             sqlToRelConfig);
+    //TODO: Need convertlet table here to be replaced somehow
     return new SqlToRelConverter(viewExpander, validator, catalogReader, cluster,
-        StandardConvertletTable.INSTANCE, sqlToRelConfig);
+        convertletTable, sqlToRelConfig);
   }
 
   /** Creates a {@link RelDataTypeFactory} for tests. */

@@ -25,6 +25,8 @@ import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
+import org.apache.calcite.sql2rel.StandardConvertletTable;
+import org.apache.calcite.sql2rel.StandardConvertletTableConfig;
 import org.apache.calcite.test.catalog.MockCatalogReaderDynamic;
 import org.apache.calcite.test.catalog.MockCatalogReaderExtended;
 import org.apache.calcite.util.TestUtil;
@@ -160,13 +162,15 @@ public class SqlToRelFixture {
   }
 
   public SqlToRelFixture withNoWindowedAggDecompositionTester() {
-    //TODO!
-    return withCatalogReader(MockCatalogReaderExtended::create);
+    return withFactory(
+        f -> f.withConvertletTable(t -> new StandardConvertletTable(
+            new StandardConvertletTableConfig(false, true))));
   }
 
   public SqlToRelFixture withNoTimestampdiffDecompositionTester() {
-    //TODO!
-    return withCatalogReader(MockCatalogReaderExtended::create);
+    return withFactory(
+        f -> f.withConvertletTable(t -> new StandardConvertletTable(
+            new StandardConvertletTableConfig(true, false))));
   }
 
   public SqlToRelFixture withDynamicTable() {
