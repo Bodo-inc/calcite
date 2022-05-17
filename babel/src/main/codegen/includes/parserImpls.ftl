@@ -196,13 +196,13 @@ void InfixCast(List<Object> list, ExprContext exprContext, Span s) :
 }
 
 /** Parses the NULL-safe "<=>" equal operator used in MySQL. */
-void NullSafeEqual(List<Object> list, ExprContext exprContext, Span s) :
-{
-}
-{
-    <NULL_SAFE_EQUAL> {
-        checkNonQueryExpression(exprContext);
-        list.add(new SqlParserUtil.ToTreeListItem(SqlLibraryOperators.NULL_SAFE_EQUAL, getPos()));
-    }
-    Expression2b(ExprContext.ACCEPT_SUB_QUERY, list)
-}
+// void NullSafeEqual(List<Object> list, ExprContext exprContext, Span s):
+// {
+// }
+// {
+//     <NULL_SAFE_EQUAL> {
+//         checkNonQueryExpression(exprContext);
+//         list.add(new SqlParserUtil.ToTreeListItem(SqlLibraryOperators.NULL_SAFE_EQUAL, getPos()));
+//     }
+//     Expression2b(ExprContext.ACCEPT_SUB_QUERY, list)
+// }

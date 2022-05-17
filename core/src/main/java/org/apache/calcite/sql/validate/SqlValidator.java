@@ -923,25 +923,19 @@ public interface SqlValidator {
      */
     Config withTypeCoercionRules(@Nullable SqlTypeCoercionRule rules);
 
-    /** Returns the dialect of SQL (SQL:2003, etc.) this validator recognizes.
-     * Default is {@link SqlConformanceEnum#DEFAULT}. */
-
-    @ImmutableBeans.Property
-    @ImmutableBeans.EnumDefault("DEFAULT")
-    SqlConformance sqlConformance();
-
-    /** Sets up the sql conformance of the validator. */
-    Config withSqlConformance(SqlConformance conformance);
-
     /** Returns the name of the table used to determine
      * named parameters' types. Default is
      * "". */
-    @ImmutableBeans.Property
-    @ImmutableBeans.StringDefault(NAMED_PARAM_TABLE_NAME_EMPTY)
-    String namedParamTableName();
+
+    @Value.Default default String namedParamTableName() {
+      return NAMED_PARAM_TABLE_NAME_EMPTY;
+    }
 
     /** Sets {@link #namedParamTableName()}. */
     Config withNamedParamTableName(String namedParamTable);
+
+    /** Returns the dialect of SQL (SQL:2003, etc.) this validator recognizes.
+     * Default is {@link SqlConformanceEnum#DEFAULT}. */
     @Value.Default default SqlConformance conformance() {
       return SqlConformanceEnum.DEFAULT;
     }

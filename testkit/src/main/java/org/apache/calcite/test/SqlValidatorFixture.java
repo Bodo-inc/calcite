@@ -182,7 +182,8 @@ public class SqlValidatorFixture {
   }
 
   public SqlValidatorFixture withNamedParamters() {
-    return withCatalogReader(MockCatalogReaderSimpleNamedParam::new).withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams"));
+    return withCatalogReader(MockCatalogReaderSimpleNamedParam::new).withValidatorConfig(c ->
+        c.withNamedParamTableName("BodoNamedParams"));
   }
 
   public SqlValidatorFixture withNamedParametersNoSchema() {

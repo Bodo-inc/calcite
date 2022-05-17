@@ -6234,6 +6234,10 @@ public class SqlToRelConverter {
    */
   public static class SqlIdentifierFinder implements SqlVisitor<Boolean> {
 
+    @Override public Boolean visit(SqlNamedParam namedParam) {
+      return false;
+    }
+
     @Override public Boolean visit(SqlCall sqlCall) {
       return sqlCall.getOperandList().stream().anyMatch(sqlNode -> sqlNode.accept(this));
     }

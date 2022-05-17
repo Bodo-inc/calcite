@@ -398,7 +398,7 @@ public class CalcitePrepareImpl implements CalcitePrepare {
 
   /** Factory method for default convertlet table. */
   protected SqlRexConvertletTable createConvertletTable() {
-    return StandardConvertletTable.DEFAULT;
+    return StandardConvertletTable.INSTANCE;
   }
 
   /** Factory method for cluster. */
