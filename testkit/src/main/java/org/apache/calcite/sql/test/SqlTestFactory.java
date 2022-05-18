@@ -298,9 +298,10 @@ public class SqlTestFactory {
       UnaryOperator<StandardConvertletTable> transform) {
     final StandardConvertletTable newConvertletTable =
         transform.apply(this.convertletTable);
-    if (newConvertletTable.equals(this.convertletTable)) {
-      return this;
-    }
+    //TODO: enable equality between convertlet table objects
+//    if (newConvertletTable.equals(this.convertletTable)) {
+//      return this;
+//    }
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
