@@ -298,10 +298,9 @@ public class SqlTestFactory {
       UnaryOperator<StandardConvertletTable> transform) {
     final StandardConvertletTable newConvertletTable =
         transform.apply(this.convertletTable);
-    //TODO: enable equality between convertlet table objects
-//    if (newConvertletTable.equals(this.convertletTable)) {
-//      return this;
-//    }
+    if (newConvertletTable.equals(this.convertletTable)) {
+      return this;
+    }
     return new SqlTestFactory(catalogReaderFactory, typeFactoryFactory,
         plannerFactory, plannerContext, clusterTransform, validatorFactory,
         connectionFactory, parserConfig, validatorConfig, sqlToRelConfig,
@@ -328,7 +327,6 @@ public class SqlTestFactory {
     RelOptTable.ViewExpander viewExpander =
         new MockViewExpander(validator, catalogReader, cluster,
             sqlToRelConfig);
-    //TODO: Need convertlet table here to be replaced somehow
     return new SqlToRelConverter(viewExpander, validator, catalogReader, cluster,
         convertletTable, sqlToRelConfig);
   }
