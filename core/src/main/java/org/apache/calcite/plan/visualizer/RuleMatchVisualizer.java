@@ -356,7 +356,7 @@ public class RuleMatchVisualizer implements RelOptListener {
 
     List<String> matchedRels = ruleCall == null
         ? Collections.emptyList()
-        : Arrays.stream(ruleCall.rels).map(this::key).collect(Collectors.toList());
+        : Arrays.stream(ruleCall.rels).map(RuleMatchVisualizer::key).collect(Collectors.toList());
     this.steps.add(new StepInfo(stepID, nextNodeUpdates, matchedRels));
   }
 
@@ -423,7 +423,7 @@ public class RuleMatchVisualizer implements RelOptListener {
   // methods related to string representation
   //--------------------------------------------------------------------------------
 
-  private String key(final RelNode rel) {
+  private static String key(final RelNode rel) {
     return "" + rel.getId();
   }
 

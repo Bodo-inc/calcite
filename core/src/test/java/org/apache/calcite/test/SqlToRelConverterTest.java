@@ -3659,7 +3659,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     String query = "SELECT emp.sal, AVG(emp.sal) OVER (PARTITION BY emp.deptno ORDER BY emp.sal"
         +
         " ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) FROM emp";
-    //with(getNoWindowedAggDecompositionTester())
     sql(query).withNoWindowedAggDecompositionTester().ok();
   }
   @Test public void testConvertletConfigNoWindowedAggDecomposeStd() {
