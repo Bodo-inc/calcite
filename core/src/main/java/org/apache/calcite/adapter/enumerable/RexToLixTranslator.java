@@ -1353,9 +1353,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
   @Override public Result visitNamedParam(RexNamedParam namedParam) {
     // TODO: Actually implement. It seems like this class isn't used by
     // BodoSQL so we aren't going to implement it
-    // I'm returning a random Result, because it causes an issue with CI because the returned value
-    // Is marked as being non-null
-    return new Result(Expressions.parameter(Boolean.TYPE), Expressions.parameter(Boolean.TYPE));
+    throw Util.needToImplement(namedParam);
   }
 
   @Override public Result visitFieldAccess(RexFieldAccess fieldAccess) {

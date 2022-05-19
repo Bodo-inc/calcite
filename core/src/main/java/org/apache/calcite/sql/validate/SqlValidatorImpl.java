@@ -6434,9 +6434,39 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       return unknownType;
     }
 
-    // TODO: Fix DataType
-    @Override public RelDataType visit(SqlNamedParam param) {
-      return unknownType;
+    @Override public RelDataType visit(SqlNamedParam namedParam) {
+      /** Ideally, this would throw an error in all the cases where we currently return
+       * unknownType, so that we don't recurse unnecessarily.
+       *
+       * This Function is needed as of the 1.30.0 Calcite upgrade, I believe due to changes
+       * within inferUnknownTypes(). However, this change should benefit us regardless, as it
+       * will get the correct typing information into the program faster.
+       * This could increase the time to validate in the case that we have an invalid Named Param,
+       * as this function has much more logic now, and may be called many many times before the
+       * query is declared invalid.
+       */
+
+      // Named Param is always in the default schema with the encoded table name.
+      String tableName = config().namedParamTableName();
+      if (tableName.equals(NAMED_PARAM_TABLE_NAME_EMPTY)) {
+        return unknownType;
+      }
+      // TODO: Set caseSensitive?
+      CalciteSchema.TableEntry entry =
+          SqlValidatorUtil.getTableEntry(getCatalogReader(), ImmutableList.of(tableName));
+      if (entry == null) {
+        return unknownType;
+      }
+      Table table = entry.getTable();
+      RelDataType rowStruct = table.getRowType(typeFactory);
+      String name = namedParam.getName();
+      // TODO: Set caseSensitive?
+      RelDataTypeField typeField = rowStruct.getField(name, false, false);
+      if (typeField == null) {
+        return unknownType;
+      }
+      // Get the type of the parameter. This stored as a column in a parameter table.
+      return typeField.getType();
     }
 
     @Override public RelDataType visit(SqlIntervalQualifier intervalQualifier) {
