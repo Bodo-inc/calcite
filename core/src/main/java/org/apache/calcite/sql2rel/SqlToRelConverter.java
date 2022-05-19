@@ -1608,7 +1608,7 @@ public class SqlToRelConverter {
         // rexBuilder.makeCall() requires that the second argument is not null
         // So we have to do a manual check, and return NULL in the case that the disjunction is NULL
         RexNode disjunction = RexUtil.composeDisjunction(rexBuilder, comparisons, true);
-        if (disjunction == null){
+        if (disjunction == null) {
           return null;
         } else {
           return rexBuilder.makeCall(SqlStdOperatorTable.NOT, disjunction);
@@ -1627,7 +1627,7 @@ public class SqlToRelConverter {
         // rexBuilder.makeCall() requires that the second argument is not null
         // So we have to do a manual check, and return NULL in the case that the disjunction is NULL
         RexNode conjunction = RexUtil.composeConjunction(rexBuilder, comparisons, true);
-        if (conjunction == null){
+        if (conjunction == null) {
           return null;
         } else {
           return rexBuilder.makeCall(SqlStdOperatorTable.NOT, conjunction);
