@@ -3950,14 +3950,14 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
-  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  /** Tests WHERE X NULLEQ ALL (a,b,c) case. */
   @Test protected void testSomeNullEqNonNullTuple() {
     final String sql = "SELECT ename from emp where sal <=> SOME (1000, 2000, 3000)";
 
     sql(sql).withConfig(c -> c.withExpand(false)).ok();
   }
 
-  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  /** Tests WHERE X NULLEQ ALL (a,b,c) case. */
   @Test protected void testAllNullEqNonNullTuple() {
     final String sql = "SELECT ename from emp where sal <=> ALL (1000, 2000, 3000)";
     sql(sql).withConfig(c -> c.withExpand(false)).ok();

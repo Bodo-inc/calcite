@@ -1605,8 +1605,14 @@ public class SqlToRelConverter {
     case ALL:
       quantifyOp = (SqlQuantifyOperator) op;
       if (quantifyOp.isNegated) {
-        return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
-            RexUtil.composeDisjunction(rexBuilder, comparisons, true));
+        // rexBuilder.makeCall() requires that the second argument is not null
+        // So we have to do a manual check, and return NULL in the case that the disjunction is NULL
+        RexNode disjunction = RexUtil.composeDisjunction(rexBuilder, comparisons, true);
+        if (disjunction == null){
+          return null;
+        } else {
+          return rexBuilder.makeCall(SqlStdOperatorTable.NOT, disjunction);
+        }
       } else {
         return RexUtil.composeConjunction(rexBuilder, comparisons, true);
       }
@@ -1618,8 +1624,14 @@ public class SqlToRelConverter {
     case SOME:
       quantifyOp = (SqlQuantifyOperator) op;
       if (quantifyOp.isNegated) {
-        return rexBuilder.makeCall(SqlStdOperatorTable.NOT,
-            RexUtil.composeConjunction(rexBuilder, comparisons, true));
+        // rexBuilder.makeCall() requires that the second argument is not null
+        // So we have to do a manual check, and return NULL in the case that the disjunction is NULL
+        RexNode conjunction = RexUtil.composeConjunction(rexBuilder, comparisons, true);
+        if (conjunction == null){
+          return null;
+        } else {
+          return rexBuilder.makeCall(SqlStdOperatorTable.NOT, conjunction);
+        }
       } else {
         return RexUtil.composeDisjunction(rexBuilder, comparisons, true);
       }
