@@ -9787,7 +9787,7 @@ public class SqlParserTest {
     assertThat(hoisted.substitute(SqlParserTest::varToStr), is(expected2));
   }
 
-  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  /** Tests WHERE X NULLEQ ALL (a,b,c) case. */
   @Test protected void testSomeNullEq() {
     final String sql = "SELECT name from emp where sal <=> SOME (1000, 2000, 3000)";
     final String expected = "SELECT `NAME`\n"
@@ -9797,7 +9797,7 @@ public class SqlParserTest {
     sql(sql).ok(expected);
   }
 
-  /** Tests WHERE X <=> ALL (a,b,c) case. */
+  /** Tests WHERE X NULLEQ ALL (a,b,c) case. */
   @Test protected void testALLLNullEq() {
     final String sql = "SELECT name from emp where sal <=> ALL (1000, 2000, 3000)";
     final String expected = "SELECT `NAME`\n"
