@@ -3464,7 +3464,6 @@ public class SqlToRelConverter {
     selectList.accept(aggregateFinder);
     if (having != null) {
       having.accept(aggregateFinder);
-      replaceSubQueries(bb, selectList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
     }
 
     // first replace the sub-queries inside the aggregates
@@ -3605,7 +3604,7 @@ public class SqlToRelConverter {
       for (SqlNode expr : selectList) {
         // All system fields are appended to the beginning of the select list, and the QUALIFY stmt
         // is always appended to the end of the select list. The below logic is to ensure that we
-        // derive new aliases only for the system fields, and the
+        // derive new aliases only for the system fields, and the qualify clause (if they exist)
         projects.add(
             Pair.of(bb.convertExpression(expr),
                 k < sysFieldCount || (addedQualifyExpr && k == selectList.size() - 1)
@@ -4621,11 +4620,14 @@ public class SqlToRelConverter {
       SqlSelect select,
       List<SqlNode> orderList) {
     SqlNodeList selectList = select.getSelectList();
+    // If the select stmt has a qualify, add it to the select list
+    // we will later perform a filter, assuming that the qualify expression is last value
+    // in the selectlist
     if (select.hasQualify()) {
       selectList.add(select.getQualify());
     }
     selectList = validator().expandStar(selectList, select, false);
-    //If the select has
+
 
 
     replaceSubQueries(bb, selectList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);

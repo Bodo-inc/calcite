@@ -723,22 +723,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testFoo() {
-    // test qualify on a complex clause containing several clauses and a sub query, and
-    // the QUALIFY clause contains no alias
-    final String sql = "SELECT deptno," +
-        "SUM(empno) OVER (PARTITION BY deptno) IN (SELECT MIN(deptno) from dept GROUP BY name HAVING MIN(deptno) > 3)\n"
-        +
-        "  FROM emp\n"
-        +
-        "  WHERE empno < 4\n"
-        +
-        "  GROUP BY deptno, empno\n"
-        +
-        "  HAVING SUM(sal) > 3\n";
-    sql(sql).ok();
-  }
-
   @Test void testQualifyNestedQualify() {
     // tests qualify on a complex clause containing several clauses and a sub query, where the sub
     // query itself contains a qualify clause.
@@ -754,13 +738,13 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "  QUALIFY SUM(empno) OVER (PARTITION BY deptno) IN (\n"
         +
-        "    SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as w \n"
+        "    SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as my_val\n"
         +
         "      from dept\n"
         +
         "      GROUP BY name\n"
         +
-        "      HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)) <= 10 AND w in (SELECT deptno from emp) ";
+        "      HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)) <= 10 AND my_val in (SELECT deptno from emp)";
     sql(sql).ok();
   }
 
