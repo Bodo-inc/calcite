@@ -631,22 +631,10 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 //    sql(sql).ok();
 //  }
 
-  @Test void testQualifySubquerySimple() {
-    /*But this fails with
-    java.lang.NullPointerException: no SELECT scope for SELECT `ID`FROM `EMP`
-    */
-    final String sql = "SELECT empno FROM emp QUALIFY ROW_NUMBER() over"
-        +
-        "(PARTITION BY deptno ORDER BY sal) in (SELECT deptno from emp)";
-
-    sql(sql).ok();
-  }
-
 
 
   @Test void testQualify() {
-    // test qualify clause
-    // deptno, empno, sal
+    // test qualify on a simple clause without any aliasing
     final String sql = "select empno from emp QUALIFY ROW_NUMBER() over"
         +
         "(PARTITION BY deptno ORDER BY sal) > 10";
@@ -655,8 +643,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
 
   @Test void testQualifyWithAlias() {
-    // test qualify clause, with an Alias
-    // deptno, empno, sal
+    // test qualify on a simple clause, that contains an alias
     final String sql = "select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)"
         +
         "as row_num from emp QUALIFY row_num > 10";
@@ -664,12 +651,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testQualifyWithAndWithoutAlias() {
-    // test qualify clause, with an Alias
-    // deptno, empno, sal
+    // test qualify on a simple clause, that contains both an aliased window function,
+    // and a non-aliased window function
 
     final String sql = "select empno,"
         +
-        "ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) as row_num"
+        "ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) as row_num "
         +
         "from emp "
         +
@@ -677,9 +664,18 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+  @Test void testQualifySubquerySimple() {
+    // test qualify on a simple clause, which contains a sub query
+    final String sql = "SELECT empno FROM emp QUALIFY ROW_NUMBER() over "
+        +
+        "(PARTITION BY deptno ORDER BY sal) in (SELECT deptno from emp)";
+
+    sql(sql).ok();
+  }
+
   @Test void testQualifyfullWithAlias() {
-    // test qualify clause, with an Alias
-    // deptno, empno, sal
+    // test qualify on a complex clause containing several clauses and a sub query, and
+    // the QUALIFY clause contains an alias
     final String sql = "SELECT deptno, SUM(empno) OVER (PARTITION BY deptno) as r\n"
         +
         "  FROM emp\n"
@@ -703,8 +699,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testQualifyfullNoAlias() {
-    // test qualify clause, with an Alias
-    // deptno, empno, sal
+    // test qualify on a complex clause containing several clauses and a sub query, and
+    // the QUALIFY clause contains no alias
     final String sql = "SELECT deptno\n"
         +
         "  FROM t1\n"

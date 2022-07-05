@@ -5519,6 +5519,75 @@ LogicalProject(EMPNO=[$0], DEPTNO=[$1], DEPTNO0=[$3], NAME=[$4])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testQualify">
+    <Resource name="sql">
+      <![CDATA[select empno from emp QUALIFY ROW_NUMBER() over
+      (PARTITION BY deptno ORDER BY sal) > 10
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0])
+  LogicalFilter(condition=[$1])
+    LogicalProject(EMPNO=[$0], EXPR$1=[>(ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5), 10)])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testQualifySubquerySimple">
+    <Resource name="sql">
+      <![CDATA[SELECT empno FROM emp QUALIFY ROW_NUMBER() over
+      (PARTITION BY deptno ORDER BY sal) in (SELECT deptno from emp)
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0])
+  LogicalFilter(condition=[$1])
+    LogicalProject(EMPNO=[$0], EXPR$1=[CAST(OR(AND(IS NOT NULL($13), <>($9, 0)), AND(<($10, $9), null, <>($9, 0), IS NULL($13)))):BOOLEAN NOT NULL])
+      LogicalJoin(condition=[=($11, $12)], joinType=[left])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], $f0=[$9], $f1=[$10], $f11=[ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5)])
+          LogicalJoin(condition=[true], joinType=[inner])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+            LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0)])
+              LogicalProject(DEPTNO=[$7], $f1=[true])
+                LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+        LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
+          LogicalProject(DEPTNO=[$7], $f1=[true])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testQualifyWithAlias">
+    <Resource name="sql">
+      <![CDATA[select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)
+      as row_num from emp QUALIFY row_num > 10
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0], ROW_NUM=[$1])
+  LogicalFilter(condition=[$2])
+    LogicalProject(EMPNO=[$0], ROW_NUM=[ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5)], EXPR$2=[>(ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5), 10)])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testQualifyWithAndWithoutAlias">
+    <Resource name="sql">
+      <![CDATA[select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) as row_num from emp
+      QUALIFY row_num > 10 and ROW_NUMBER() over (PARTITION BY sal ORDER BY deptno) <= 10
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0], ROW_NUM=[$1])
+  LogicalFilter(condition=[$2])
+    LogicalProject(EMPNO=[$0], ROW_NUM=[ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5)], EXPR$2=[AND(>(ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $5), 10), <=(ROW_NUMBER() OVER (PARTITION BY $5 ORDER BY $7), 10))])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testReduceConstExpr">
     <Resource name="sql">
       <![CDATA[select sum(case when 'y' = 'n' then ename else 0.1 end) from emp]]>
