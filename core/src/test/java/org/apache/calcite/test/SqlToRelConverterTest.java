@@ -575,141 +575,114 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
       //The only change is to the conformance is "isHavingAlias" is now true
       final SqlToRelFixture fixture = fixture().withConformance(new SqlConformance() {
-        @Override
-        public boolean isLiberal() {
-          return false;
-        }
+      @Override public boolean isLiberal() {
+        return false;
+      }
 
-        @Override
-        public boolean allowCharLiteralAlias() {
-          return false;
-        }
+      @Override public boolean allowCharLiteralAlias() {
+        return false;
+      }
 
-        @Override
-        public boolean isGroupByAlias() {
-          return false;
-        }
+      @Override public boolean isGroupByAlias() {
+        return false;
+      }
 
-        @Override
-        public boolean isGroupByOrdinal() {
-          return false;
-        }
+      @Override public boolean isGroupByOrdinal() {
+        return false;
+      }
 
-        @Override
-        public boolean isHavingAlias() {
-          return true;
-        }
+      @Override public boolean isHavingAlias() {
+        return true;
+      }
 
-        @Override
-        public boolean isSortByOrdinal() {
-          return false;
-        }
+      @Override public boolean isSortByOrdinal() {
+        return false;
+      }
 
-        @Override
-        public boolean isSortByAlias() {
-          return false;
-        }
+      @Override public boolean isSortByAlias() {
+        return false;
+      }
 
-        @Override
-        public boolean isSortByAliasObscures() {
-          return false;
-        }
+      @Override public boolean isSortByAliasObscures() {
+        return false;
+      }
 
-        @Override
-        public boolean isFromRequired() {
-          return false;
-        }
+      @Override public boolean isFromRequired() {
+        return false;
+      }
 
-        @Override
-        public boolean splitQuotedTableName() {
-          return false;
-        }
+      @Override public boolean splitQuotedTableName() {
+        return false;
+      }
 
-        @Override
-        public boolean allowHyphenInUnquotedTableName() {
-          return false;
-        }
+      @Override public boolean allowHyphenInUnquotedTableName() {
+        return false;
+      }
 
-        @Override
-        public boolean isBangEqualAllowed() {
-          return false;
-        }
+      @Override public boolean isBangEqualAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean isPercentRemainderAllowed() {
-          return false;
-        }
+      @Override public boolean isPercentRemainderAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean isMinusAllowed() {
-          return false;
-        }
+      @Override public boolean isMinusAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean isApplyAllowed() {
-          return false;
-        }
+      @Override public boolean isApplyAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean isInsertSubsetColumnsAllowed() {
-          return false;
-        }
+      @Override public boolean isInsertSubsetColumnsAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean allowAliasUnnestItems() {
-          return false;
-        }
+      @Override public boolean allowAliasUnnestItems() {
+        return false;
+      }
 
-        @Override
-        public boolean allowNiladicParentheses() {
-          return false;
-        }
+      @Override public boolean allowNiladicParentheses() {
+        return false;
+      }
 
-        @Override
-        public boolean allowExplicitRowValueConstructor() {
-          return false;
-        }
+      @Override public boolean allowExplicitRowValueConstructor() {
+        return false;
+      }
 
-        @Override
-        public boolean allowExtend() {
-          return false;
-        }
+      @Override public boolean allowExtend() {
+        return false;
+      }
 
-        @Override
-        public boolean isLimitStartCountAllowed() {
-          return false;
-        }
+      @Override public boolean isLimitStartCountAllowed() {
+        return false;
+      }
 
-        @Override
-        public boolean allowGeometry() {
-          return false;
-        }
+      @Override public boolean allowGeometry() {
+        return false;
+      }
 
-        @Override
-        public boolean shouldConvertRaggedUnionTypesToVarying() {
-          return false;
-        }
+      @Override public boolean shouldConvertRaggedUnionTypesToVarying() {
+        return false;
+      }
 
-        @Override
-        public boolean allowExtendedTrim() {
-          return false;
-        }
+      @Override public boolean allowExtendedTrim() {
+        return false;
+      }
 
-        @Override
-        public boolean allowPluralTimeUnits() {
-          return false;
-        }
+      @Override public boolean allowPluralTimeUnits() {
+        return false;
+      }
 
-        @Override
-        public boolean allowQualifyingCommonColumn() {
-          return false;
-        }
+      @Override public boolean allowQualifyingCommonColumn() {
+        return false;
+      }
 
-        @Override
-        public SqlLibrary semantics() {
-          return null;
-        }
-      });
+      @Override public SqlLibrary semantics() {
+        return null;
+      }
+    });
 
     final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno"
         +
@@ -752,15 +725,15 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   @Test void testHavingWithNestedSubquerry() {
     // empty group-by clause, having
     final String sql = "select sum(sal + sal) as tmp_sum from emp group by deptno" +
-    "having tmp_sum IN (SELECT MIN(DEPTNO)\n"
-  +
+        "having tmp_sum IN (SELECT MIN(DEPTNO)\n"
+      +
         "FROM DEPT\n"
-  +
+        +
         "GROUP BY NAME\n"
-  +
+        +
         "HAVING MIN(DEPTNO) > 3)"; // GROUP BY deptno having sum(sal) > 10
 
-    /*
+    /**
     After validation, is expanded too:
     SELECT SUM(`EMP`.`SAL` + `EMP`.`SAL`) AS `TMP_SUM`
     FROM `CATALOG`.`SALES`.`EMP` AS `EMP`
@@ -843,7 +816,20 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testQualifyfullWithAlias() {
+  @Test void testQualifyHavingSimple() {
+    // test qualify and having on a simple clause
+    final String sql = "         SELECT emp.deptno from emp"
+        +
+        "         GROUP BY emp.empno, emp.deptno\n"
+        +
+        "         HAVING MIN(emp.deptno) > 3"
+        +
+        "         QUALIFY RANK() over (PARTITION BY emp.empno ORDER BY emp.deptno) <= 10";
+
+    sql(sql).ok();
+  }
+
+  @Test void testQualifyFullWithAlias() {
     // test qualify on a complex clause containing several clauses and a sub query, and
     // the QUALIFY clause contains an alias
     final String sql = "SELECT deptno, SUM(empno) OVER (PARTITION BY deptno) as r\n"
@@ -868,7 +854,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testQualifyfullNoAlias() {
+  @Test void testQualifyFullNoAlias() {
     // test qualify on a complex clause containing several clauses and a sub query, and
     // the QUALIFY clause contains no alias
     final String sql = "SELECT deptno\n"
@@ -881,7 +867,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "  HAVING SUM(sal) > 3\n"
         +
-        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno) IN (\n"
+        "  QUALIFY SUM(sal) OVER (PARTITION BY hiredate) IN (\n"
         +
         "    SELECT MIN(deptno)\n"
         +
@@ -913,37 +899,65 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   @Test void testQualifyNestedQualifyFull() {
     // tests qualify on a complex clause containing several clauses and sub querys, where the sub
     // queries also contain a qualify clause.
-    final String sql = "SELECT deptno\n"
+
+    // https://www.geeksforgeeks.org/sql-correlated-subqueries/
+    //The fully qualified IE, it think
+
+    final String sql = "SELECT outermost_correlated_table.deptno\n"
         +
-        "  FROM emp\n"
+        "  FROM emp outermost_correlated_table\n"
         +
-        "  WHERE empno < 4\n"
+        "  WHERE outermost_correlated_table.empno < 4\n"
         +
-        "  GROUP BY deptno, empno\n"
+        "  GROUP BY outermost_correlated_table.deptno, outermost_correlated_table.empno\n"
         +
-        "  HAVING SUM(sal) > 3\n"
+        "  HAVING SUM(outermost_correlated_table.sal) > 3\n"
         +
-        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno)"
+        "  QUALIFY SUM(outermost_correlated_table.empno) OVER (PARTITION BY outermost_correlated_table.deptno)"
         +
         "  IN (\n"
         +
-        "    SELECT MIN(deptno) OVER (PARTITION BY name) as my_val\n"
+        "    SELECT MIN(dept.deptno) OVER (PARTITION BY dept.name) as my_val\n"
         +
         "      from dept\n"
         +
-        "      QUALIFY ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) <= 10 AND my_val IN ("
+        "      QUALIFY ROW_NUMBER() over (PARTITION BY dept.deptno ORDER BY dept.name) <= 10 AND my_val IN ("
         +
-        "         SELECT MAX(deptno) from emp"
+        "         SELECT SUM(emp.deptno) OVER (PARTITION BY emp.comm) as w  from emp"
         +
-        "         GROUP BY name, deptno\n"
+        "         GROUP BY emp.empno, emp.deptno, emp.comm\n"
         +
-        "         HAVING MIN(deptno) > 3"
+        "         HAVING MIN(emp.deptno) > 3"
         +
-        "         QUALIFY RANK() over (PARTITION BY name ORDER BY deptno) <= 10"
+        "         QUALIFY RANK() over (PARTITION BY emp.comm ORDER BY emp.deptno) <= 10 or w in (select outermost_correlated_table.deptno)"
         +
         "))";
     sql(sql).ok();
   }
+
+  @Test void testQualifyCorrelatedSubquery() {
+    /**
+    In order to match Snowflake syntax, we need to be able to handle correlated sub queries, IE:
+
+    SELECT c2
+    FROM t1 outer
+    WHERE c3 < 4
+    GROUP BY c2, c3
+    HAVING SUM(c1) > 3
+    QUALIFY SUM(c2) OVER (PARTITION BY c3) in (Select outer.c2)
+     */
+
+    final String sql = "SELECT correlated_table.deptno\n"
+        +
+        "  FROM emp correlated_table\n"
+        +
+        "  QUALIFY SUM(correlated_table.empno) OVER (PARTITION BY correlated_table.deptno)"
+        +
+        "  IN (SELECT correlated_table.sal)";
+    sql(sql).ok();
+
+  }
+
 
   @Test void testGroupBug281() {
     // Dtbug 281 gives:

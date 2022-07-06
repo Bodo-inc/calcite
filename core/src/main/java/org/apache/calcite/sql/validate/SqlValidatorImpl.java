@@ -2764,8 +2764,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
       // Next register the QUALIFY clause (if it exists). Similarly to the WHERE clause,
       // the QUALIFY clause should see all the aliases in the select list
+      // However, in the case that the select is an aggregating select,
+      // we have to use an aggregating scope. Using an aggregating scope ensures that
+      // the column references in the QUALIFY clause are properly checked, to ensure that
+      // they are valid grouping expressions.
+      SqlValidatorScope qualifyScope = selectScope;
       if (select.hasQualify()) {
-        clauseScopes.put(IdPair.of(select, Clause.QUALIFY), selectScope);
+        if (isAggregate(select)) {
+          qualifyScope =
+              new AggregatingSelectScope(selectScope, select, false);
+        }
+        clauseScopes.put(IdPair.of(select, Clause.QUALIFY), qualifyScope);
         //The operand third argument determines which operand of the select to operate on
         registerOperandSubQueries(
             selectScope,
@@ -4461,12 +4470,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     // Need to validate the having expression before inferring unknown types, so that any aliases
     // can be resolved before qualification occurs
-    qualify.validate(this, qualifyScope);
+    qualifyScope.validateExpr(qualify);
     //qualify must be a boolean expression.
     inferUnknownTypes(
         booleanType,
         qualifyScope,
         qualify);
+
 
     final RelDataType type = deriveType(qualifyScope, qualify);
     if (!SqlTypeUtil.inBooleanFamily(type)) {

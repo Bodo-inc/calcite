@@ -3591,7 +3591,7 @@ public class SqlToRelConverter {
       // relnode's rowtype but do not
       // (yet) appear in the validator type.
       // TODO: This implies that we should update the validator type at some point when handling
-      //  the Qualify clause
+      //  the Qualify clause?
       final SelectScope selectScope =
           SqlValidatorUtil.getEnclosingSelectScope(bb.scope);
       assert selectScope != null;
@@ -3601,6 +3601,9 @@ public class SqlToRelConverter {
       final List<String> names =
           selectNamespace.getRowType().getFieldNames();
       int sysFieldCount = selectList.size() - names.size();
+      if (addedQualifyExpr) {
+        sysFieldCount -= 1;
+      }
       for (SqlNode expr : selectList) {
         // All system fields are appended to the beginning of the select list, and the QUALIFY stmt
         // is always appended to the end of the select list. The below logic is to ensure that we
