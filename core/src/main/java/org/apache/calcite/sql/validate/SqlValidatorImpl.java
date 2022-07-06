@@ -4405,6 +4405,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
     final AggregatingScope havingScope =
         (AggregatingScope) getSelectScope(select);
+    //TODO: revert this
     if (true) {
       SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(having, havingScope, select,
           true, false);
@@ -6771,10 +6772,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // This is true for our purposes, but if we want to merge this back into Calcite eventually,
       // we should likely allow for a validator.config() that controls this behavior, similarly
       // to the other two clauses.
-      if (id.isSimple()
-          && (havingExpr
-              ? validator.config().conformance().isHavingAlias()
-              : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
+      if (id.isSimple()) {
+//          && (havingExpr
+//              ? validator.config().conformance().isHavingAlias()
+//              : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
         String name = id.getSimple();
         SqlNode expr = null;
         final SqlNameMatcher nameMatcher =

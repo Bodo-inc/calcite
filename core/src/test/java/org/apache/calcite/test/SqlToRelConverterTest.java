@@ -40,6 +40,7 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlExplainLevel;
+import org.apache.calcite.sql.fun.SqlLibrary;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
@@ -575,6 +576,153 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 //    sql(sql).ok();
 //  }
 
+    @Test void testNestedHavingAlias() {
+    // empty group-by clause, having
+      final SqlToRelFixture fixture = fixture().withConformance(new SqlConformance() {
+        @Override
+        public boolean isLiberal() {
+          return false;
+        }
+
+        @Override
+        public boolean allowCharLiteralAlias() {
+          return false;
+        }
+
+        @Override
+        public boolean isGroupByAlias() {
+          return true;
+        }
+
+        @Override
+        public boolean isGroupByOrdinal() {
+          return false;
+        }
+
+        @Override
+        public boolean isHavingAlias() {
+          return true;
+        }
+
+        @Override
+        public boolean isSortByOrdinal() {
+          return false;
+        }
+
+        @Override
+        public boolean isSortByAlias() {
+          return false;
+        }
+
+        @Override
+        public boolean isSortByAliasObscures() {
+          return false;
+        }
+
+        @Override
+        public boolean isFromRequired() {
+          return false;
+        }
+
+        @Override
+        public boolean splitQuotedTableName() {
+          return false;
+        }
+
+        @Override
+        public boolean allowHyphenInUnquotedTableName() {
+          return false;
+        }
+
+        @Override
+        public boolean isBangEqualAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean isPercentRemainderAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean isMinusAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean isApplyAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean isInsertSubsetColumnsAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean allowAliasUnnestItems() {
+          return false;
+        }
+
+        @Override
+        public boolean allowNiladicParentheses() {
+          return false;
+        }
+
+        @Override
+        public boolean allowExplicitRowValueConstructor() {
+          return false;
+        }
+
+        @Override
+        public boolean allowExtend() {
+          return false;
+        }
+
+        @Override
+        public boolean isLimitStartCountAllowed() {
+          return false;
+        }
+
+        @Override
+        public boolean allowGeometry() {
+          return false;
+        }
+
+        @Override
+        public boolean shouldConvertRaggedUnionTypesToVarying() {
+          return false;
+        }
+
+        @Override
+        public boolean allowExtendedTrim() {
+          return false;
+        }
+
+        @Override
+        public boolean allowPluralTimeUnits() {
+          return false;
+        }
+
+        @Override
+        public boolean allowQualifyingCommonColumn() {
+          return false;
+        }
+
+        @Override
+        public SqlLibrary semantics() {
+          return null;
+        }
+      });
+//      SqlValidatorTest.checkLarge(x, input -> {
+//            final RelRoot root = fixture.withSql(input).toRoot();
+//            final String s = RelOptUtil.toString(root.project());
+//            assertThat(s, notNullValue());
+
+    final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno HAVING alias_val in (SELECT max(deptno) as tmp_val_two from dept GROUP BY sal HAVING tmp_val_two > 0)";
+    fixture.withSql(sql).ok();
+  }
+
 //  @Test void testHavingWithWindow() {
 //    // empty group-by clause, having
 //    final String sql = "select sum(sal + sal), MAX(sal) OVER(Partition by" +
@@ -605,31 +753,57 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 //    */
 //    sql(sql).ok();
 //  }
-//  @Test void testHavingWithNestedSubquerry() {
-//    // empty group-by clause, having
-//    final String sql = "select sum(sal + sal) as tmp_sum from emp group by deptno" +
-//    "having tmp_sum IN (SELECT MIN(DEPTNO)\n"
-//  +
-//        "FROM DEPT\n"
-//  +
-//        "GROUP BY NAME\n"
-//  +
-//        "HAVING MIN(DEPTNO) > 3)"; // GROUP BY deptno having sum(sal) > 10
-//
-//    /*
-//    After validation, is expanded too:
-//    SELECT SUM(`EMP`.`SAL` + `EMP`.`SAL`) AS `TMP_SUM`
-//    FROM `CATALOG`.`SALES`.`EMP` AS `EMP`
-//    GROUP BY `EMP`.`DEPTNO`
-//    HAVING SUM(`EMP`.`SAL` + `EMP`.`SAL`) IN (SELECT MIN(`DEPT`.`DEPTNO`)
-//    FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`
-//    GROUP BY `DEPT`.`NAME`
-//    HAVING MIN(`DEPT`.`DEPTNO`) > 3)
-//
-//    IE, it seems that calcite just duplicates any aliases present in the original.
-//    */
-//    sql(sql).ok();
-//  }
+  @Test void testHavingWithNestedSubquerry() {
+    // empty group-by clause, having
+    final String sql = "select sum(sal + sal) as tmp_sum from emp group by deptno" +
+    "having tmp_sum IN (SELECT MIN(DEPTNO)\n"
+  +
+        "FROM DEPT\n"
+  +
+        "GROUP BY NAME\n"
+  +
+        "HAVING MIN(DEPTNO) > 3)"; // GROUP BY deptno having sum(sal) > 10
+
+    /*
+    After validation, is expanded too:
+    SELECT SUM(`EMP`.`SAL` + `EMP`.`SAL`) AS `TMP_SUM`
+    FROM `CATALOG`.`SALES`.`EMP` AS `EMP`
+    GROUP BY `EMP`.`DEPTNO`
+    HAVING SUM(`EMP`.`SAL` + `EMP`.`SAL`) IN (SELECT MIN(`DEPT`.`DEPTNO`)
+    FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`
+    GROUP BY `DEPT`.`NAME`
+    HAVING MIN(`DEPT`.`DEPTNO`) > 3)
+
+    IE, it seems that calcite just duplicates any aliases present in the original.
+    */
+    sql(sql).ok();
+  }
+
+  @Test void testHavingWithNestedSubquerry2() {
+    // empty group-by clause, having
+    final String sql = "select sum(sal + sal) as tmp_sum from emp group by deptno" +
+        "HAVING tmp_sum IN (SELECT MIN(DEPTNO) as arbitrary_var\n"
+        +
+        "FROM DEPT\n"
+        +
+        "GROUP BY NAME\n"
+        +
+        "HAVING arbitrary_var > 3)"; // GROUP BY deptno having sum(sal) > 10
+
+    /*
+    After validation, is expanded too:
+    SELECT SUM(`EMP`.`SAL` + `EMP`.`SAL`) AS `TMP_SUM`
+    FROM `CATALOG`.`SALES`.`EMP` AS `EMP`
+    GROUP BY `EMP`.`DEPTNO`
+    HAVING SUM(`EMP`.`SAL` + `EMP`.`SAL`) IN (SELECT MIN(`DEPT`.`DEPTNO`)
+    FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`
+    GROUP BY `DEPT`.`NAME`
+    HAVING MIN(`DEPT`.`DEPTNO`) > 3)
+
+    IE, it seems that calcite just duplicates any aliases present in the original.
+    */
+    sql(sql).ok();
+  }
 
 
 
