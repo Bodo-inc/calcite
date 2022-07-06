@@ -897,66 +897,67 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
   @Test void testQualifyNestedQualifyFull() {
-    // tests qualify on a complex clause containing several clauses and sub querys, where the sub
+    // tests qualify on a complex clause containing several clauses and sub queries, where the sub
     // queries also contain a qualify clause.
 
-    // https://www.geeksforgeeks.org/sql-correlated-subqueries/
-    //The fully qualified IE, it think
-
-    final String sql = "SELECT outermost_correlated_table.deptno\n"
+    final String sql = "SELECT deptno\n"
         +
-        "  FROM emp outermost_correlated_table\n"
+        "  FROM emp\n"
         +
-        "  WHERE outermost_correlated_table.empno < 4\n"
+        "  WHERE empno < 4\n"
         +
-        "  GROUP BY outermost_correlated_table.deptno, outermost_correlated_table.empno\n"
+        "  GROUP BY deptno, empno\n"
         +
-        "  HAVING SUM(outermost_correlated_table.sal) > 3\n"
+        "  HAVING SUM(sal) > 3\n"
         +
-        "  QUALIFY SUM(outermost_correlated_table.empno) OVER (PARTITION BY outermost_correlated_table.deptno)"
+        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno)"
         +
         "  IN (\n"
         +
-        "    SELECT MIN(dept.deptno) OVER (PARTITION BY dept.name) as my_val\n"
+        "    SELECT MIN(deptno) OVER (PARTITION BY dept.name) as my_val\n"
         +
         "      from dept\n"
         +
         "      QUALIFY ROW_NUMBER() over (PARTITION BY dept.deptno ORDER BY dept.name) <= 10 AND my_val IN ("
         +
-        "         SELECT SUM(emp.deptno) OVER (PARTITION BY emp.comm) as w  from emp"
+        "         SELECT SUM(emp.deptno) OVER (PARTITION BY emp.comm) as w from emp"
         +
         "         GROUP BY emp.empno, emp.deptno, emp.comm\n"
         +
         "         HAVING MIN(emp.deptno) > 3"
         +
-        "         QUALIFY RANK() over (PARTITION BY emp.comm ORDER BY emp.deptno) <= 10 or w in (select outermost_correlated_table.deptno)"
+        "         QUALIFY RANK() over (PARTITION BY emp.comm ORDER BY emp.deptno) <= 10 or w in (select deptno from dept) or w in (select deptno from emp)"
         +
         "))";
     sql(sql).ok();
   }
 
-  @Test void testQualifyCorrelatedSubquery() {
-    /**
-    In order to match Snowflake syntax, we need to be able to handle correlated sub queries, IE:
+  //TODO: BodoSQL as a whole does not yet handle correlated Queries, so this is not needed.
+//  @Test void testQualifyCorrelatedSubquery() {
+//    /**
+//    In order to match Snowflake syntax, we need to be able to handle correlated sub queries, IE:
+//
+//    SELECT c2
+//    FROM t1 outer
+//    WHERE c3 < 4
+//    GROUP BY c2, c3
+//    HAVING SUM(c1) > 3
+//    QUALIFY SUM(c2) OVER (PARTITION BY c3) in (Select outer.c2)
+//     */
+//
+//    final String sql = "SELECT correlated_table.deptno\n"
+//        +
+//        "   FROM emp correlated_table\n"
+//        +
+//        "   GROUP BY correlated_table.deptno"
+//        +
+//        "   QUALIFY SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno)"
+//        +
+//        "   IN (SELECT correlated_table.sal)";
+//    sql(sql).ok();
+//
+//  }
 
-    SELECT c2
-    FROM t1 outer
-    WHERE c3 < 4
-    GROUP BY c2, c3
-    HAVING SUM(c1) > 3
-    QUALIFY SUM(c2) OVER (PARTITION BY c3) in (Select outer.c2)
-     */
-
-    final String sql = "SELECT correlated_table.deptno\n"
-        +
-        "  FROM emp correlated_table\n"
-        +
-        "  QUALIFY SUM(correlated_table.empno) OVER (PARTITION BY correlated_table.deptno)"
-        +
-        "  IN (SELECT correlated_table.sal)";
-    sql(sql).ok();
-
-  }
 
 
   @Test void testGroupBug281() {

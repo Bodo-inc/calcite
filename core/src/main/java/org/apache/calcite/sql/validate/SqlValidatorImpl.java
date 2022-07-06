@@ -4452,9 +4452,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlValidatorScope qualifyScope = requireNonNull(getQualifyScope(select), () ->
         "internal error in validateQualifyClause, scope for non-null qualify clause was null");
 
-    //TODO: should this be expand Select Item? I think it should be equivalent, but since I'm
+    // TODO: should this be expand Select Item? I think it should be equivalent, but since I'm
     // handling qualify by putting it into the selectlist, this might be more correct...
-    //
     SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(qualify, qualifyScope, select,
         false, false);
 
