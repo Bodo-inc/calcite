@@ -4415,11 +4415,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
     }
     havingScope.checkAggregateExpr(having, true);
+    // Need to validate the having expression before inferring unknown types, so that any aliase
+    // can be resolved before qualification occurs
+    having.validate(this, havingScope);
+    //having must be a boolean expression
     inferUnknownTypes(
         booleanType,
         havingScope,
         having);
-    having.validate(this, havingScope);
     final RelDataType type = deriveType(havingScope, having);
     if (!SqlTypeUtil.inBooleanFamily(type)) {
       throw newValidationError(having, RESOURCE.havingMustBeBoolean());
@@ -4455,13 +4458,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     //    qualifyScope.checkAggregateExpr(having, true);
     // This probably means I need to create a new scope subclass, and define some
     // checkAggregateExpr to
+
+    // Need to validate the having expression before inferring unknown types, so that any aliases
+    // can be resolved before qualification occurs
+    qualify.validate(this, qualifyScope);
     //qualify must be a boolean expression.
     inferUnknownTypes(
         booleanType,
         qualifyScope,
         qualify);
 
-    qualify.validate(this, qualifyScope);
     final RelDataType type = deriveType(qualifyScope, qualify);
     if (!SqlTypeUtil.inBooleanFamily(type)) {
       throw newValidationError(qualify, RESOURCE.qualifyMustBeBoolean());

@@ -570,14 +570,10 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-//  @Test void testHaving() {
-//    // empty group-by clause, having
-//    final String sql = "select sum(sal + sal), sum(sal) from emp having sum(sal) > 10";
-//    sql(sql).ok();
-//  }
-
     @Test void testNestedHavingAlias() {
-    // empty group-by clause, having
+      // tests having with a nested alias
+
+      //The only change is to the conformance is "isHavingAlias" is now true
       final SqlToRelFixture fixture = fixture().withConformance(new SqlConformance() {
         @Override
         public boolean isLiberal() {
@@ -591,7 +587,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
         @Override
         public boolean isGroupByAlias() {
-          return true;
+          return false;
         }
 
         @Override
@@ -714,12 +710,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
           return null;
         }
       });
-//      SqlValidatorTest.checkLarge(x, input -> {
-//            final RelRoot root = fixture.withSql(input).toRoot();
-//            final String s = RelOptUtil.toString(root.project());
-//            assertThat(s, notNullValue());
 
-    final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno HAVING alias_val in (SELECT max(deptno) as tmp_val_two from dept GROUP BY sal HAVING tmp_val_two > 0)";
+    final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno"
+        +
+        "HAVING alias_val in"
+        +
+        "(SELECT max(deptno) as tmp_val_two from dept GROUP BY deptno HAVING tmp_val_two > 0)";
     fixture.withSql(sql).ok();
   }
 
@@ -897,9 +893,26 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testQualifyNestedQualify() {
-    // tests qualify on a complex clause containing several clauses and a sub query, where the sub
+
+  @Test void testQualifyNestedQualifysimple() {
+    // tests qualify on a complex clause containing a sub query, where the sub
     // query itself contains a qualify clause.
+    final String sql = "SELECT deptno\n"
+        +
+        "  FROM emp\n"
+        +
+        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno) IN (\n"
+        +
+        "    SELECT MIN(deptno) OVER (PARTITION BY name) as my_val\n"
+        +
+        "      from dept\n"
+        +
+        "      QUALIFY my_val in (SELECT deptno from emp))";
+    sql(sql).ok();
+  }
+  @Test void testQualifyNestedQualifyFull() {
+    // tests qualify on a complex clause containing several clauses and sub querys, where the sub
+    // queries also contain a qualify clause.
     final String sql = "SELECT deptno\n"
         +
         "  FROM emp\n"
@@ -910,15 +923,25 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "  HAVING SUM(sal) > 3\n"
         +
-        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno) IN (\n"
+        "  QUALIFY SUM(empno) OVER (PARTITION BY deptno)"
         +
-        "    SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as my_val\n"
+        "  IN (\n"
+        +
+        "    SELECT MIN(deptno) OVER (PARTITION BY name) as my_val\n"
         +
         "      from dept\n"
         +
-        "      GROUP BY name\n"
+        "      QUALIFY ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) <= 10 AND my_val IN ("
         +
-        "      HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)) <= 10 AND my_val in (SELECT deptno from emp)";
+        "         SELECT MAX(deptno) from emp"
+        +
+        "         GROUP BY name, deptno\n"
+        +
+        "         HAVING MIN(deptno) > 3"
+        +
+        "         QUALIFY RANK() over (PARTITION BY name ORDER BY deptno) <= 10"
+        +
+        "))";
     sql(sql).ok();
   }
 

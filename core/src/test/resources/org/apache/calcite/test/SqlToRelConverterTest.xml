@@ -2457,6 +2457,29 @@ LogicalProject(SAL=[$0])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testNestedHavingAlias">
+    <Resource name="sql">
+      <![CDATA[
+      select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno
+      HAVING alias_val in (SELECT max(deptno) as tmp_val_two from dept GROUP BY deptno HAVING tmp_val_two > 0)
+]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ALIAS_VAL=[$1], EXPR$1=[$2])
+  LogicalJoin(condition=[=($1, $3)], joinType=[inner])
+    LogicalAggregate(group=[{0}], ALIAS_VAL=[SUM($1)], EXPR$1=[SUM($2)])
+      LogicalProject(DEPTNO=[$7], $f1=[+($5, $5)], SAL=[$5])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalAggregate(group=[{0}])
+      LogicalProject(TMP_VAL_TWO=[$1])
+        LogicalFilter(condition=[>($1, 0)])
+          LogicalAggregate(group=[{0}], TMP_VAL_TWO=[MAX($0)])
+            LogicalProject(DEPTNO=[$0])
+              LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testHopTable">
     <Resource name="sql">
       <![CDATA[select stream hop_start(rowtime, interval '1' hour, interval '3' hour) as rowtime,
@@ -5534,6 +5557,68 @@ LogicalProject(EMPNO=[$0])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testQualifyNestedQualifyFull">
+    <Resource name="sql">
+      <![CDATA[ SELECT deptno FROM emp WHERE empno < 4 GROUP BY deptno, empno HAVING SUM(sal) > 3 QUALIFY SUM(empno)
+      OVER (PARTITION BY deptno) IN (SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as w from dept GROUP BY
+      name HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER()
+      over (PARTITION BY deptno ORDER BY sal)) <= 10 AND w in (SELECT deptno from emp)
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testQualifyNestedQualifySimple">
+    <Resource name="sql">
+      <![CDATA[ SELECT deptno FROM emp WHERE empno < 4 GROUP BY deptno, empno HAVING SUM(sal) > 3 QUALIFY SUM(empno)
+      OVER (PARTITION BY deptno) IN (SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as w from dept GROUP BY
+      name HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER()
+      over (PARTITION BY deptno ORDER BY sal)) <= 10 AND w in (SELECT deptno from emp)
+  ]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(DEPTNO=[$0])
+  LogicalFilter(condition=[$1])
+    LogicalProject(DEPTNO=[$7], EXPR$1=[CAST(OR(AND(IS NOT NULL($13), <>($9, 0)), AND(<($10, $9), null, <>($9, 0), IS NULL($13)))):BOOLEAN NOT NULL])
+      LogicalJoin(condition=[=($11, $12)], joinType=[left])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], $f0=[$9], $f1=[$10], $f11=[SUM($0) OVER (PARTITION BY $7)])
+          LogicalJoin(condition=[true], joinType=[inner])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+            LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0)])
+              LogicalProject(MY_VAL=[$0], $f1=[true])
+                LogicalFilter(condition=[$1])
+                  LogicalProject(MY_VAL=[MIN($0) OVER (PARTITION BY $1)], EXPR$1=[CAST(OR(AND(IS NOT NULL($6), <>($2, 0)), AND(<($3, $2), null, <>($2, 0), IS NULL($6)))):BOOLEAN NOT NULL])
+                    LogicalJoin(condition=[=($4, $5)], joinType=[left])
+                      LogicalProject(DEPTNO=[$0], NAME=[$1], $f0=[$2], $f1=[$3], $f4=[MIN($0) OVER (PARTITION BY $1)])
+                        LogicalJoin(condition=[true], joinType=[inner])
+                          LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+                          LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0)])
+                            LogicalProject(DEPTNO=[$7], $f1=[true])
+                              LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+                      LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
+                        LogicalProject(DEPTNO=[$7], $f1=[true])
+                          LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+        LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
+          LogicalProject(MY_VAL=[$0], $f1=[true])
+            LogicalFilter(condition=[$1])
+              LogicalProject(MY_VAL=[MIN($0) OVER (PARTITION BY $1)], EXPR$1=[CAST(OR(AND(IS NOT NULL($6), <>($2, 0)), AND(<($3, $2), null, <>($2, 0), IS NULL($6)))):BOOLEAN NOT NULL])
+                LogicalJoin(condition=[=($4, $5)], joinType=[left])
+                  LogicalProject(DEPTNO=[$0], NAME=[$1], $f0=[$2], $f1=[$3], $f4=[MIN($0) OVER (PARTITION BY $1)])
+                    LogicalJoin(condition=[true], joinType=[inner])
+                      LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+                      LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0)])
+                        LogicalProject(DEPTNO=[$7], $f1=[true])
+                          LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+                  LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
+                    LogicalProject(DEPTNO=[$7], $f1=[true])
+                      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testQualifyfullWithNoAlias">
     <Resource name="sql">
       <![CDATA[SELECT deptno, SUM(empno) OVER (PARTITION BY deptno) as r FROM emp
@@ -5605,20 +5690,6 @@ LogicalProject(DEPTNO=[$0], DEPTNO0=[$1])
 ]]>
     </Resource>
   </TestCase>
-<!--  <TestCase name="testQualifyNestedQualify">-->
-<!--    <Resource name="sql">-->
-<!--      <![CDATA[ SELECT deptno FROM emp WHERE empno < 4 GROUP BY deptno, empno HAVING SUM(sal) > 3 QUALIFY SUM(empno)-->
-<!--      OVER (PARTITION BY deptno) IN (SELECT MIN(deptno), SUM(empno) OVER (PARTITION BY deptno) as w from dept GROUP BY-->
-<!--      name HAVING MIN(deptno) > 3 QUALIFY ROW_NUMBER()-->
-<!--      over (PARTITION BY deptno ORDER BY sal)) <= 10 AND w in (SELECT deptno from emp)-->
-<!--  ]]>-->
-<!--    </Resource>-->
-<!--    <Resource name="plan">-->
-<!--      <![CDATA[-->
-
-<!--]]>-->
-<!--    </Resource>-->
-<!--  </TestCase>-->
   <TestCase name="testQualifySubquerySimple">
     <Resource name="sql">
       <![CDATA[SELECT empno FROM emp QUALIFY ROW_NUMBER() over
