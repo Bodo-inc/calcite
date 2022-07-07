@@ -23,7 +23,7 @@ import org.apache.calcite.sql.SqlSelect;
  * Scope of a Qualify clause. Mostly a wrapper around the parent's selectScope, but has some utility
  * for checking validity of the qualify clause.
  */
-public class QualifyScope extends DelegatingScope  implements WindowedSelectScope {
+public class QualifyScope extends DelegatingScope implements WindowedSelectScope {
 
   //~ Instance fields --------------------------------------------------------
 
@@ -44,13 +44,31 @@ public class QualifyScope extends DelegatingScope  implements WindowedSelectScop
   //~ Methods ----------------------------------------------------------------
 
   @Override public boolean checkWindowedAggregateExpr(SqlNode expr, boolean deep) {
-    //TODO:
-    return false;
+    // Fully-qualify any identifiers in expr.
+    if (deep) {
+      expr = validator.expand(expr, this);
+    }
+
+    // Create a new checker, which will visit all the nested expressions and determine if we have
+    // a window operation
+    final WindowedAggChecker windowedAggChecker = new WindowedAggChecker();
+
+    // Do the visiting
+    expr.accept(windowedAggChecker);
+
+    //return if we saw a window
+    return windowedAggChecker.sawWindow();
   }
 
   @Override public SqlNode getNode() {
     return qualifyNode;
   }
 
+
+  @Override public void validateExpr(SqlNode expr) {
+    // For a qualify clause, it should be validated in the scope of the enclosing expression
+    // This is not the default for a DelegatingScope, strangely.
+    parent.validateExpr(expr);
+  }
 
 }

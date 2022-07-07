@@ -789,7 +789,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
 
-  @Test void testQualifyNestedQualifysimple() {
+  @Test void testQualifyNestedQualifySimple() {
     // tests qualify on a complex clause containing a sub query, where the sub
     // query itself contains a qualify clause.
     final String sql =

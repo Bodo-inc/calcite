@@ -2777,7 +2777,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // We need to wrap the outermost selectScope in a Qualify Scope, to ensure that
         // the scope properly validates the expressions in the parent select scope.
         // The default selectScope does not do this
-        clauseScopes.put(IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope, select.getQualify(), select));
+        clauseScopes.put(
+            IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope,
+            select.getQualify(), select)); //qualifyScope);
         //The operand third argument determines which operand of the select to operate on
         registerOperandSubQueries(
             selectScope,
@@ -4455,7 +4457,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // if the overall select is aggregating or not.
     // The wrapping is needed so that the call to validateExpr actually validates the
     // expressions in the QUALIFY clause in the scope of the parent expression.
-    final SqlValidatorScope qualifyScope = requireNonNull(getQualifyScope(select), () ->
+    final QualifyScope qualifyScope = (QualifyScope) requireNonNull(getQualifyScope(select), () ->
         "internal error in validateQualifyClause, scope for non-null qualify clause was null");
 
 
@@ -4475,6 +4477,15 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Need to validate the qualify expression before inferring unknown types, so that any aliases
     // can be resolved before qualification occurs
     qualify.validate(this, qualifyScope);
+
+    // We also need to check that the expression is valid within its scope. This is only important
+    // if we have an aggregating scope
+    qualifyScope.validateExpr(qualify);
+
+    if (!qualifyScope.checkWindowedAggregateExpr(qualify, true)) {
+      throw newValidationError(qualify, RESOURCE.qualifyRequiresWindowFn());
+    }
+
     //qualify must be a boolean expression.
     inferUnknownTypes(
         booleanType,
