@@ -727,7 +727,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test void testQualifyHavingSimple() {
     // test qualify and having on a simple clause
-    final String sql = "         SELECT emp.deptno from emp"
+    final String sql = "SELECT emp.deptno from emp"
         +
         "         GROUP BY emp.empno, emp.deptno\n"
         +
@@ -776,7 +776,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "  HAVING SUM(sal) > 3\n"
         +
-        "  QUALIFY SUM(sal) OVER (PARTITION BY hiredate) IN (\n"
+        "  QUALIFY SUM(deptno) OVER (PARTITION BY empno) IN (\n"
         +
         "    SELECT MIN(deptno)\n"
         +
@@ -836,70 +836,13 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "         HAVING MIN(emp.deptno) > 3"
         +
-        "         QUALIFY RANK() over (PARTITION BY emp.comm ORDER BY emp.deptno) <= 10 or w in (select dept.deptno from dept) or w in (select emp.deptno from emp)"
+        "         QUALIFY RANK() over (PARTITION BY emp.comm ORDER BY emp.deptno) <= 10 or w in"
+        +
+        "         (select dept.deptno from dept) or w in (select emp.deptno from emp)"
         +
         "))";
     sql(sql).ok();
   }
-
-  @Test void testQualifyCorrelatedSubqueryError() {
-    /**
-     * In order to match Snowflake syntax, we need to be able to handle correlated sub queries, IE:
-     *
-     *     SELECT c2
-     *     FROM t1 outer
-     *     WHERE c3 < 4
-     *     GROUP BY c2, c3
-     *     HAVING SUM(c1) > 3
-     *     QUALIFY SUM(c2) OVER (PARTITION BY c3) in (Select outer.c2)
-     *
-     *      Currently, this is un needed, as we don't handle correlated variables period in BodoSQL.
-     */
-
-    final String sql = "SELECT correlated_table.deptno\n"
-        +
-        "   FROM emp correlated_table\n"
-        +
-        "   GROUP BY correlated_table.deptno"
-        +
-        "   QUALIFY SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno)"
-        +
-        "   IN (SELECT correlated_table.deptno)";
-
-    //TODO: this should eventually fail during validation, but for now it fails during sql to rel
-    sql(sql).ok();
-
-  }
-
-  @Test void testFoo() {
-
-    final String sql = "SELECT correlated_table.deptno\n"
-        +
-        "   FROM emp correlated_table\n"
-        +
-        "   GROUP BY correlated_table.deptno"
-        +
-        "   QUALIFY SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno)"
-        +
-        "   IN (SELECT correlated_table.deptno)";
-
-    //TODO: this should eventually fail during validation, but for now it fails during sql to rel
-    sql(sql).ok();
-
-  }
-
-
-  @Test void testFoo2() {
-    final String sql = "SELECT correlated_table.deptno, SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno) IN (SELECT correlated_table.deptno)\n"
-        +
-        "   FROM emp correlated_table\n"
-        +
-        "   GROUP BY correlated_table.deptno";
-
-    //TODO: this should eventually fail during validation, but for now it fails during sql to rel
-    sql(sql).ok();
-  }
-
 
   @Test void testGroupBug281() {
     // Dtbug 281 gives:

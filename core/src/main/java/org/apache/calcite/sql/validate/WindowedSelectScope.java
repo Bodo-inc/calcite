@@ -14,16 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.validate;
 
 import org.apache.calcite.sql.SqlNode;
 
+/**
+ * Abstract class used to scope statements that require there to be windowed aggregations.
+ */
 public interface WindowedSelectScope extends SqlValidatorScope {
 
 
 /**
- * Checks whether an expression contains a windowed aggregation function
+ * Checks whether an expression contains a windowed aggregation function.
  */
   boolean checkWindowedAggregateExpr(SqlNode expr, boolean deep);
 }

@@ -4455,7 +4455,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // if the overall select is aggregating or not.
     // The wrapping is needed so that the call to validateExpr actually validates the
     // expressions in the QUALIFY clause in the scope of the parent expression.
-    final QualifyScope qualifyScope = (QualifyScope) requireNonNull(getQualifyScope(select), () ->
+    final SqlValidatorScope qualifyScope = requireNonNull(getQualifyScope(select), () ->
         "internal error in validateQualifyClause, scope for non-null qualify clause was null");
 
 

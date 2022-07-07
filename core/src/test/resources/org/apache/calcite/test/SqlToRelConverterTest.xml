@@ -33,6 +33,20 @@ LogicalProject(DEPTNO=[$0])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testQualifyHavingSimple">
+    <Resource name="sql">
+      <![CDATA[SELECT emp.deptno from emp
+      GROUP BY emp.empno, emp.deptno
+HAVING MIN(emp.deptno) > 3
+QUALIFY RANK() over (PARTITION BY emp.empno ORDER BY emp.deptno) <= 10
+]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testAggCaseSubQuery">
     <Resource name="sql">
       <![CDATA[SELECT SUM(CASE WHEN empno IN (3) THEN 0 ELSE 1 END) FROM emp]]>

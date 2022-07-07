@@ -14,23 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.validate;
 
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.util.List;
-
-import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getSelectList;
-import static org.apache.calcite.util.Static.RESOURCE;
-
+/**
+ * Scope of a Qualify clause. Mostly a wrapper around the parent's selectScope, but has some utility
+ * for checking validity of the qualify clause.
+ */
 public class QualifyScope extends DelegatingScope  implements WindowedSelectScope {
 
   //~ Instance fields --------------------------------------------------------
@@ -51,34 +43,7 @@ public class QualifyScope extends DelegatingScope  implements WindowedSelectScop
 
   //~ Methods ----------------------------------------------------------------
 
-
-//  @Override public SqlQualified fullyQualify(SqlIdentifier identifier) {
-//
-//    // If it's a simple identifier, look for an alias.
-//    if (identifier.isSimple()) {
-//      final String name = identifier.names.get(0);
-//      final SqlValidatorNamespace selectNs =
-//          validator.getNamespaceOrThrow(select);
-//      final RelDataType rowType = selectNs.getRowType();
-//
-//      final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
-//      final RelDataTypeField field = nameMatcher.field(rowType, name);
-//      final int aliasCount = aliasCount(nameMatcher, name);
-//      if (aliasCount > 1) {
-//        // More than one column has this alias.
-//        throw validator.newValidationError(identifier,
-//            RESOURCE.columnAmbiguous(name));
-//      }
-//      if (field != null && !field.isDynamicStar() && aliasCount == 1) {
-//        // if identifier is resolved to a dynamic star, use super.fullyQualify() for such case.
-//        return SqlQualified.create(this, 1, selectNs, identifier);
-//      }
-//    }
-//    return super.fullyQualify(identifier);
-//  }
-
-  @Override
-  public boolean checkWindowedAggregateExpr(SqlNode expr, boolean deep) {
+  @Override public boolean checkWindowedAggregateExpr(SqlNode expr, boolean deep) {
     //TODO:
     return false;
   }
@@ -87,90 +52,5 @@ public class QualifyScope extends DelegatingScope  implements WindowedSelectScop
     return qualifyNode;
   }
 
-//  @Override public void validateExpr(SqlNode expr) {
-//    parent.validateExpr(expr);
-//  }
-
-//    /** Returns the number of columns in the SELECT clause that have {@code name}
-//   * as their implicit (e.g. {@code t.name}) or explicit (e.g.
-//   * {@code t.c as name}) alias. */
-//  private int aliasCount(SqlNameMatcher nameMatcher, String name) {
-//    int n = 0;
-//    for (SqlNode s : getSelectList(select)) {
-//      final String alias = SqlValidatorUtil.getAlias(s, -1);
-//      if (alias != null && nameMatcher.matches(alias, name)) {
-//        n++;
-//      }
-//    }
-//    return n;
-//  }
-
-
 
 }
-
-
-//
-//package org.apache.calcite.sql.validate;
-//
-//    import org.apache.calcite.rel.type.RelDataType;
-//    import org.apache.calcite.rel.type.RelDataTypeField;
-//    import org.apache.calcite.sql.SqlIdentifier;
-//    import org.apache.calcite.sql.SqlNode;
-//    import org.apache.calcite.sql.SqlNodeList;
-//    import org.apache.calcite.sql.SqlSelect;
-//
-//    import org.checkerframework.checker.nullness.qual.Nullable;
-//
-//    import java.util.List;
-//
-//    import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getSelectList;
-//    import static org.apache.calcite.util.Static.RESOURCE;
-//
-///**
-// * Represents the name-resolution context for expressions in an ORDER BY clause.
-// *
-// * <p>In some dialects of SQL, the ORDER BY clause can reference column aliases
-// * in the SELECT clause. For example, the query</p>
-// *
-// * <blockquote><code>SELECT empno AS x<br>
-// * FROM emp<br>
-// * ORDER BY x</code></blockquote>
-// *
-// * <p>is valid.</p>
-// */
-//public class OrderByScope {
-//
-//
-//
-//
-
-//
-//  @Override public void findAllColumnNames(List<SqlMoniker> result) {
-//    final SqlValidatorNamespace ns = validator.getNamespaceOrThrow(select);
-//    addColumnNames(ns, result);
-//  }
-//
-//
-//
-
-//
-//  @Override public @Nullable RelDataType resolveColumn(String name, SqlNode ctx) {
-//    final SqlValidatorNamespace selectNs = validator.getNamespaceOrThrow(select);
-//    final RelDataType rowType = selectNs.getRowType();
-//    final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
-//    final RelDataTypeField field = nameMatcher.field(rowType, name);
-//    if (field != null) {
-//      return field.getType();
-//    }
-//    final SqlValidatorScope selectScope = validator.getSelectScope(select);
-//    return selectScope.resolveColumn(name, ctx);
-//  }
-//
-//  @Override public void validateExpr(SqlNode expr) {
-//    SqlNode expanded = validator.expandOrderExpr(select, expr);
-//
-//    // expression needs to be valid in parent scope too
-//    parent.validateExpr(expanded);
-//  }
-//}
