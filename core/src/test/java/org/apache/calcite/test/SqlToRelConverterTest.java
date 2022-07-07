@@ -879,11 +879,25 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "   GROUP BY correlated_table.deptno"
         +
-        "   HAVING SUM(correlated_table.deptno) IN (SELECT correlated_table.deptno)";
+        "   QUALIFY SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno)"
+        +
+        "   IN (SELECT correlated_table.deptno)";
 
     //TODO: this should eventually fail during validation, but for now it fails during sql to rel
     sql(sql).ok();
 
+  }
+
+
+  @Test void testFoo2() {
+    final String sql = "SELECT correlated_table.deptno, SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno) IN (SELECT correlated_table.deptno)\n"
+        +
+        "   FROM emp correlated_table\n"
+        +
+        "   GROUP BY correlated_table.deptno";
+
+    //TODO: this should eventually fail during validation, but for now it fails during sql to rel
+    sql(sql).ok();
   }
 
 
