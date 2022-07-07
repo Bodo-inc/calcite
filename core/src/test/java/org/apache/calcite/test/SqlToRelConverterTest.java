@@ -686,9 +686,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         }
         );
 
-    final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno"
+    final String sql = "select sum(sal + sal) as alias_val, sum(sal) from emp GROUP BY deptno\n"
         +
-        "HAVING alias_val in"
+        "HAVING alias_val in\n"
         +
         "(SELECT max(deptno) as tmp_val_two from dept GROUP BY deptno HAVING tmp_val_two > 0)";
     fixture.withSql(sql).ok();
@@ -696,7 +696,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test void testQualifyWithAlias() {
     // test qualify on a simple clause, that contains an alias
-    final String sql = "select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)"
+    final String sql = "select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)\n"
         +
         "as row_num from emp QUALIFY row_num > 10";
     sql(sql).ok();
@@ -708,7 +708,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
     final String sql = "select empno,"
         +
-        "ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) as row_num "
+        "ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal) as row_num\n"
         +
         "from emp "
         +
@@ -864,17 +864,27 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "   QUALIFY SUM(correlated_table.deptno) OVER (PARTITION BY correlated_table.deptno)"
         +
-        "   IN (SELECT correlated_table.sal from dept)";
+        "   IN (SELECT correlated_table.deptno from dept)";
 
     //TODO: this should eventually fail during validation, but for now it fails during sql to rel
-    try {
-      sql(sql).ok();
-    } catch (Exception e){
-      return;
-    }
+    sql(sql).ok();
 
   }
 
+  @Test void testFoo() {
+
+    final String sql = "SELECT correlated_table.deptno\n"
+        +
+        "   FROM emp correlated_table\n"
+        +
+        "   GROUP BY correlated_table.deptno"
+        +
+        "   HAVING SUM(correlated_table.deptno) IN (SELECT correlated_table.deptno from dept)";
+
+    //TODO: this should eventually fail during validation, but for now it fails during sql to rel
+    sql(sql).ok();
+
+  }
 
 
   @Test void testGroupBug281() {

@@ -2774,7 +2774,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           qualifyScope =
               new AggregatingSelectScope(selectScope, select, false);
         }
-        clauseScopes.put(IdPair.of(select, Clause.QUALIFY), qualifyScope);
+        // We need to wrap the outermost selectScope in a Qualify Scope, to ensure that
+        // the scope properly validates the expressions in the parent select scope.
+        // The default selectScope does not do this
+        clauseScopes.put(IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope, select.getQualify(), select));
         //The operand third argument determines which operand of the select to operate on
         registerOperandSubQueries(
             selectScope,
@@ -2804,7 +2807,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
 
       // If this is an aggregating query, the SELECT list and HAVING
-      // clause use a different scope, where you can only reference
+      // clause use a different scope (AggregatingSelectScope), which ensures that
+      // you can only reference
       // columns which are in the GROUP BY clause.
       SqlValidatorScope aggScope = selectScope;
       if (isAggregate(select)) {
@@ -4446,7 +4450,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
     SqlNode qualify = select.getQualify();
 
-    final SqlValidatorScope qualifyScope = requireNonNull(getQualifyScope(select), () ->
+    // get the scope of the qualify. The QualifyScope object wraps the parent scope, which
+    // could be either a Select Scope, or an Aggregating Scope, depending on
+    // if the overall select is aggregating or not.
+    // The wrapping is needed so that the call to validateExpr actually validates the
+    // expressions in the QUALIFY clause in the scope of the parent expression.
+    final QualifyScope qualifyScope = (QualifyScope) requireNonNull(getQualifyScope(select), () ->
         "internal error in validateQualifyClause, scope for non-null qualify clause was null");
 
 
@@ -4463,9 +4472,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // This probably means I need to create a new scope subclass, and define some
     // checkAggregateExpr to
 
-    // Need to validate the having expression before inferring unknown types, so that any aliases
+    // Need to validate the qualify expression before inferring unknown types, so that any aliases
     // can be resolved before qualification occurs
-    qualifyScope.validateExpr(qualify);
+    qualify.validate(this, qualifyScope);
     //qualify must be a boolean expression.
     inferUnknownTypes(
         booleanType,
