@@ -140,22 +140,22 @@ class SqlValidatorUtilTest {
   }
 
   @Test void testQualifyGroupingErrorMsg() {
-    /*
-    In a groupby clause, the qualify statment has the same restrictions as if you had placed
-    the expression into the select statment.
-
-    For example, the following queries are illegal:
-    SELECT c2
-    FROM t1 outer
-    GROUP BY c2, c3
-    HAVING SUM(c1) > 3
-    QUALIFY SUM(c1) OVER (PARTITION BY c3) in (Select outer.c2)
-
-    SELECT c2
-    FROM t1 outer
-    GROUP BY c2, c3
-    HAVING SUM(c1) > 3
-    QUALIFY SUM(c2) OVER (PARTITION BY c1) in (Select outer.c2)
+    /**
+     * In a query with a group by and qualify clause, the qualify statement has the same
+     * restrictions as if you had placed the expression into the select statement.
+     *
+     *     For example, the following queries are illegal:
+     *     SELECT c2
+     *     FROM t1 outer
+     *     GROUP BY c2, c3
+     *     HAVING SUM(c1) > 3
+     *     QUALIFY SUM(c1) OVER (PARTITION BY c3) in (Select outer.c2)
+     *
+     *     SELECT c2
+     *     FROM t1 outer
+     *     GROUP BY c2, c3
+     *     HAVING SUM(c1) > 3
+     *     QUALIFY SUM(c2) OVER (PARTITION BY c1) in (Select outer.c2)
      */
     final SqlValidatorFixture fixture = Fixtures.forValidator();
 
@@ -167,6 +167,22 @@ class SqlValidatorUtilTest {
         +
         "  QUALIFY SUM(^empno^) OVER (PARTITION BY deptno) > 1";
     Fixtures.forValidator().withSql(sql).fails("Expression 'EMPNO' is not being grouped");
+  }
+
+  @Test void testQualifyNonBooleanError() {
+    final String sql = "SELECT deptno FROM emp GROUP BY correlated_table.deptno"
+        +
+        " QUALIFY SUM(deptno) OVER (PARTITION BY deptno)";
+    Fixtures.forValidator().withSql(sql).fails("TODO");
+  }
+
+  @Test void testQualifyNonWindowError() {
+
+
+    final String sql = "SELECT deptno FROM emp GROUP BY correlated_table.deptno"
+        +
+        " QUALIFY SUM(deptno) OVER (PARTITION BY deptno)";
+    Fixtures.forValidator().withSql(sql).fails("TODO");
   }
 
   @Test void testNameMatcher() {

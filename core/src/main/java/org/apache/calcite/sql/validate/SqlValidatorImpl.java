@@ -4412,10 +4412,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (having == null) {
       return;
     }
+    //If we have an HAVING clause, the select scope must be an aggregating scope,
+    //so the cast is safe
     final AggregatingScope havingScope =
         (AggregatingScope) getSelectScope(select);
     //TODO: revert this
-    if (true) {
+    if (config.conformance().isHavingAlias()) {
       SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(having, havingScope, select,
           true, false);
       if (having != newExpr) {
@@ -4424,8 +4426,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
     }
     havingScope.checkAggregateExpr(having, true);
-    // Need to validate the having expression before inferring unknown types, so that any aliase
+    // Need to validate the having expression before inferring unknown types, so that any aliases
     // can be resolved before qualification occurs
+    // TODO: push this change into calcite
     having.validate(this, havingScope);
     //having must be a boolean expression
     inferUnknownTypes(
@@ -4438,12 +4441,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
   protected void validateQualifyClause(SqlSelect select) {
-    // Validating Qualify is a bit tricky. Essentially, Qualify needs to
-    //
-    // HAVING is validated in the scope after groups have been created.
-    // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
-    // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
-    // clause is illegal.
     if (!select.hasQualify()) {
       return;
     }
@@ -4452,8 +4449,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlValidatorScope qualifyScope = requireNonNull(getQualifyScope(select), () ->
         "internal error in validateQualifyClause, scope for non-null qualify clause was null");
 
-    // TODO: should this be expand Select Item? I think it should be equivalent, but since I'm
-    // handling qualify by putting it into the selectlist, this might be more correct...
+
     SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(qualify, qualifyScope, select,
         false, false);
 
@@ -6787,10 +6783,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // This is true for our purposes, but if we want to merge this back into Calcite eventually,
       // we should likely allow for a validator.config() that controls this behavior, similarly
       // to the other two clauses.
-      if (id.isSimple()) {
-//          && (havingExpr
-//              ? validator.config().conformance().isHavingAlias()
-//              : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
+      if (id.isSimple()
+          && (havingExpr
+              ? validator.config().conformance().isHavingAlias()
+              : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
         String name = id.getSimple();
         SqlNode expr = null;
         final SqlNameMatcher nameMatcher =

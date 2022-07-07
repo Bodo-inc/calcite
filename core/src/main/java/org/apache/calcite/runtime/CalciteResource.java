@@ -388,6 +388,9 @@ public interface CalciteResource {
   @BaseMessage("QUALIFY clause must be a boolean condition")
   ExInst<SqlValidatorException> qualifyMustBeBoolean();
 
+  @BaseMessage("QUALIFY clause does not support Correlated Variables")
+  ExInst<SqlValidatorException> qualifyCorrelatedVariablesNotSupported();
+
   @BaseMessage("OVER must be applied to aggregate function")
   ExInst<SqlValidatorException> overNonAggregate();
 

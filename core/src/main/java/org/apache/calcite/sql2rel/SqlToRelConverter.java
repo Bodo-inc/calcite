@@ -87,6 +87,7 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.rex.RexWindowBounds;
+import static org.apache.calcite.util.Static.RESOURCE;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.schema.ModifiableView;
@@ -166,6 +167,7 @@ import org.apache.calcite.sql.validate.SqlValidatorTable;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Litmus;
@@ -866,6 +868,8 @@ public class SqlToRelConverter {
 
 
     final CorrelationUse p = getCorrelationUse(bb, filterRelNode);
+
+    // This condition will never be true, as we disallow corelated variables at an earlier step
     if (p != null) {
       assert p.r instanceof Filter;
       Filter f = (Filter) p.r;
@@ -3024,6 +3028,8 @@ public class SqlToRelConverter {
 
     final CorrelationUse p = getCorrelationUse(bb, rightRel);
     if (p != null) {
+
+
       RelNode innerRel = p.r;
       ImmutableBitSet requiredCols = p.requiredColumns;
 
@@ -3620,6 +3626,22 @@ public class SqlToRelConverter {
             Pair.of(bb.convertExpression(expr),
                 castNonNull(validator().deriveAlias(expr, k++))));
       }
+
+      //TODO: this should likely take place in validation, but I'm unable to determine how to
+      // find correlated variables before the node has been converted to a relnode. It would
+      // likely need to be handled while fully qualifying variable names, but I'm uncertain how
+      // to distinguish when the namespace uses a value that ends up being from the outer query
+      // (correlated), and when it uses a value from within the same query
+//      if (addedQualifyExpr){
+//        RexNode convertedQualify = projects.get(projects.size()-1).getKey();
+//        final CorrelationUse p = getCorrelationUse(bb, convertedQualify);
+//        if (p != null) {
+//          final SqlParserPos pos = selectList.get(selectList.size()-1).getParserPosition();
+//          throw SqlUtil.newContextException(pos, RESOURCE.qualifyCorrelatedVariablesNotSupported());
+//        }
+//
+//      }
+
     } finally {
       bb.agg = null;
     }
