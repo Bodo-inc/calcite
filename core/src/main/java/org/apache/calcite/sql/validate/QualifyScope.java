@@ -28,17 +28,14 @@ public class QualifyScope extends DelegatingScope implements WindowedSelectScope
   //~ Instance fields --------------------------------------------------------
 
   private final SqlNode qualifyNode;
-  private final SqlSelect select;
 
   //~ Constructors -----------------------------------------------------------
 
   QualifyScope(
       SqlValidatorScope parent,
-      SqlNode qualifyNode,
-      SqlSelect select) {
+      SqlNode qualifyNode) {
     super(parent);
     this.qualifyNode = qualifyNode;
-    this.select = select;
   }
 
   //~ Methods ----------------------------------------------------------------

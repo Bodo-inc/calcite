@@ -751,7 +751,7 @@ public class SqlToRelConverter {
     }
 
     if (select.hasQualify()) {
-      handleQualifyClause(bb, select);
+      handleQualifyClause(bb);
     }
 
     if (select.isDistinct()) {
@@ -784,59 +784,21 @@ public class SqlToRelConverter {
   }
 
 
-  /**
-   * Having translated 'SELECT ... FROM ... [GROUP BY ...] [HAVING ...]',
-   * handles the Qualify Expression.
-   *
-   * @param bb               Blackboard
-   * @param select           Select Statement
-   */
-  private void expandQualify(Blackboard bb, SqlSelect select) {
-
-
-    final Map<String, SqlNode> selectIdentifierMap = new HashMap<>();
-
-    //Find all the aliases
-    final SqlNodeList selectList = select.getSelectList();
-    for (int i = 0; i < selectList.size(); i++) {
-      SqlNode selectItem = selectList.get(i);
-      SqlIdentifier name = null;
-      if (SqlUtil.isCallTo(
-          selectItem,
-          SqlStdOperatorTable.AS)) {
-        final SqlCall call = (SqlCall) selectItem;
-        selectItem = call.operand(0);
-        name = (SqlIdentifier) call.operand(1);
-        selectIdentifierMap.put(name.toString(), selectItem);
-      }
-    }
-    QualifyConverter converter = new QualifyConverter(selectIdentifierMap);
-
-    SqlNode newQualify = select.getQualify().accept(converter);
-
-    List<String> replacedIdentifiers = new ArrayList<>(converter.getConvertedIdentifiers());
-//    Set<SqlNode> inputTableColNames = null;//bb.scope()
-
-//    for (int i = 0; i < replacedIdentifiers.size(); i++){
-//      SqlNode replacedIdentifier = replacedIdentifiers.get(i);
-//      if (inputTableColNames.contains(replacedIdentifier)) {
-//        System.out.println("ERROR"); //throw new Exception("Error, Qualify contains a stmt");
-//      }
-//    }
-
-    select.setQualify(newQualify);
-  }
 
 
   /**
    * Having translated 'SELECT ... FROM ... [GROUP BY ...] [HAVING ...]',
    * handles the Qualify Expression.
    *
+   * We expect that, while handling the conversion of the select List, the QUALIFY condition was
+   * added as the last element of the selectList. Therefore, this function uses that value to create
+   * a filter and projection (see
+   * https://docs.snowflake.com/en/sql-reference/constructs/qualify.html)
+   *
    * @param bb               Blackboard
-   * @param select           Select Statment
    */
   private void handleQualifyClause(
-      Blackboard bb, SqlSelect select) {
+      Blackboard bb) {
     RelNode rel = bb.root;
     // If we had a qualify clause, we know it's the last item in the select list,
     // as we place it there.

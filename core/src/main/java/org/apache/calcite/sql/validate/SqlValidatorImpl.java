@@ -2779,7 +2779,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // The default selectScope does not do this
         clauseScopes.put(
             IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope,
-            select.getQualify(), select)); //qualifyScope);
+            select.getQualify())); //qualifyScope);
         //The operand third argument determines which operand of the select to operate on
         registerOperandSubQueries(
             selectScope,
