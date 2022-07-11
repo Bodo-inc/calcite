@@ -571,7 +571,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testNestedHavingAlias() {
-    // tests having with a nested alias
+    // tests having with a nested alias, when isHavingAlias is set to True
+    // TODO: Push this fix to calcite
 
     //The only change is to the conformance is "isHavingAlias" is now true
     final SqlToRelFixture fixture = fixture().withConformance(

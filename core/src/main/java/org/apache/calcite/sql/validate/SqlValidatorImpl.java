@@ -4422,7 +4422,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     //so the cast is safe
     final AggregatingScope havingScope =
         (AggregatingScope) getSelectScope(select);
-    //TODO: revert this
     if (config.conformance().isHavingAlias()) {
       SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(having, havingScope, select,
           true, false);
@@ -4469,10 +4468,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       select.setQualify(newExpr);
     }
 
-    //TODO: need to check if this is a window expr, in some manner equivalent to
-    //    qualifyScope.checkAggregateExpr(having, true);
-    // This probably means I need to create a new scope subclass, and define some
-    // checkAggregateExpr to
 
     // Need to validate the qualify expression before inferring unknown types, so that any aliases
     // can be resolved before qualification occurs
@@ -4482,6 +4477,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // if we have an aggregating scope
     qualifyScope.validateExpr(qualify);
 
+    // Finally, check that the expression actually contains a windowed aggregation.
     if (!qualifyScope.checkWindowedAggregateExpr(qualify, true)) {
       throw newValidationError(qualify, RESOURCE.qualifyRequiresWindowFn());
     }
@@ -6150,8 +6146,15 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @param scope The base scope of the query, generally equivalent to the scope of the select.
    * @param select The select query.
    * @param havingExpression Is the expression a having expression? Needed as some SQL dialects do
-   *                         not allow aliases in having expressions
-   *                         (validator.config().conformance().isHavingAlias())
+   *                         not allow aliases in having expressions (Controlled by
+   *                         validator.config().conformance().isHavingAlias()). Cannot be true if
+   *                         groupByExpr is also set. If both havingExpression and groupByExpr
+   *                         are false, the expression must be a qualify Expression.
+   * @param groupByExpr Is the expression a having expression? Needed as some SQL dialects do
+   *                    not allow aliases in group by expressions (Controlled by
+   *                    validator.config().conformance().isGroupByAlias()). Cannot be true if
+   *                    havingExpression is also set. If both havingExpression and groupByExpr
+   *                    are false, the expression must be a qualify Expression.
    * @return The expanded SqlNode
    */
   public SqlNode expandGroupByOrHavingOrQualifyExpr(SqlNode expr,
