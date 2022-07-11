@@ -29,6 +29,7 @@ import org.apache.calcite.sql.type.SqlOperandCountRanges;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.implicit.TypeCoercion;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
@@ -61,6 +62,17 @@ public class SqlCoalesceFunction extends SqlFunction {
         SqlFunctionCategory.SYSTEM);
   }
 
+  //~ Methods ----------------------------------------------------------------
+
+  @Override public RelDataType deriveType(
+      SqlValidator validator,
+      SqlValidatorScope scope,
+      SqlCall call) {
+    // Do not try to derive the types of the operands. We will do that
+    // later, top down, when we infer the return type
+    return validateOperands(validator, scope, call);
+  }
+
   @Override public RelDataType inferReturnType(
       SqlOperatorBinding opBinding) {
     // REVIEW jvs 4-June-2005:  can't these be unified?
@@ -89,13 +101,7 @@ public class SqlCoalesceFunction extends SqlFunction {
       }
     }
 
-//    SqlNode elseOp = requireNonNull(caseCall.getElseOperand(),
-//        () -> "elseOperand for " + caseCall);
-//    argTypes.add(
-//        SqlTypeUtil.deriveType(callBinding, elseOp));
-//    if (SqlUtil.isNullLiteral(elseOp, false)) {
-//      nullList.add(elseOp);
-//    }
+
 
     RelDataType ret = typeFactory.leastRestrictive(argTypes);
     if (null == ret) {
@@ -108,7 +114,7 @@ public class SqlCoalesceFunction extends SqlFunction {
         // (with the correct nullability) in SqlValidator
         // instead of the commonType as the return type.
         if (null != commonType) {
-          coerced = typeCoercion.caseWhenCoercion(callBinding);
+          coerced = typeCoercion.coalesceCoercion(callBinding);
           if (coerced) {
             ret = SqlTypeUtil.deriveType(callBinding);
           }
@@ -145,7 +151,13 @@ public class SqlCoalesceFunction extends SqlFunction {
         () -> "Can't find leastRestrictive type for " + thenTypes);
   }
 
-  //~ Methods ----------------------------------------------------------------
+  @Override public boolean checkOperandTypes(
+      SqlCallBinding callBinding,
+      boolean throwOnFailure) {
+    // Again, we omit checking the operand types at this stage
+    // all the checking occurs in inferReturnType
+    return true;
+  }
 
 
   @Override public SqlOperandCountRange getOperandCountRange() {

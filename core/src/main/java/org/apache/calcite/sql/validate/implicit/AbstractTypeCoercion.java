@@ -22,13 +22,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCollation;
-import org.apache.calcite.sql.SqlDynamicParam;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeFamily;
@@ -721,4 +715,6 @@ public abstract class AbstractTypeCoercion implements TypeCoercion {
     }
     return null;
   }
+
+  public abstract boolean coalesceCoercion(SqlCallBinding callBinding);
 }
