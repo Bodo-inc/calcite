@@ -16,13 +16,18 @@
  */
 package org.apache.calcite.sql.fun;
 
-import com.google.common.collect.Iterables;
-
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexCallBinding;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCallBinding;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperandCountRange;
+import org.apache.calcite.sql.SqlOperatorBinding;
+import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
@@ -31,16 +36,14 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.implicit.TypeCoercion;
-import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
-import org.apache.calcite.rel.type.RelDataType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Objects.requireNonNull;
-
 import static org.apache.calcite.util.Static.RESOURCE;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * The <code>COALESCE</code> function.
@@ -85,7 +88,8 @@ public class SqlCoalesceFunction extends SqlFunction {
   private static RelDataType inferTypeFromValidator(
       SqlCallBinding callBinding) {
     SqlCall coalesceCall = callBinding.getCall();
-    SqlNodeList thenList = new SqlNodeList(coalesceCall.getOperandList(), coalesceCall.getParserPosition());
+    SqlNodeList thenList = new SqlNodeList(coalesceCall.getOperandList(),
+        coalesceCall.getParserPosition());
     ArrayList<SqlNode> nullList = new ArrayList<>();
     List<RelDataType> argTypes = new ArrayList<>();
 
@@ -94,7 +98,9 @@ public class SqlCoalesceFunction extends SqlFunction {
 
     for (int i = 0; i < thenList.size(); i++) {
       SqlNode node = thenList.get(i);
-      RelDataType type = typeFactory.createTypeWithNullability(SqlTypeUtil.deriveType(callBinding, node), false);
+      RelDataType type = typeFactory.createTypeWithNullability(
+          SqlTypeUtil.deriveType(callBinding,
+          node), false);
       argTypes.add(type);
       if (SqlUtil.isNullLiteral(node, false)) {
         nullList.add(node);
@@ -136,10 +142,6 @@ public class SqlCoalesceFunction extends SqlFunction {
   private static RelDataType inferTypeFromOperands(SqlOperatorBinding opBinding) {
     final RelDataTypeFactory typeFactory = opBinding.getTypeFactory();
     final List<RelDataType> argTypes = opBinding.collectOperandTypes();
-    assert (argTypes.size() % 2) == 1 : "odd number of arguments expected: "
-        + argTypes.size();
-    assert argTypes.size() > 1 : "CASE must have more than 1 argument. Given "
-        + argTypes.size() + ", " + argTypes;
     List<RelDataType> thenTypes = new ArrayList<>();
     for (int j = 0; j < argTypes.size(); j += 1) {
       RelDataType argType = typeFactory.createTypeWithNullability(argTypes.get(j), false);
