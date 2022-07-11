@@ -17,7 +17,6 @@
 package org.apache.calcite.sql.validate;
 
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlSelect;
 
 /**
  * Scope of a Qualify clause. Mostly a wrapper around the parent's selectScope, but has some utility
