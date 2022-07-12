@@ -52,7 +52,7 @@ public class QualifyScope extends DelegatingScope implements WindowedSelectScope
     // Do the visiting
     expr.accept(windowedAggChecker);
 
-    //return if we saw a window
+    // return if we saw a window
     return windowedAggChecker.sawWindow();
   }
 

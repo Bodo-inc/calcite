@@ -750,7 +750,7 @@ public class SqlToRelConverter {
           orderExprList);
     }
 
-    if (select.hasQualify()) {
+    if (select.getQualify() != null) {
       handleQualifyClause(bb);
     }
 
@@ -799,7 +799,7 @@ public class SqlToRelConverter {
    */
   private void handleQualifyClause(
       Blackboard bb) {
-    RelNode rel = bb.root;
+    RelNode rel = bb.root();
     // If we had a qualify clause, we know it's the last item in the select list,
     // as we place it there.
 
@@ -823,7 +823,6 @@ public class SqlToRelConverter {
 
     final CorrelationUse p = getCorrelationUse(bb, filterRelNode);
 
-    // This condition will never be true, as we disallow corelated variables at an earlier step
     if (p != null) {
       assert p.r instanceof Filter;
       Filter f = (Filter) p.r;
@@ -842,7 +841,6 @@ public class SqlToRelConverter {
     final RelNode projectRel = LogicalProject.create(filterRelNode, ImmutableList.of(),
         Pair.left(newProjects), Pair.right(newProjects));
     bb.setRoot(projectRel, false);
-    return;
   }
 
   /**
@@ -3295,7 +3293,8 @@ public class SqlToRelConverter {
      * later generating a wrapping filter in handleQualifyClause, assuming that the clause is
      * always present as the rightmost element of the selectlist
      */
-    if (select.hasQualify()) {
+
+    if (select.getQualify() != null) {
       selectList.add(select.getQualify());
     }
     SqlNode having = select.getHaving();
@@ -3308,7 +3307,7 @@ public class SqlToRelConverter {
         groupList,
         having,
         orderExprList,
-        select.hasQualify());
+        select.getQualify() != null);
   }
 
   protected final void createAggImpl(
@@ -3456,7 +3455,7 @@ public class SqlToRelConverter {
       final SelectScope selectScope =
           SqlValidatorUtil.getEnclosingSelectScope(bb.scope);
       assert selectScope != null;
-      //validator namespace
+      // validator namespace
       final SqlValidatorNamespace selectNamespace = getNamespaceOrNull(selectScope.getNode());
       assert selectNamespace != null : "selectNamespace must not be null for " + selectScope;
       final List<String> names =
@@ -4495,7 +4494,7 @@ public class SqlToRelConverter {
      * later generating a wrapping filter in handleQualifyClause, assuming that the clause is
      * always present as the rightmost element of the selectList
      */
-    if (select.hasQualify()) {
+    if (select.getQualify() != null) {
       selectList.add(select.getQualify());
     }
     selectList = validator().expandStar(selectList, select, false);

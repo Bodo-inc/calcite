@@ -2769,7 +2769,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // the column references in the QUALIFY clause are properly checked, to ensure that
       // they are valid grouping expressions.
       SqlValidatorScope qualifyScope = selectScope;
-      if (select.hasQualify()) {
+      final SqlNode qualify = select.getQualify();
+      if (qualify != null) {
         if (isAggregate(select)) {
           qualifyScope =
               new AggregatingSelectScope(selectScope, select, false);
@@ -2778,9 +2779,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // the scope properly validates the expressions in the parent select scope.
         // The default selectScope does not do this
         clauseScopes.put(
-            IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope,
-            select.getQualify())); //qualifyScope);
-        //The operand third argument determines which operand of the select to operate on
+            IdPair.of(select, Clause.QUALIFY), new QualifyScope(qualifyScope, qualify)); //qualifyScope);
+        // The operand third argument determines which operand of the select to operate on
         registerOperandSubQueries(
             selectScope,
             select,
@@ -4418,8 +4418,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (having == null) {
       return;
     }
-    //If we have an HAVING clause, the select scope must be an aggregating scope,
-    //so the cast is safe
+    // If we have an HAVING clause, the select scope must be an aggregating scope,
+    // so the cast is safe
     final AggregatingScope havingScope =
         (AggregatingScope) getSelectScope(select);
     if (config.conformance().isHavingAlias()) {
@@ -4435,7 +4435,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // can be resolved before qualification occurs
     // TODO: push this change into calcite
     having.validate(this, havingScope);
-    //having must be a boolean expression
+    // having must be a boolean expression
     inferUnknownTypes(
         booleanType,
         havingScope,
@@ -4446,10 +4446,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
   protected void validateQualifyClause(SqlSelect select) {
-    if (!select.hasQualify()) {
+    SqlNode qualify = select.getQualify();
+    if (qualify == null) {
       return;
     }
-    SqlNode qualify = select.getQualify();
+
 
     // get the scope of the qualify. The QualifyScope object wraps the parent scope, which
     // could be either a Select Scope, or an Aggregating Scope, depending on
@@ -4482,7 +4483,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw newValidationError(qualify, RESOURCE.qualifyRequiresWindowFn());
     }
 
-    //qualify must be a boolean expression.
+    // qualify must be a boolean expression.
     inferUnknownTypes(
         booleanType,
         qualifyScope,
@@ -6139,7 +6140,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   /**
    * For several clauses in many SQL dialects, it is valid to use aliases from the select statement.
    * IE:
-   * select MAX(ID) as tmp_val from my_table GROUP BY name HAVING tmp_val > 1;
+   * select MAX(ID) as tmp_val from my_table GROUP BY name HAVING tmp_val &gt 1;
    * This helper function expands the underlying expression, getting rid of the aliasing.
    *
    * @param expr The expression for which aliases are to be expanded.
@@ -6150,7 +6151,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    *                         validator.config().conformance().isHavingAlias()). Cannot be true if
    *                         groupByExpr is also set. If both havingExpression and groupByExpr
    *                         are false, the expression must be a qualify Expression.
-   * @param groupByExpr Is the expression a having expression? Needed as some SQL dialects do
+   * @param groupByExpr Is the expression a group by expression? Needed as some SQL dialects do
    *                    not allow aliases in group by expressions (Controlled by
    *                    validator.config().conformance().isGroupByAlias()). Cannot be true if
    *                    havingExpression is also set. If both havingExpression and groupByExpr
@@ -6792,7 +6793,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     ExtendedExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
         SqlSelect select, SqlNode root, boolean havingExpr, boolean groupByExpr) {
       super(validator, scope);
-      //Should never have both flags indicating the type of expression set.
+      // Should never have both flags indicating the type of expression set.
       assert !(havingExpr && groupByExpr);
       this.select = select;
       this.root = root;
