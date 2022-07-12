@@ -519,7 +519,7 @@ class RexProgramTest extends RexProgramTestBase {
   }
 
   // This test no longer passes, as we've modified COALESCE to have the same type inference
-  // as CASE
+  // as CASE, and the second argument will be cast to string.
 //  @Test void testNoCommonReturnTypeFails() {
 //    try {
 //      final RexNode node = coalesce(vVarchar(1), vInt(2));

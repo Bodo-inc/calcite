@@ -721,5 +721,4 @@ public abstract class AbstractTypeCoercion implements TypeCoercion {
     }
     return null;
   }
-
 }

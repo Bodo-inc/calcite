@@ -97,6 +97,13 @@ public class SqlCoalesceFunction extends SqlFunction {
 
 
     // Coalesce can only return null if all the input argument types are nullable
+    // For example, assume we have a call like
+    // Coalesce(A, B, C .... Non_null_col .. X, Y, Z)
+    // If any of the columns prior to non_null_col are not null for a particular index,
+    // then we select that column. If all of the columns prior to non_null_col are null and we
+    // reach non_null_column, then we always select non_null_col, as it is never null.
+    // Therefore, for each index of the output, we will always have a non-null value,
+    // meaning the overall return type is not null.
     boolean retTypeIsNullable = true;
     for (int i = 0; i < arglist.size(); i++) {
       SqlNode node = arglist.get(i);
@@ -147,6 +154,13 @@ public class SqlCoalesceFunction extends SqlFunction {
     List<RelDataType> thenTypes = new ArrayList<>();
 
     // Coalesce can only return null if all the input argument types are nullable
+    // For example, assume we have a call like
+    // Coalesce(A, B, C .... Non_null_col .. X, Y, Z)
+    // If any of the columns prior to non_null_col are not null for a particular index,
+    // then we select that column. If all of the columns prior to non_null_col are null and we
+    // reach non_null_column, then we always select non_null_col, as it is never null.
+    // Therefore, for each index of the output, we will always have a non-null value,
+    // meaning the overall return type is not null.
     boolean retTypeIsNullable = true;
     for (int j = 0; j < argTypes.size(); j += 1) {
       RelDataType argType = argTypes.get(j);

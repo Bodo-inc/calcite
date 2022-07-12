@@ -437,13 +437,6 @@ public abstract class OperandTypes {
       new SameOperandTypeChecker(-1);
 
   /**
-   * Operand type-checking strategy where any number of operands must all be
-   * in the same type family.
-   */
-  public static final SqlOperandTypeChecker TODO =
-      new SameOperandTypeChecker(-1);
-
-  /**
    * Operand type-checking strategy where any positive number of operands must all be
    * in the same type family.
    */
