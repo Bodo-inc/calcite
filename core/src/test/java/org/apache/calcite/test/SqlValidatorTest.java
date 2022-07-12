@@ -207,6 +207,18 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql(sql).withValidatorConfig(c -> c.withCallRewrite(false)).ok();
   }
 
+  @Test void testCoalesceDecompose2() {
+    final String sql =
+        "SELECT COALESCE('hello', 10) FROM emp";
+    sql(sql).ok();
+  }
+
+  @Test void testCoalesceNoDecompose2() {
+    final String sql =
+        "SELECT COALESCE('hello', 10) FROM emp";
+    sql(sql).withValidatorConfig(c -> c.withCallRewrite(false)).ok();
+  }
+
   @Test void testTypesLiterals() {
     expr("'abc'")
         .columnType("CHAR(3) NOT NULL");

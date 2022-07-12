@@ -88,26 +88,28 @@ public class SqlCoalesceFunction extends SqlFunction {
   private static RelDataType inferTypeFromValidator(
       SqlCallBinding callBinding) {
     SqlCall coalesceCall = callBinding.getCall();
-    SqlNodeList thenList = new SqlNodeList(coalesceCall.getOperandList(),
+    SqlNodeList arglist = new SqlNodeList(coalesceCall.getOperandList(),
         coalesceCall.getParserPosition());
     ArrayList<SqlNode> nullList = new ArrayList<>();
     List<RelDataType> argTypes = new ArrayList<>();
 
-//    final SqlNodeList whenOperands = caseCall.getWhenOperands();
     final RelDataTypeFactory typeFactory = callBinding.getTypeFactory();
 
-    for (int i = 0; i < thenList.size(); i++) {
-      SqlNode node = thenList.get(i);
-      RelDataType type = typeFactory.createTypeWithNullability(
-          SqlTypeUtil.deriveType(callBinding,
-          node), false);
+
+    // Coalesce can only return null if all the input argument types are nullable
+    boolean retTypeIsNullable = true;
+    for (int i = 0; i < arglist.size(); i++) {
+      SqlNode node = arglist.get(i);
+      RelDataType type = SqlTypeUtil.deriveType(callBinding, node);
       argTypes.add(type);
+      if (!type.isNullable()) {
+        retTypeIsNullable = false;
+      }
       if (SqlUtil.isNullLiteral(node, false)) {
+        // We need to keep track of the nulls, so we can later
         nullList.add(node);
       }
     }
-
-
 
     RelDataType ret = typeFactory.leastRestrictive(argTypes);
     if (null == ret) {
@@ -136,21 +138,29 @@ public class SqlCoalesceFunction extends SqlFunction {
     for (SqlNode node : nullList) {
       validator.setValidatedNodeType(node, ret);
     }
-    return ret;
+    return typeFactory.createTypeWithNullability(ret, retTypeIsNullable);
   }
 
   private static RelDataType inferTypeFromOperands(SqlOperatorBinding opBinding) {
     final RelDataTypeFactory typeFactory = opBinding.getTypeFactory();
     final List<RelDataType> argTypes = opBinding.collectOperandTypes();
     List<RelDataType> thenTypes = new ArrayList<>();
+
+    // Coalesce can only return null if all the input argument types are nullable
+    boolean retTypeIsNullable = true;
     for (int j = 0; j < argTypes.size(); j += 1) {
-      RelDataType argType = typeFactory.createTypeWithNullability(argTypes.get(j), false);
+      RelDataType argType = argTypes.get(j);
       thenTypes.add(argType);
+      if (!argType.isNullable()) {
+        retTypeIsNullable = false;
+      }
     }
 
-    return requireNonNull(
+    RelDataType retType = requireNonNull(
         typeFactory.leastRestrictive(thenTypes),
         () -> "Can't find leastRestrictive type for " + thenTypes);
+
+    return typeFactory.createTypeWithNullability(retType, retTypeIsNullable);
   }
 
   @Override public boolean checkOperandTypes(

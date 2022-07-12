@@ -451,7 +451,7 @@ public class TypeCoercionImpl extends AbstractTypeCoercion {
       boolean coerced = false;
       for (int i = 0; i < operandList.size(); i++) {
         coerced = coerceColumnType(scope, operandList, i, widerType) || coerced;
-        // manually propagate changes
+        // manually propagate changes back to the call operands
         call.setOperand(i, operandList.get(i));
       }
       return coerced;
