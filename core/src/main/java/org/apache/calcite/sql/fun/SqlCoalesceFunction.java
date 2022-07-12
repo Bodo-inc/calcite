@@ -60,6 +60,9 @@ public class SqlCoalesceFunction extends SqlFunction {
     super("COALESCE",
         SqlKind.COALESCE,
         null,
+        // Operand type inference
+        // We explicitly cast each operand to the return type while inferring the return
+        // type in inferReturnType, so the type of each operand is the return type.
         InferTypes.RETURN_TYPE,
         null,
         SqlFunctionCategory.SYSTEM);
