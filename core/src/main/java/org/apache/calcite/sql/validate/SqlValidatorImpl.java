@@ -6140,7 +6140,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   /**
    * For several clauses in many SQL dialects, it is valid to use aliases from the select statement.
    * IE:
-   * select MAX(ID) as tmp_val from my_table GROUP BY name HAVING tmp_val &gt 1;
+   * select MAX(ID) as tmp_val from my_table GROUP BY name HAVING tmp_val &gt; 1;
    * This helper function expands the underlying expression, getting rid of the aliasing.
    *
    * @param expr The expression for which aliases are to be expanded.
