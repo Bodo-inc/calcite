@@ -316,9 +316,34 @@ public class RelMdColumnUniqueness
     for (RexCall equals: equalities) {
       Integer arg0 = ((RexInputRef) equals.getOperands().get(0)).getIndex();
       Integer arg1 = ((RexInputRef) equals.getOperands().get(1)).getIndex();
-      // Left and right must not be in the same table
-      if ((arg0 < numLeftCols && arg1 >= numLeftCols)
-          || (arg0 >= numLeftCols && arg1 < numLeftCols)) {
+      if (arg0 < numLeftCols && arg1 < numLeftCols) {
+        // Both columns are in the left table.
+        if (!isOuterLeft) {
+          // An outer join may not have the columns equal
+          boolean foundArg0 = initLeftColumns.get(arg0);
+          boolean foundArg1 = initLeftColumns.get(arg1);
+          if (foundArg0 && !foundArg1) {
+            addedLeftCols.set(arg1);
+          } else if (!foundArg0 && foundArg1) {
+            addedLeftCols.set(arg0);
+          }
+        }
+      } else if (arg0 >= numLeftCols && arg1 >= numLeftCols) {
+        // Both columns are in the right table.
+        if (!isOuterRight) {
+          // An outer join may not have the columns equal
+          arg0 = arg0 - numLeftCols;
+          arg1 = arg1 - numLeftCols;
+          boolean foundArg0 = initLeftColumns.get(arg0);
+          boolean foundArg1 = initLeftColumns.get(arg1);
+          if (foundArg0 && !foundArg1) {
+            addedRightCols.set(arg1);
+          } else if (!foundArg0 && foundArg1) {
+            addedRightCols.set(arg0);
+          }
+        }
+      } else {
+        // Left and right are in different tables
         Integer leftArg;
         Integer rightArg;
         if (arg0 < numLeftCols) {
