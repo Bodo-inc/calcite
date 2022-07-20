@@ -328,11 +328,9 @@ public class RelMdColumnUniqueness
             // An outer join may not have the columns equal
             boolean foundArg0 = combinedLeftBits.get(arg0);
             boolean foundArg1 = combinedLeftBits.get(arg1);
-            if (foundArg0 && !foundArg1) {
-              addedLeftCols.set(arg1);
-              bitAdded = true;
-            } else if (!foundArg0 && foundArg1) {
+            if ((foundArg0 && !foundArg1) || (!foundArg0 && foundArg1)) {
               addedLeftCols.set(arg0);
+              addedLeftCols.set(arg1);
               bitAdded = true;
             } else {
               unmatchedEqualities.add(equals);
@@ -346,11 +344,9 @@ public class RelMdColumnUniqueness
             arg1 = arg1 - numLeftCols;
             boolean foundArg0 = combinedRightBits.get(arg0);
             boolean foundArg1 = combinedRightBits.get(arg1);
-            if (foundArg0 && !foundArg1) {
-              addedRightCols.set(arg1);
-              bitAdded = true;
-            } else if (!foundArg0 && foundArg1) {
+            if ((foundArg0 && !foundArg1) || (!foundArg0 && foundArg1)) {
               addedRightCols.set(arg0);
+              addedRightCols.set(arg1);
               bitAdded = true;
             } else {
               unmatchedEqualities.add(equals);
@@ -440,7 +436,7 @@ public class RelMdColumnUniqueness
   }
 
   /**
-   * Takes a RexNode that represents a condition and finas
+   * Takes a RexNode that represents a condition and finds
    * all equalities that are always True. This is used by Join
    * to help identify when the columns are unique.
    */
