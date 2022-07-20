@@ -333,9 +333,9 @@ public class RelMdColumnUniqueness
         boolean foundLeft = initLeftColumns.get(leftArg);
         boolean foundRight = initRightColumns.get(rightArg);
         if (foundLeft && !foundRight && !isOuterLeft) {
-          addedLeftCols.set(leftArg);
-        } else if (!foundLeft && foundRight && !isOuterRight) {
           addedRightCols.set(rightArg);
+        } else if (!foundLeft && foundRight && !isOuterRight) {
+          addedLeftCols.set(leftArg);
         }
       }
     }
