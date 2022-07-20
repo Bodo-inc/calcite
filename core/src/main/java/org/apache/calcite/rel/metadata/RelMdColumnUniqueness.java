@@ -319,8 +319,8 @@ public class RelMdColumnUniqueness
       // Left and right must not be in the same table
       if ((arg0 < numLeftCols && arg1 >= numLeftCols)
           || (arg0 >= numLeftCols && arg1 < numLeftCols)) {
-        Integer leftArg = 0;
-        Integer rightArg = 0;
+        Integer leftArg;
+        Integer rightArg;
         if (arg0 < numLeftCols) {
           // arg0 -> Left, arg1 -> Right
           leftArg = arg0;
@@ -397,7 +397,11 @@ public class RelMdColumnUniqueness
     // Note: Hash(RexNode) is equivalent to RexNode.toString().
     HashSet<RexCall> equalityExprs = new HashSet<>();
     if (cond.getKind() == SqlKind.EQUALS) {
-      equalityExprs.add((RexCall) cond);
+      RexCall equalNode = (RexCall) cond;
+      if (equalNode.getOperands().get(0) instanceof RexInputRef
+          && equalNode.getOperands().get(1) instanceof RexInputRef) {
+        equalityExprs.add(equalNode);
+      }
     } else if (cond.getKind() == SqlKind.AND) {
       RexCall andCond = (RexCall) cond;
       // And can have many children, we want to merge on
