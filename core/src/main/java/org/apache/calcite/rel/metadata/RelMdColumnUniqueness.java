@@ -309,63 +309,89 @@ public class RelMdColumnUniqueness
     HashSet<RexCall> equalities = findCommonEqualities(rel.getCondition());
     // Check each equality. If we are only checking uniqueness with a single
     // side we can include the other side.
-    BitSet addedLeftCols = new BitSet();
-    BitSet addedRightCols = new BitSet();
     boolean isOuterLeft = rel.getJoinType().generatesNullsOnRight();
     boolean isOuterRight = rel.getJoinType().generatesNullsOnLeft();
-    for (RexCall equals: equalities) {
-      Integer arg0 = ((RexInputRef) equals.getOperands().get(0)).getIndex();
-      Integer arg1 = ((RexInputRef) equals.getOperands().get(1)).getIndex();
-      if (arg0 < numLeftCols && arg1 < numLeftCols) {
-        // Both columns are in the left table.
-        if (!isOuterLeft) {
-          // An outer join may not have the columns equal
-          boolean foundArg0 = initLeftColumns.get(arg0);
-          boolean foundArg1 = initLeftColumns.get(arg1);
-          if (foundArg0 && !foundArg1) {
-            addedLeftCols.set(arg1);
-          } else if (!foundArg0 && foundArg1) {
-            addedLeftCols.set(arg0);
+    ImmutableBitSet combinedLeftBits = initLeftColumns;
+    ImmutableBitSet combinedRightBits = initRightColumns;
+    boolean bitAdded = true;
+    while (bitAdded) {
+      BitSet addedLeftCols = new BitSet();
+      BitSet addedRightCols = new BitSet();
+      bitAdded = false;
+      HashSet<RexCall> unmatchedEqualities = new HashSet();
+      for (RexCall equals: equalities) {
+        Integer arg0 = ((RexInputRef) equals.getOperands().get(0)).getIndex();
+        Integer arg1 = ((RexInputRef) equals.getOperands().get(1)).getIndex();
+        if (arg0 < numLeftCols && arg1 < numLeftCols) {
+          // Both columns are in the left table.
+          if (!isOuterLeft) {
+            // An outer join may not have the columns equal
+            boolean foundArg0 = combinedLeftBits.get(arg0);
+            boolean foundArg1 = combinedLeftBits.get(arg1);
+            if (foundArg0 && !foundArg1) {
+              addedLeftCols.set(arg1);
+              bitAdded = true;
+            } else if (!foundArg0 && foundArg1) {
+              addedLeftCols.set(arg0);
+              bitAdded = true;
+            } else {
+              unmatchedEqualities.add(equals);
+            }
           }
-        }
-      } else if (arg0 >= numLeftCols && arg1 >= numLeftCols) {
-        // Both columns are in the right table.
-        if (!isOuterRight) {
-          // An outer join may not have the columns equal
-          arg0 = arg0 - numLeftCols;
-          arg1 = arg1 - numLeftCols;
-          boolean foundArg0 = initLeftColumns.get(arg0);
-          boolean foundArg1 = initLeftColumns.get(arg1);
-          if (foundArg0 && !foundArg1) {
-            addedRightCols.set(arg1);
-          } else if (!foundArg0 && foundArg1) {
-            addedRightCols.set(arg0);
+        } else if (arg0 >= numLeftCols && arg1 >= numLeftCols) {
+          // Both columns are in the right table.
+          if (!isOuterRight) {
+            // An outer join may not have the columns equal
+            arg0 = arg0 - numLeftCols;
+            arg1 = arg1 - numLeftCols;
+            boolean foundArg0 = combinedRightBits.get(arg0);
+            boolean foundArg1 = combinedRightBits.get(arg1);
+            if (foundArg0 && !foundArg1) {
+              addedRightCols.set(arg1);
+              bitAdded = true;
+            } else if (!foundArg0 && foundArg1) {
+              addedRightCols.set(arg0);
+              bitAdded = true;
+            } else {
+              unmatchedEqualities.add(equals);
+            }
           }
-        }
-      } else {
-        // Left and right are in different tables
-        Integer leftArg;
-        Integer rightArg;
-        if (arg0 < numLeftCols) {
-          // arg0 -> Left, arg1 -> Right
-          leftArg = arg0;
-          rightArg = arg1 - numLeftCols;
         } else {
-          // arg0 -> Right, arg1 -> Left
-          leftArg = arg1;
-          rightArg = arg0 - numLeftCols;
-        }
-        boolean foundLeft = initLeftColumns.get(leftArg);
-        boolean foundRight = initRightColumns.get(rightArg);
-        if (foundLeft && !foundRight && !isOuterLeft) {
-          addedRightCols.set(rightArg);
-        } else if (!foundLeft && foundRight && !isOuterRight) {
-          addedLeftCols.set(leftArg);
+          // Left and right are in different tables
+          Integer leftArg;
+          Integer rightArg;
+          if (arg0 < numLeftCols) {
+            // arg0 -> Left, arg1 -> Right
+            leftArg = arg0;
+            rightArg = arg1 - numLeftCols;
+          } else {
+            // arg0 -> Right, arg1 -> Left
+            leftArg = arg1;
+            rightArg = arg0 - numLeftCols;
+          }
+          boolean foundLeft = combinedLeftBits.get(leftArg);
+          boolean foundRight = combinedRightBits.get(rightArg);
+          if (foundLeft && !foundRight) {
+            if (!isOuterLeft) {
+              addedRightCols.set(rightArg);
+              bitAdded = true;
+            }
+          } else if (!foundLeft && foundRight) {
+            if (!isOuterRight) {
+              addedLeftCols.set(leftArg);
+              bitAdded = true;
+            }
+          } else {
+            unmatchedEqualities.add(equals);
+          }
         }
       }
+      equalities = unmatchedEqualities;
+      combinedLeftBits = combinedLeftBits.union(addedLeftCols);
+      combinedRightBits = combinedRightBits.union(addedRightCols);
     }
-    final ImmutableBitSet leftColumns = initLeftColumns.union(addedLeftCols);
-    final ImmutableBitSet rightColumns = initRightColumns.union(addedRightCols);
+    final ImmutableBitSet leftColumns = combinedLeftBits;
+    final ImmutableBitSet rightColumns = combinedRightBits;
 
     // If the original column mask contains columns from both the left and
     // right hand side, then the columns are unique if and only if they're
