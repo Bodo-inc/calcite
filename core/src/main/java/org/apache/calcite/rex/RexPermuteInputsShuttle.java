@@ -87,7 +87,7 @@ public class RexPermuteInputsShuttle extends RexShuttle {
     int target = mapping.getTarget(index);
     return new RexInputRef(
         target,
-        local.getType());
+        local.getType(), local.getParserPosition());
   }
 
   @Override public RexNode visitCall(RexCall call) {
@@ -96,7 +96,7 @@ public class RexPermuteInputsShuttle extends RexShuttle {
           (String) ((RexLiteral) call.getOperands().get(1)).getValue2();
       final int i = lookup(fields, name);
       if (i >= 0) {
-        return RexInputRef.of(i, fields);
+        return RexInputRef.of(i, fields, call.getParserPosition());
       }
     }
     return super.visitCall(call);

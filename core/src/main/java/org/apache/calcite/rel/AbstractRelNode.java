@@ -34,6 +34,7 @@ import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlExplainLevel;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
@@ -65,6 +66,8 @@ public abstract class AbstractRelNode implements RelNode {
 
   //~ Instance fields --------------------------------------------------------
 
+  protected final SqlParserPos pos;
+
   /**
    * Cached type of this relational expression.
    */
@@ -89,8 +92,9 @@ public abstract class AbstractRelNode implements RelNode {
   /**
    * Creates an <code>AbstractRelNode</code>.
    */
-  protected AbstractRelNode(RelOptCluster cluster, RelTraitSet traitSet) {
+  protected AbstractRelNode(RelOptCluster cluster, RelTraitSet traitSet, SqlParserPos pos) {
     super();
+    this.pos = pos;
     assert cluster != null;
     this.cluster = cluster;
     this.traitSet = traitSet;
@@ -518,4 +522,12 @@ public abstract class AbstractRelNode implements RelNode {
       return this;
     }
   }
+
+  /**
+   * Returns the original parser position of the expression that was converted into this relNode.
+   */
+  public SqlParserPos getParserPosition() {
+    return pos;
+  }
+
 }

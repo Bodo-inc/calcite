@@ -38,6 +38,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexSlot;
 import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Litmus;
@@ -375,8 +376,9 @@ public abstract class Window extends SingleRel {
         RelDataType type,
         List<RexNode> operands,
         int ordinal,
-        boolean distinct) {
-      this(aggFun, type, operands, ordinal, distinct, false);
+        boolean distinct,
+        SqlParserPos pos) {
+      this(aggFun, type, operands, ordinal, distinct, false, pos);
     }
 
     /**
@@ -394,8 +396,9 @@ public abstract class Window extends SingleRel {
         List<RexNode> operands,
         int ordinal,
         boolean distinct,
-        boolean ignoreNulls) {
-      super(type, aggFun, operands);
+        boolean ignoreNulls,
+        SqlParserPos pos) {
+      super(type, aggFun, operands, pos);
       this.ordinal = ordinal;
       this.distinct = distinct;
       this.ignoreNulls = ignoreNulls;
@@ -424,8 +427,8 @@ public abstract class Window extends SingleRel {
       return hash;
     }
 
-    @Override public RexCall clone(RelDataType type, List<RexNode> operands) {
-      return super.clone(type, operands);
+    @Override public RexCall clone(RelDataType type, List<RexNode> operands, SqlParserPos pos) {
+      return super.clone(type, operands, pos);
     }
   }
 }

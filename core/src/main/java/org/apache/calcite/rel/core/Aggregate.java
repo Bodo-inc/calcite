@@ -52,12 +52,7 @@ import com.google.common.math.IntMath;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Relational operator that eliminates
@@ -157,7 +152,8 @@ public abstract class Aggregate extends SingleRel implements Hintable {
       ImmutableBitSet groupSet,
       @Nullable List<ImmutableBitSet> groupSets,
       List<AggregateCall> aggCalls) {
-    super(cluster, traitSet, input);
+    super(cluster, traitSet, input,
+        SqlParserPos.sum((Collection) aggCalls.stream().map(AggregateCall::getPos)));
     this.hints = ImmutableList.copyOf(hints);
     this.aggCalls = ImmutableList.copyOf(aggCalls);
     this.groupSet = Objects.requireNonNull(groupSet, "groupSet");

@@ -19,6 +19,7 @@ package org.apache.calcite.rex;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import com.google.common.base.Preconditions;
 
@@ -60,7 +61,9 @@ public class RexFieldAccess extends RexNode {
 
   RexFieldAccess(
       RexNode expr,
-      RelDataTypeField field) {
+      RelDataTypeField field,
+      SqlParserPos pos) {
+    super(pos);
     checkValid(expr, field);
     this.expr = expr;
     this.field = field;

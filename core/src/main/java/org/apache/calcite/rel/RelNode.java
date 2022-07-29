@@ -30,6 +30,7 @@ import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Litmus;
 
 import org.apiguardian.api.API;
@@ -427,6 +428,11 @@ public interface RelNode extends RelOptNode, Cloneable {
   default boolean fieldIsNullable(int i) {
     return getRowType().getFieldList().get(i).getType().isNullable();
   }
+
+  /**
+   * Returns the original parser position of the expression that was converted into this relNode.
+   */
+  SqlParserPos getParserPosition();
 
   /** Context of a relational expression, for purposes of checking validity. */
   interface Context {

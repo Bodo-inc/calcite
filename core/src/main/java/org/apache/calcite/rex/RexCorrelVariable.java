@@ -19,6 +19,7 @@ package org.apache.calcite.rex;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -38,8 +39,9 @@ public class RexCorrelVariable extends RexVariable {
 
   RexCorrelVariable(
       CorrelationId id,
-      RelDataType type) {
-    super(id.getName(), type);
+      RelDataType type,
+      SqlParserPos pos) {
+    super(id.getName(), type, pos);
     this.id = Objects.requireNonNull(id, "id");
   }
 

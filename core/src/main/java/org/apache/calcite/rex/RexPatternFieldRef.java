@@ -18,6 +18,7 @@ package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
  * Variable that references a field of an input relational expression.
@@ -25,8 +26,8 @@ import org.apache.calcite.sql.SqlKind;
 public class RexPatternFieldRef extends RexInputRef {
   private final String alpha;
 
-  public RexPatternFieldRef(String alpha, int index, RelDataType type) {
-    super(index, type);
+  public RexPatternFieldRef(String alpha, int index, RelDataType type, SqlParserPos pos) {
+    super(index, type, pos);
     this.alpha = alpha;
     digest = alpha + ".$" + index;
   }
@@ -35,12 +36,12 @@ public class RexPatternFieldRef extends RexInputRef {
     return alpha;
   }
 
-  public static RexPatternFieldRef of(String alpha, int index, RelDataType type) {
-    return new RexPatternFieldRef(alpha, index, type);
+  public static RexPatternFieldRef of(String alpha, int index, RelDataType type, SqlParserPos pos) {
+    return new RexPatternFieldRef(alpha, index, type, pos);
   }
 
   public static RexPatternFieldRef of(String alpha, RexInputRef ref) {
-    return new RexPatternFieldRef(alpha, ref.getIndex(), ref.getType());
+    return new RexPatternFieldRef(alpha, ref.getIndex(), ref.getType(), ref.getParserPosition());
   }
 
   @Override public <R> R accept(RexVisitor<R> visitor) {

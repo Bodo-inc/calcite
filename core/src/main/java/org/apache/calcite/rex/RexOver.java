@@ -19,6 +19,7 @@ package org.apache.calcite.rex;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlWindow;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ControlFlowException;
 import org.apache.calcite.util.Util;
 
@@ -68,8 +69,9 @@ public class RexOver extends RexCall {
       List<RexNode> operands,
       RexWindow window,
       boolean distinct,
-      boolean ignoreNulls) {
-    super(type, op, operands);
+      boolean ignoreNulls,
+      SqlParserPos pos) {
+    super(type, op, operands, pos);
     Preconditions.checkArgument(op.isAggregator());
     this.window = Objects.requireNonNull(window, "window");
     this.distinct = distinct;

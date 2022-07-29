@@ -39,6 +39,8 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.BuiltInMethod;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Pair;
@@ -50,6 +52,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -262,7 +265,7 @@ public abstract class EnumerableAggregateBase extends Aggregate {
                   inputPhysType.getRowType().getFieldList();
               List<RexNode> args = new ArrayList<>();
               for (int index : agg.call.getArgList()) {
-                args.add(RexInputRef.of(index, inputTypes));
+                args.add(RexInputRef.of(index, inputTypes, agg.call.getPos()));
               }
               return args;
             }
@@ -271,7 +274,7 @@ public abstract class EnumerableAggregateBase extends Aggregate {
               return agg.call.filterArg < 0
                   ? null
                   : RexInputRef.of(agg.call.filterArg,
-                      inputPhysType.getRowType());
+                      inputPhysType.getRowType(), agg.call.getPos());
             }
 
             @Override public RexToLixTranslator rowTranslator() {

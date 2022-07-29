@@ -19,6 +19,7 @@ package org.apache.calcite.rex;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -46,8 +47,8 @@ public class RexTableInputRef extends RexInputRef {
 
   private final RelTableRef tableRef;
 
-  private RexTableInputRef(RelTableRef tableRef, int index, RelDataType type) {
-    super(index, type);
+  private RexTableInputRef(RelTableRef tableRef, int index, RelDataType type, SqlParserPos pos) {
+    super(index, type, pos);
     this.tableRef = tableRef;
     this.digest = tableRef.toString() + ".$" + index;
   }
@@ -77,12 +78,16 @@ public class RexTableInputRef extends RexInputRef {
     return tableRef.getEntityNumber();
   }
 
-  public static RexTableInputRef of(RelTableRef tableRef, int index, RelDataType type) {
-    return new RexTableInputRef(tableRef, index, type);
+  public static RexTableInputRef of(
+      RelTableRef tableRef,
+      int index,
+      RelDataType type,
+      SqlParserPos pos) {
+    return new RexTableInputRef(tableRef, index, type, pos);
   }
 
   public static RexTableInputRef of(RelTableRef tableRef, RexInputRef ref) {
-    return new RexTableInputRef(tableRef, ref.getIndex(), ref.getType());
+    return new RexTableInputRef(tableRef, ref.getIndex(), ref.getType(), ref.getParserPosition());
   }
 
   @Override public <R> R accept(RexVisitor<R> visitor) {

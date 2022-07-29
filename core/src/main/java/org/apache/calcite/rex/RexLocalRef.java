@@ -18,6 +18,7 @@ package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -50,8 +51,8 @@ public class RexLocalRef extends RexSlot {
    * @param index Index of the field in the underlying row type
    * @param type  Type of the column
    */
-  public RexLocalRef(int index, RelDataType type) {
-    super(createName(index), index, type);
+  public RexLocalRef(int index, RelDataType type, SqlParserPos pos) {
+    super(createName(index), index, type, pos);
     assert type != null;
     assert index >= 0;
   }

@@ -19,6 +19,7 @@ package org.apache.calcite.rex;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -64,8 +65,8 @@ public class RexInputRef extends RexSlot {
    * @param index Index of the field in the underlying row-type
    * @param type  Type of the column
    */
-  public RexInputRef(int index, RelDataType type) {
-    super(createName(index), index, type);
+  public RexInputRef(int index, RelDataType type, SqlParserPos pos) {
+    super(createName(index), index, type, pos);
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -83,15 +84,15 @@ public class RexInputRef extends RexSlot {
   /**
    * Creates a reference to a given field in a row type.
    */
-  public static RexInputRef of(int index, RelDataType rowType) {
-    return of(index, rowType.getFieldList());
+  public static RexInputRef of(int index, RelDataType rowType, SqlParserPos pos) {
+    return of(index, rowType.getFieldList(), pos);
   }
 
   /**
    * Creates a reference to a given field in a list of fields.
    */
-  public static RexInputRef of(int index, List<RelDataTypeField> fields) {
-    return new RexInputRef(index, fields.get(index).getType());
+  public static RexInputRef of(int index, List<RelDataTypeField> fields, SqlParserPos pos) {
+    return new RexInputRef(index, fields.get(index).getType(), pos);
   }
 
   /**
@@ -99,10 +100,11 @@ public class RexInputRef extends RexSlot {
    */
   public static Pair<RexNode, String> of2(
       int index,
-      List<RelDataTypeField> fields) {
+      List<RelDataTypeField> fields,
+      SqlParserPos pos) {
     final RelDataTypeField field = fields.get(index);
     return Pair.of(
-        (RexNode) new RexInputRef(index, field.getType()),
+        (RexNode) new RexInputRef(index, field.getType(), pos),
         field.getName());
   }
 

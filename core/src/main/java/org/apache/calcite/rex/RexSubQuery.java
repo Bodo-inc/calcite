@@ -43,7 +43,7 @@ public class RexSubQuery extends RexCall {
 
   private RexSubQuery(RelDataType type, SqlOperator op,
       ImmutableList<RexNode> operands, RelNode rel) {
-    super(type, op, operands);
+    super(type, op, operands, rel.getParserPosition());
     this.rel = rel;
   }
 

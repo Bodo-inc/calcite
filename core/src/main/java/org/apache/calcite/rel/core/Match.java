@@ -33,6 +33,7 @@ import org.apache.calcite.sql.fun.SqlMinMaxAggFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.fun.SqlSumAggFunction;
 import org.apache.calcite.sql.fun.SqlSumEmptyIsZeroAggFunction;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableBitSet;
 
 import com.google.common.base.Preconditions;
@@ -102,7 +103,7 @@ public abstract class Match extends SingleRel {
       RexNode after, Map<String, ? extends SortedSet<String>> subsets,
       boolean allRows, ImmutableBitSet partitionKeys, RelCollation orderKeys,
       @Nullable RexNode interval) {
-    super(cluster, traitSet, input);
+    super(cluster, traitSet, input, input.getParserPosition());
     this.rowType = Objects.requireNonNull(rowType, "rowType");
     this.pattern = Objects.requireNonNull(pattern, "pattern");
     Preconditions.checkArgument(patternDefinitions.size() > 0);
@@ -250,7 +251,7 @@ public abstract class Match extends SingleRel {
       }
       if (aggFunction != null) {
         RexMRAggCall aggCall = new RexMRAggCall(aggFunction,
-            call.getType(), call.getOperands(), aggregateCalls.size());
+            call.getType(), call.getOperands(), aggregateCalls.size(), call.getParserPosition());
         aggregateCalls.add(aggCall);
         Set<String> pv = new PatternVarFinder().go(call.getOperands());
         if (pv.size() == 0) {
@@ -326,8 +327,9 @@ public abstract class Match extends SingleRel {
     RexMRAggCall(SqlAggFunction aggFun,
         RelDataType type,
         List<RexNode> operands,
-        int ordinal) {
-      super(type, aggFun, operands);
+        int ordinal,
+        SqlParserPos pos) {
+      super(type, aggFun, operands, pos);
       this.ordinal = ordinal;
       digest = toString(); // can compute here because class is final
     }

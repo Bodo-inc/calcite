@@ -21,6 +21,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Litmus;
@@ -76,7 +77,9 @@ public class RexCall extends RexNode {
   protected RexCall(
       RelDataType type,
       SqlOperator operator,
-      List<? extends RexNode> operands) {
+      List<? extends RexNode> operands,
+      SqlParserPos pos) {
+    super(pos);
     this.type = requireNonNull(type, "type");
     this.op = requireNonNull(operator, "operator");
     this.operands = ImmutableList.copyOf(operands);
@@ -266,8 +269,8 @@ public class RexCall extends RexNode {
    * @param operands Operands to call
    * @return New call
    */
-  public RexCall clone(RelDataType type, List<RexNode> operands) {
-    return new RexCall(type, op, operands);
+  public RexCall clone(RelDataType type, List<RexNode> operands, SqlParserPos newPos) {
+    return new RexCall(type, op, operands, newPos);
   }
 
   private Pair<SqlOperator, List<RexNode>> getNormalized() {

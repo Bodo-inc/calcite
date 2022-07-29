@@ -21,15 +21,13 @@ import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,6 +43,8 @@ public class RexProgramBuilder {
 
   private final RexBuilder rexBuilder;
   private final RelDataType inputRowType;
+
+  private final List<SqlParserPos> sqlParserPosList;
   private final List<RexNode> exprList = new ArrayList<>();
   private final Map<Pair<RexNode, String>, RexLocalRef> exprMap =
       new HashMap<>();
@@ -61,8 +61,8 @@ public class RexProgramBuilder {
   /**
    * Creates a program-builder that will not simplify.
    */
-  public RexProgramBuilder(RelDataType inputRowType, RexBuilder rexBuilder) {
-    this(inputRowType, rexBuilder, null);
+  public RexProgramBuilder(RelDataType inputRowType, RexBuilder rexBuilder, List<SqlParserPos> posList) {
+    this(inputRowType, rexBuilder, null, posList);
   }
 
   /**
@@ -70,17 +70,18 @@ public class RexProgramBuilder {
    */
   @SuppressWarnings("method.invocation.invalid")
   private RexProgramBuilder(RelDataType inputRowType, RexBuilder rexBuilder,
-      @Nullable RexSimplify simplify) {
+      @Nullable RexSimplify simplify, List<SqlParserPos> posList) {
     this.inputRowType = requireNonNull(inputRowType, "inputRowType");
     this.rexBuilder = requireNonNull(rexBuilder, "rexBuilder");
     this.simplify = simplify; // may be null
     this.validating = assertionsAreEnabled();
+    this.sqlParserPosList = posList;
 
     // Pre-create an expression for each input field.
     if (inputRowType.isStruct()) {
       final List<RelDataTypeField> fields = inputRowType.getFieldList();
       for (int i = 0; i < fields.size(); i++) {
-        registerInternal(RexInputRef.of(i, fields), false);
+        registerInternal(RexInputRef.of(i, fields, posList.get(i)), false);
       }
     }
   }
@@ -107,7 +108,7 @@ public class RexProgramBuilder {
       final RelDataType outputRowType,
       boolean normalize,
       @Nullable RexSimplify simplify) {
-    this(inputRowType, rexBuilder, simplify);
+    this(inputRowType, rexBuilder, simplify, new ArrayList<>((Collection) exprList.stream().map(RexNode::getParserPosition)));
 
     // Create a shuttle for registering input expressions.
     final RexShuttle shuttle =
@@ -385,7 +386,8 @@ public class RexProgramBuilder {
     ref =
         new RexLocalRef(
             index,
-            expr.getType());
+            expr.getType(),
+            expr.getParserPosition());
     localRefList.add(ref);
     return ref;
   }
@@ -602,7 +604,7 @@ public class RexProgramBuilder {
       final RexShuttle shuttle,
       final boolean updateRefs) {
     final RexProgramBuilder progBuilder =
-        new RexProgramBuilder(inputRowType, rexBuilder);
+        new RexProgramBuilder(inputRowType, rexBuilder, new ArrayList<>((Collection) exprList.stream().map(RexNode::getParserPosition)));
     progBuilder.add(
         exprList,
         projectRefList,
@@ -852,7 +854,8 @@ public class RexProgramBuilder {
       addProject(
           new RexInputRef(
               field.getIndex(),
-              field.getType()),
+              field.getType(),
+              sqlParserPosList.get(field.getIndex())),
           field.getName());
     }
   }
@@ -870,7 +873,8 @@ public class RexProgramBuilder {
     final RelDataTypeField field = fields.get(index);
     return new RexLocalRef(
         index,
-        field.getType());
+        field.getType(),
+        sqlParserPosList.get(index));
   }
 
   /**

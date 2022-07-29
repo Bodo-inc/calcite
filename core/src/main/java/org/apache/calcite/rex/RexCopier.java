@@ -52,7 +52,7 @@ class RexCopier extends RexShuttle {
     final boolean[] update = null;
     return new RexOver(copy(over.getType()), over.getAggOperator(),
         visitList(over.getOperands(), update), visitWindow(over.getWindow()),
-        over.isDistinct(), over.ignoreNulls());
+        over.isDistinct(), over.ignoreNulls(), over.getParserPosition());
   }
 
   @Override public RexNode visitCall(final RexCall call) {
@@ -76,13 +76,14 @@ class RexCopier extends RexShuttle {
   }
 
   @Override public RexNode visitLocalRef(RexLocalRef localRef) {
-    return new RexLocalRef(localRef.getIndex(), copy(localRef.getType()));
+    return new RexLocalRef(localRef.getIndex(), copy(localRef.getType()),
+        localRef.getParserPosition());
   }
 
   @Override public RexNode visitLiteral(RexLiteral literal) {
     // Get the value as is
     return new RexLiteral(RexLiteral.value(literal), copy(literal.getType()),
-        literal.getTypeName());
+        literal.getTypeName(), literal.getParserPosition());
   }
 
   @Override public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
@@ -91,7 +92,8 @@ class RexCopier extends RexShuttle {
   }
 
   @Override public RexNode visitNamedParam(RexNamedParam namedParam) {
-    return new RexNamedParam(copy(namedParam.getType()), namedParam.getName());
+    return new RexNamedParam(copy(namedParam.getType()), namedParam.getName(),
+        namedParam.getParserPosition());
   }
 
   @Override public RexNode visitRangeRef(RexRangeRef rangeRef) {

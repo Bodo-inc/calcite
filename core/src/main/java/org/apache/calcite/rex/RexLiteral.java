@@ -31,6 +31,7 @@ import org.apache.calcite.sql.SqlCollation;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.parser.SqlParserUtil;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.CompositeList;
@@ -224,7 +225,9 @@ public class RexLiteral extends RexNode {
   RexLiteral(
       @Nullable Comparable value,
       RelDataType type,
-      SqlTypeName typeName) {
+      SqlTypeName typeName,
+      SqlParserPos pos) {
+    super(pos);
     this.value = value;
     this.type = requireNonNull(type, "type");
     this.typeName = requireNonNull(typeName, "typeName");
@@ -735,14 +738,15 @@ public class RexLiteral extends RexNode {
 
   private static <C extends Comparable<C>> void printSarg(StringBuilder sb,
       Sarg<C> sarg, RelDataType type) {
+    //I don't know what this does, so I'm not messing with it
     sarg.printTo(sb, (sb2, value) ->
-        sb2.append(toLiteral(type, value)));
+        sb2.append(toLiteral(type, value, SqlParserPos.ZERO)));
   }
 
   /** Converts a value to a temporary literal, for the purposes of generating a
    * digest. Literals of type ROW and MULTISET require that their components are
    * also literals. */
-  private static RexLiteral toLiteral(RelDataType type, Comparable<?> value) {
+  private static RexLiteral toLiteral(RelDataType type, Comparable<?> value, SqlParserPos pos) {
     final SqlTypeName typeName = strictTypeName(type);
     switch (typeName) {
     case ROW:
@@ -752,8 +756,8 @@ public class RexLiteral extends RexNode {
       final List<RexLiteral> fieldLiterals =
           FlatLists.of(
               Functions.generate(fieldValues.size(), i ->
-                  toLiteral(fields.get(i).getType(), fieldValues.get(i))));
-      return new RexLiteral((Comparable) fieldLiterals, type, typeName);
+                  toLiteral(fields.get(i).getType(), fieldValues.get(i), pos)));
+      return new RexLiteral((Comparable) fieldLiterals, type, typeName, pos);
 
     case MULTISET:
       assert value instanceof List : "value must implement List: " + value;
@@ -761,11 +765,11 @@ public class RexLiteral extends RexNode {
       final List<RexLiteral> elementLiterals =
           FlatLists.of(
               Functions.generate(elementValues.size(), i ->
-                  toLiteral(castNonNull(type.getComponentType()), elementValues.get(i))));
-      return new RexLiteral((Comparable) elementLiterals, type, typeName);
+                  toLiteral(castNonNull(type.getComponentType()), elementValues.get(i), pos)));
+      return new RexLiteral((Comparable) elementLiterals, type, typeName, pos);
 
     default:
-      return new RexLiteral(value, type, typeName);
+      return new RexLiteral(value, type, typeName, pos);
     }
   }
 
@@ -786,7 +790,8 @@ public class RexLiteral extends RexNode {
   public static @PolyNull RexLiteral fromJdbcString(
       RelDataType type,
       SqlTypeName typeName,
-      @PolyNull String literal) {
+      @PolyNull String literal,
+      SqlParserPos pos) {
     if (literal == null) {
       return null;
     }
@@ -800,19 +805,19 @@ public class RexLiteral extends RexNode {
               literal,
               charset.name(),
               collation);
-      return new RexLiteral(str, type, typeName);
+      return new RexLiteral(str, type, typeName, pos);
     case BOOLEAN:
       Boolean b = ConversionUtil.toBoolean(literal);
-      return new RexLiteral(b, type, typeName);
+      return new RexLiteral(b, type, typeName, pos);
     case DECIMAL:
     case DOUBLE:
       BigDecimal d = new BigDecimal(literal);
-      return new RexLiteral(d, type, typeName);
+      return new RexLiteral(d, type, typeName, pos);
     case BINARY:
       byte[] bytes = ConversionUtil.toByteArrayFromString(literal, 16);
-      return new RexLiteral(new ByteString(bytes), type, typeName);
+      return new RexLiteral(new ByteString(bytes), type, typeName, pos);
     case NULL:
-      return new RexLiteral(null, type, typeName);
+      return new RexLiteral(null, type, typeName, pos);
     case INTERVAL_DAY:
     case INTERVAL_DAY_HOUR:
     case INTERVAL_DAY_MINUTE:
@@ -827,7 +832,7 @@ public class RexLiteral extends RexNode {
           SqlParserUtil.intervalToMillis(
               literal,
               castNonNull(type.getIntervalQualifier()));
-      return new RexLiteral(BigDecimal.valueOf(millis), type, typeName);
+      return new RexLiteral(BigDecimal.valueOf(millis), type, typeName, pos);
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
@@ -835,7 +840,7 @@ public class RexLiteral extends RexNode {
           SqlParserUtil.intervalToMonths(
               literal,
               castNonNull(type.getIntervalQualifier()));
-      return new RexLiteral(BigDecimal.valueOf(months), type, typeName);
+      return new RexLiteral(BigDecimal.valueOf(months), type, typeName, pos);
     case DATE:
     case TIME:
     case TIMESTAMP:
@@ -876,7 +881,7 @@ public class RexLiteral extends RexNode {
           throw new AssertionError();
         }
       }
-      return new RexLiteral(v, type, typeName);
+      return new RexLiteral(v, type, typeName, pos);
 
     case SYMBOL:
       // Symbols are for internal use

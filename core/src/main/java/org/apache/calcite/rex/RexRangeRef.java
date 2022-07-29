@@ -17,6 +17,7 @@
 package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -56,7 +57,9 @@ public class RexRangeRef extends RexNode {
    */
   RexRangeRef(
       RelDataType rangeType,
-      int offset) {
+      int offset,
+      SqlParserPos pos) {
+    super(pos);
     this.type = rangeType;
     this.offset = offset;
   }

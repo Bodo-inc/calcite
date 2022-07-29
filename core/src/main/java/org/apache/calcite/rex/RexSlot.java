@@ -17,6 +17,7 @@
 package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import java.util.AbstractList;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -40,8 +41,9 @@ public abstract class RexSlot extends RexVariable {
   protected RexSlot(
       String name,
       int index,
-      RelDataType type) {
-    super(name, type);
+      RelDataType type,
+      SqlParserPos pos) {
+    super(name, type, pos);
     assert index >= 0;
     this.index = index;
   }

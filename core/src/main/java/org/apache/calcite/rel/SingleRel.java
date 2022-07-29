@@ -20,6 +20,7 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import com.google.common.collect.ImmutableList;
 
@@ -48,8 +49,9 @@ public abstract class SingleRel extends AbstractRelNode {
   protected SingleRel(
       RelOptCluster cluster,
       RelTraitSet traits,
-      RelNode input) {
-    super(cluster, traits);
+      RelNode input,
+      SqlParserPos pos) {
+    super(cluster, traits, pos);
     this.input = input;
   }
 

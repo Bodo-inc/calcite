@@ -18,11 +18,13 @@ package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -43,6 +45,19 @@ import static java.util.Objects.requireNonNull;
 public abstract class RexNode {
 
   //~ Instance fields --------------------------------------------------------
+
+  protected final SqlParserPos pos;
+
+  //~ Constructors -----------------------------------------------------------
+
+  /**
+   * Creates a rexNode.
+   *
+   * @param pos Parser position, must not be null.
+   */
+  RexNode(SqlParserPos pos) {
+    this.pos = Objects.requireNonNull(pos, "pos");
+  }
 
   // Effectively final. Set in each sub-class constructor, and never re-set.
   protected @MonotonicNonNull String digest;
@@ -127,4 +142,12 @@ public abstract class RexNode {
    * {@link #equals}
    */
   @Override public abstract int hashCode();
+
+  /**
+   * Returns the original parser position of the expression that was converted into this rexNode.
+   */
+  public SqlParserPos getParserPosition() {
+    return pos;
+  }
+
 }

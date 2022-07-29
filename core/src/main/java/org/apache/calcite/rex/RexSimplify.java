@@ -747,7 +747,7 @@ public class RexSimplify {
           call2.clone(call2.type,
               ImmutableList.of(ref,
                   rexBuilder.makeLiteral(requireNonNull(sarg, "sarg").negate(), literal.getType(),
-                      literal.getTypeName()))),
+                      literal.getTypeName())), call2.getParserPosition()),
           unknownAs.negate());
 
     case LITERAL:
@@ -1117,7 +1117,7 @@ public class RexSimplify {
       if (operands.equals(call.operands)) {
         return call;
       }
-      return call.clone(call.type, operands);
+      return call.clone(call.type, operands, call.getParserPosition());
     }
   }
 
@@ -2127,7 +2127,7 @@ public class RexSimplify {
                   literal.getTypeName());
           // Now we've strengthened the Sarg, try to simplify again
           return simplifySearch(
-              call.clone(call.type, ImmutableList.of(a, literal2)),
+              call.clone(call.type, ImmutableList.of(a, literal2), call.getParserPosition()),
               unknownAs);
         }
       } else if (sarg.isPoints() && sarg.pointCount <= 1) {
@@ -2263,12 +2263,12 @@ public class RexSimplify {
       if (parentFlagValue != null && childFlagValue != null) {
         if (canRollUp(parentFlagValue.startUnit, childFlagValue.startUnit)) {
           return e.clone(e.getType(),
-              ImmutableList.of(child.getOperands().get(0), parentFlag));
+              ImmutableList.of(child.getOperands().get(0), parentFlag), e.getParserPosition());
         }
       }
     }
     return e.clone(e.getType(),
-        ImmutableList.of(operand, e.getOperands().get(1)));
+        ImmutableList.of(operand, e.getOperands().get(1)), e.getParserPosition());
   }
 
   /** Method that returns whether we can rollup from inner time unit
@@ -2977,6 +2977,7 @@ public class RexSimplify {
     RexUnknownAs nullAs = FALSE;
 
     RexSargBuilder(RexNode ref, RexBuilder rexBuilder, boolean negate) {
+      super(ref.getParserPosition());
       this.ref = requireNonNull(ref, "ref");
       this.rexBuilder = requireNonNull(rexBuilder, "rexBuilder");
       this.negate = negate;

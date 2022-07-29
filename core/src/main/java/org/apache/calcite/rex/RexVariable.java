@@ -17,6 +17,7 @@
 package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import java.util.Objects;
 
@@ -33,7 +34,9 @@ public abstract class RexVariable extends RexNode {
 
   protected RexVariable(
       String name,
-      RelDataType type) {
+      RelDataType type,
+      SqlParserPos pos) {
+    super(pos);
     this.name = Objects.requireNonNull(name, "name");
     this.digest = Objects.requireNonNull(name, "name");
     this.type = Objects.requireNonNull(type, "type");

@@ -18,6 +18,7 @@ package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -39,8 +40,9 @@ public class RexNamedParam extends RexVariable {
    */
   public RexNamedParam(
       RelDataType type,
-      String name) {
-    super(name, type);
+      String name,
+      SqlParserPos pos) {
+    super(name, type, pos);
   }
 
   //~ Methods ----------------------------------------------------------------

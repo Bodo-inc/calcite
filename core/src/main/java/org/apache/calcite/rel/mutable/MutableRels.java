@@ -53,6 +53,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
@@ -166,7 +167,7 @@ public abstract class MutableRels {
 
           @Override public RexNode get(int index) {
             final int pos = posList.get(index);
-            return RexInputRef.of(pos, rowType);
+            return RexInputRef.of(pos, rowType, SqlParserPos.ZERO); //TODO: fix
           }
         });
   }
@@ -176,7 +177,8 @@ public abstract class MutableRels {
    */
   public static List<RexNode> createProjectExprs(final MutableRel child,
       final List<Integer> posList) {
-    return posList.stream().map(pos -> RexInputRef.of(pos, child.rowType))
+    //TODO: this seems less then ideal
+    return posList.stream().map(pos -> RexInputRef.of(pos, child.rowType, SqlParserPos.ZERO))
         .collect(Collectors.toList());
   }
 
@@ -189,7 +191,9 @@ public abstract class MutableRels {
     for (RexNode project : projects) {
       if (project instanceof RexInputRef) {
         RexInputRef rexInputRef = (RexInputRef) project;
-        rexNodeList.add(RexInputRef.of(rexInputRef.getIndex(), child.rowType));
+        rexNodeList.add(
+            RexInputRef.of(rexInputRef.getIndex(), child.rowType,
+            rexInputRef.getParserPosition()));
       } else {
         rexNodeList.add(project);
       }

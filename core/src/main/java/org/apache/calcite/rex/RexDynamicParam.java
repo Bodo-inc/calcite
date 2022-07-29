@@ -18,6 +18,7 @@ package org.apache.calcite.rex;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -41,8 +42,8 @@ public class RexDynamicParam extends RexVariable {
    */
   public RexDynamicParam(
       RelDataType type,
-      int index) {
-    super("?" + index, type);
+      int index, SqlParserPos pos) {
+    super("?" + index, type, pos);
     this.index = index;
   }
 
