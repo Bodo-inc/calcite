@@ -335,9 +335,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     return new CalciteSqlValidator(opTab,
         catalogReader,
         getTypeFactory(),
-//        this.sqlValidatorConfig);
         sqlValidatorConfig
-//            .withDefaultNullCollation(connectionConfig.defaultNullCollation())
             .withLenientOperatorLookup(connectionConfig.lenientOperatorLookup())
             .withConformance(connectionConfig.conformance())
             .withIdentifierExpansion(true));
