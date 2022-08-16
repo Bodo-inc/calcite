@@ -4222,8 +4222,8 @@ public class SqlToRelConverter {
             SqlValidatorUtil.getTargetField(
                 targetRowType, typeFactory, id, catalogReader, targetTable);
         assert field != null : "column " + id.toString() + " not found";
-
-        curUpdateAction.add(new Pair<>(field.getName(), convertExpression(targetColumnExpr)));
+        RexNode targetColumnRexExpr = convertExpression(targetColumnExpr);
+        curUpdateAction.add(new Pair<>(field.getName(), targetColumnRexExpr));
       }
       TableModify.MatchAction matchAction =
           new TableModify.MatchAction(false, curUpdateAction);
