@@ -397,8 +397,9 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
             rel.getOperation(),
             rel.getUpdateColumnList(),
             rel.getSourceExpressionList(),
-            rel.getCondition(),
-            true);
+            true,
+            rel.getUpdateColumnsListList(),
+            rel.getInsertColumnsListList());
     setNewForOldRel(rel, newRel);
   }
 

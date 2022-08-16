@@ -3796,7 +3796,7 @@ public class SqlToRelConverter {
         && modifiableTable == targetTable.unwrap(Table.class)) {
       return modifiableTable.toModificationRel(cluster, targetTable,
           catalogReader, source, LogicalTableModify.Operation.INSERT, null,
-          null, null, false);
+          null,  false, null, null);
     }
     final ModifiableView modifiableView =
         targetTable.unwrap(ModifiableView.class);
@@ -3811,7 +3811,7 @@ public class SqlToRelConverter {
       return createModify(delegateRelOptTable, newSource);
     }
     return LogicalTableModify.create(targetTable, catalogReader, source,
-        LogicalTableModify.Operation.INSERT, null, null, null, false);
+        LogicalTableModify.Operation.INSERT, null, null,  false, null, null);
   }
 
   /** Wraps a relational expression in the projects and filters implied by

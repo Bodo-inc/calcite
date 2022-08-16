@@ -974,11 +974,7 @@ public class RelToSqlConverter extends SqlImplementor
       final SqlNode sqlSource =
           visitInput(modify, 0).asQueryOrValues();
 
-      RexNode rexCondition = modify.getCondition();
       SqlNode sqlCondition = null;
-      if (rexCondition != null) {
-        sqlCondition = context.toSql(null, rexCondition);
-      }
       final SqlInsert sqlInsert =
           new SqlInsert(POS, SqlNodeList.EMPTY, sqlTargetTable, sqlSource,
               identifierList(modify.getTable().getRowType().getFieldNames()), sqlCondition);
