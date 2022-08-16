@@ -4136,9 +4136,9 @@ public class SqlToRelConverter {
         requireNonNull(call.getSourceSelect(), () -> "sourceSelect for " + call),
         false);
 
-    //TODO: I may need to add a condition to the call, and propogate that cal here
     return LogicalTableModify.create(targetTable, catalogReader, sourceRel,
-        LogicalTableModify.Operation.DELETE, null, null, null, false);
+        LogicalTableModify.Operation.DELETE, null, null,
+        false, null, null);
   }
 
   private RelNode convertUpdate(SqlUpdate call) {
@@ -4173,12 +4173,11 @@ public class SqlToRelConverter {
       rexNodeSourceExpressionListBuilder.add(rn);
     }
 
-    // Note: in this case, we don't need to explicitly pass the condition. It will be included
-    // as a filter in the select.
+    // We don't need to handle the last two arguments, those are only used for converting merge
 
     return LogicalTableModify.create(targetTable, catalogReader, sourceRel,
         LogicalTableModify.Operation.UPDATE, targetColumnNameList,
-        rexNodeSourceExpressionListBuilder.build(), null, false);
+        rexNodeSourceExpressionListBuilder.build(), false, null, null);
   }
 
   private RelNode convertMerge(SqlMerge call) {
@@ -4294,11 +4293,10 @@ public class SqlToRelConverter {
 
 
     //TODO: this will need to be updated
-    // I'm uncertain how to properly convert the condition node
-    // RexNode condition = convertExpresion(call.getCondition());
     return LogicalTableModify.create(targetTable, catalogReader,
         relBuilder.build(), LogicalTableModify.Operation.MERGE,
-        targetColumnNameList, null, null, false);
+        targetColumnNameList, null, false,
+        null, null);
   }
 
   /**

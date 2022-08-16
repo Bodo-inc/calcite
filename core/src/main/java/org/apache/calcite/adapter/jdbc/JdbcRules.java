@@ -68,6 +68,7 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
 
@@ -996,8 +997,9 @@ public class JdbcRules {
           modify.getOperation(),
           modify.getUpdateColumnList(),
           modify.getSourceExpressionList(),
-          modify.getCondition(),
-          modify.isFlattened());
+          modify.isFlattened(),
+          modify.getUpdateColumnsListList(),
+          modify.getInsertColumnsListList());
     }
   }
 
@@ -1011,9 +1013,12 @@ public class JdbcRules {
         Operation operation,
         @Nullable List<String> updateColumnList,
         @Nullable List<RexNode> sourceExpressionList,
-        boolean flattened) {
+        boolean flattened,
+        @Nullable List<Pair<MatchAction, RexNode>> updateColumnsListList,
+        @Nullable List<Pair<NotMatchedAction, RexNode>> insertColumnsListList) {
       super(cluster, traitSet, table, catalogReader, input, operation,
-          updateColumnList, sourceExpressionList, flattened);
+          updateColumnList, sourceExpressionList, flattened, updateColumnsListList,
+          insertColumnsListList);
       assert input.getConvention() instanceof JdbcConvention;
       assert getConvention() instanceof JdbcConvention;
       final ModifiableTable modifiableTable =
@@ -1040,7 +1045,8 @@ public class JdbcRules {
       return new JdbcTableModify(
           getCluster(), traitSet, getTable(), getCatalogReader(),
           sole(inputs), getOperation(), getUpdateColumnList(),
-          getSourceExpressionList(), isFlattened());
+          getSourceExpressionList(), isFlattened(), getUpdateColumnsListList(),
+          getInsertColumnsListList());
     }
 
     @Override public JdbcImplementor.Result implement(JdbcImplementor implementor) {

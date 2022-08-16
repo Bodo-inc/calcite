@@ -25,6 +25,7 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -46,9 +47,11 @@ public abstract class AbstractModifiableTable
       TableModify.Operation operation,
       List<String> updateColumnList,
       List<RexNode> sourceExpressionList,
-      @Nullable RexNode condition,
-      boolean flattened) {
+      boolean flattened,
+      @Nullable List<Pair<TableModify.MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<TableModify.NotMatchedAction, RexNode>> insertColumnsListList) {
     return LogicalTableModify.create(table, catalogReader, child, operation,
-        updateColumnList, sourceExpressionList, condition, flattened);
+        updateColumnList, sourceExpressionList, flattened, updateColumnsListList,
+        insertColumnsListList);
   }
 }

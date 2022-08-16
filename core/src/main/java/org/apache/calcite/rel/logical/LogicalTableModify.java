@@ -38,9 +38,6 @@ import java.util.List;
 public final class LogicalTableModify extends TableModify {
   //~ Constructors -----------------------------------------------------------
 
-  private final @Nullable List<Pair<MatchAction, RexNode>> updateColumnsListList;
-  private final @Nullable List<Pair<NotMatchedAction, RexNode>> insertColumnsListList;
-
   /**
    * Creates a LogicalTableModify.
    *
@@ -58,9 +55,7 @@ public final class LogicalTableModify extends TableModify {
       @Nullable List<Pair<MatchAction, RexNode>> updateColumnsListList,
       @Nullable List<Pair<NotMatchedAction, RexNode>> insertColumnsListList) {
     super(cluster, traitSet, table, schema, input, operation, updateColumnList,
-        sourceExpressionList, flattened);
-    this.updateColumnsListList = updateColumnsListList;
-    this.insertColumnsListList = insertColumnsListList;
+        sourceExpressionList, flattened, updateColumnsListList, insertColumnsListList);
   }
 
   /**
@@ -68,9 +63,6 @@ public final class LogicalTableModify extends TableModify {
    */
   public LogicalTableModify(RelInput input) {
     super(input);
-    // For Bodo, we're never handling serialized output
-    this.updateColumnsListList = null;
-    this.insertColumnsListList = null;
   }
 
   @Deprecated // to be removed before 2.0
@@ -114,65 +106,9 @@ public final class LogicalTableModify extends TableModify {
     assert traitSet.containsIfApplicable(Convention.NONE);
     return new LogicalTableModify(getCluster(), traitSet, table, catalogReader,
         sole(inputs), getOperation(), getUpdateColumnList(),
-        getSourceExpressionList(), isFlattened(), updateColumnsListList, insertColumnsListList);
-  }
-
-  public @Nullable List<Pair<MatchAction, RexNode>> getUpdateColumnsListList() {
-    return this.updateColumnsListList;
-  }
-
-  public @Nullable List<Pair<NotMatchedAction, RexNode>> getInsertColumnsListList() {
-    return this.insertColumnsListList;
+        getSourceExpressionList(), isFlattened(), getUpdateColumnsListList(),
+        getInsertColumnsListList());
   }
 
 
-  /**
-   * MatchAction is a wrapper around either a List of Pairs of String and RexNode,
-   * which is the columns to
-   * update and the expressions to use for updating, or a DELETE action.
-   *
-   * NonMatchedAction is a List of Pairs of String and RexNode,
-   * which is the columns to insert, and the
-   * expression to use for inserting.
-   *
-   * TODO: is there a better way to index into columns besides name? I could probably figure out
-   * how to index properly into the dest table, especially since the columns in the dest table
-   * should be constant, relative to the query's plan.
-   *
-   */
-  public static class MatchAction {
-    private final boolean isDelete;
-    private final @Nullable List<Pair<String, RexNode>> updateAction;
-
-    MatchAction(boolean isDelete, @Nullable List<Pair<String, RexNode>> updateAction) {
-      this.isDelete = isDelete;
-      this.updateAction = updateAction;
-    }
-
-    public boolean isDelete() {
-      return isDelete;
-    }
-
-    public List<Pair<String, RexNode>> getUpdateAction() {
-      if (updateAction == null) {
-        throw new RuntimeException("Error, attempted to get update action from a Delete action");
-      }
-      return updateAction;
-    }
-  }
-
-  /**
-   * See above.
-   */
-  public static class NotMatchedAction {
-    private final List<Pair<String, RexNode>> insertAction;
-
-    NotMatchedAction(List<Pair<String, RexNode>> insertAction) {
-      this.insertAction = insertAction;
-    }
-
-    public List<Pair<String, RexNode>> getInsertAction() {
-      return insertAction;
-    }
-  }
 }

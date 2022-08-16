@@ -198,13 +198,15 @@ public class JdbcTable extends AbstractQueryableTable
   @Override public TableModify toModificationRel(RelOptCluster cluster,
       RelOptTable table, CatalogReader catalogReader, RelNode input,
       Operation operation, @Nullable List<String> updateColumnList,
-      @Nullable List<RexNode> sourceExpressionList, @Nullable RexNode condition,
-      boolean flattened) {
+      @Nullable List<RexNode> sourceExpressionList,
+      boolean flattened,
+      @Nullable List<Pair<LogicalTableModify.MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<LogicalTableModify.NotMatchedAction, RexNode>> insertColumnsListList) {
     jdbcSchema.convention.register(cluster.getPlanner());
 
     return new LogicalTableModify(cluster, cluster.traitSetOf(Convention.NONE),
         table, catalogReader, input, operation, updateColumnList,
-        sourceExpressionList, condition, flattened);
+        sourceExpressionList, flattened, updateColumnsListList, insertColumnsListList);
   }
 
   /** Enumerable that returns the contents of a {@link JdbcTable} by connecting
