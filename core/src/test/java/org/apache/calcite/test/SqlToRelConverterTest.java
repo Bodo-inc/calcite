@@ -3176,7 +3176,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testMergeMatchedOnly() {
-    //Tests a basic merge query with only an matched condition
+    //Tests a basic merge query with only a matched condition
     final String sql1 = "merge into empnullables_20 as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
         + "on target.sal = source.sal\n"
