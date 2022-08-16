@@ -305,7 +305,7 @@ public abstract class TableModify extends SingleRel {
     private final boolean isDelete;
     private final @Nullable List<Pair<String, RexNode>> updateAction;
 
-    MatchAction(boolean isDelete, @Nullable List<Pair<String, RexNode>> updateAction) {
+    public MatchAction(boolean isDelete, @Nullable List<Pair<String, RexNode>> updateAction) {
       this.isDelete = isDelete;
       this.updateAction = updateAction;
     }
@@ -328,7 +328,7 @@ public abstract class TableModify extends SingleRel {
   public static class NotMatchedAction {
     private final List<Pair<String, RexNode>> insertAction;
 
-    NotMatchedAction(List<Pair<String, RexNode>> insertAction) {
+    public NotMatchedAction(List<Pair<String, RexNode>> insertAction) {
       this.insertAction = insertAction;
     }
 

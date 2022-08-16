@@ -35,17 +35,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.SingleRel;
-import org.apache.calcite.rel.core.AggregateCall;
-import org.apache.calcite.rel.core.Collect;
-import org.apache.calcite.rel.core.CorrelationId;
-import org.apache.calcite.rel.core.Filter;
-import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.core.JoinInfo;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.core.RelFactories;
-import org.apache.calcite.rel.core.Sample;
-import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
@@ -4181,27 +4171,6 @@ public class SqlToRelConverter {
   }
 
   private RelNode convertMerge(SqlMerge call) {
-    RelOptTable targetTable = getTargetTable(call);
-
-    // convert update column list from SqlIdentifier to String
-    final List<String> targetColumnNameList = new ArrayList<>();
-    final RelDataType targetRowType = targetTable.getRowType();
-    SqlNodeList updateCallList = call.getUpdateCallList();
-
-    for (int i = 0; i < updateCallList.size(); i++) {
-      SqlUpdate curUpdateCall = (SqlUpdate) updateCallList.get(i);
-      // TODO: is this right?
-      if (curUpdateCall != null) {
-        for (SqlNode targetColumn : curUpdateCall.getTargetColumnList()) {
-          SqlIdentifier id = (SqlIdentifier) targetColumn;
-          RelDataTypeField field =
-              SqlValidatorUtil.getTargetField(
-                  targetRowType, typeFactory, id, catalogReader, targetTable);
-          assert field != null : "column " + id.toString() + " not found";
-          targetColumnNameList.add(field.getName());
-        }
-      }
-    }
 
     // replace the projection of the source select with a
     // projection that contains the following:
@@ -4214,6 +4183,51 @@ public class SqlToRelConverter {
     // from the target table and the set expressions in the update call
     RelNode mergeSourceRel = convertSelect(
         requireNonNull(call.getSourceSelect(), () -> "sourceSelect for " + call), false);
+
+    RelOptTable targetTable = getTargetTable(call);
+
+
+
+    // convert update column list from SqlIdentifier to String
+
+    final RelDataType targetRowType = targetTable.getRowType();
+    SqlNodeList updateCallList = call.getUpdateCallList();
+
+    List<Pair<TableModify.MatchAction, RexNode>> updateColumnsListList = new ArrayList<>();
+
+    // First, construct the match list from the update
+
+    for (int i = 0; i < updateCallList.size(); i++) {
+      SqlUpdate curUpdateCall = (SqlUpdate) updateCallList.get(i);
+      List<Pair<String, RexNode>> curUpdateAction = new ArrayList<>();
+      // TODO: is this right?
+      assert curUpdateCall.getTargetColumnList().size()
+          == curUpdateCall.getSourceExpressionList().size();
+      for (int j = 0; i < curUpdateCall.getTargetColumnList().size(); j++) {
+        SqlNode targetColumn = curUpdateCall.getTargetColumnList().get(j);
+        SqlNode targetColumnExpr = curUpdateCall.getSourceExpressionList().get(j);
+        SqlIdentifier id = (SqlIdentifier) targetColumn;
+        RelDataTypeField field =
+            SqlValidatorUtil.getTargetField(
+                targetRowType, typeFactory, id, catalogReader, targetTable);
+        assert field != null : "column " + id.toString() + " not found";
+
+        curUpdateAction.add(new Pair<>(field.getName(), convertExpression(targetColumnExpr)));
+      }
+      TableModify.MatchAction matchAction =
+          new TableModify.MatchAction(false, curUpdateAction);
+      SqlNode curUpdateCondition = curUpdateCall.getCondition();
+      RexNode conditionExpr;
+      if (curUpdateCondition != null) {
+        conditionExpr = convertExpression(curUpdateCall.getCondition());
+      } else {
+        //TODO: how to make a rexLiteral
+        conditionExpr = relBuilder.getRexBuilder().makeLiteral(true);
+      }
+      updateColumnsListList.add(new Pair<>(matchAction, conditionExpr));
+    }
+
+
 
     // then, convert the insert statement so that we can get the insert
     // values expressions
@@ -4292,11 +4306,12 @@ public class SqlToRelConverter {
 
 
 
-    //TODO: this will need to be updated
+    // TODO: this will need to be updated. Because of Bodo specific changes,
+    // we expect that only the last two values will be set.
     return LogicalTableModify.create(targetTable, catalogReader,
         relBuilder.build(), LogicalTableModify.Operation.MERGE,
-        targetColumnNameList, null, false,
-        null, null);
+        null, null, false,
+        updateColumnsListList, null);
   }
 
   /**
