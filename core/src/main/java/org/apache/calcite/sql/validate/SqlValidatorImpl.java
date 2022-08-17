@@ -3022,31 +3022,47 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // or the target table, so set its parent scope to the merge's
       // source select; when validating the update, skip the feature
       // validation check
+
       for (int i = 0; i < mergeCall.getUpdateCallList().size(); i++) {
         SqlUpdate mergeUpdateCall = (SqlUpdate) mergeCall.getUpdateCallList().get(i);
-        if (mergeUpdateCall != null) {
-          registerQuery(
-              getScope(SqlNonNullableAccessors.getSourceSelect(mergeCall), Clause.WHERE),
-              null,
-              mergeUpdateCall,
-              enclosingNode,
-              null,
-              false,
-              false);
+
+        registerQuery(
+            getScope(SqlNonNullableAccessors.getSourceSelect(mergeCall), Clause.WHERE),
+            null,
+            mergeUpdateCall,
+            enclosingNode,
+            null,
+            false,
+            false);
+
+        // Due to the local changes made for re-writing merge, we also need to validate
+        // the source expression list (previously, we only needed the source select)
+        for (int j = 0; j < mergeUpdateCall.getSourceExpressionList().size(); j++) {
+          registerSubQueries(
+              //TODO: is this the right scope?
+              getScope(SqlNonNullableAccessors.getSourceSelect(mergeCall), Clause.SELECT),
+              mergeUpdateCall.getSourceExpressionList().get(j));
         }
+
+//        for (int i = 0; i < call.operandCount(); i++) {
+//          registerOperandSubQueries(parentScope, call, i);
+//        }
+
+//        getScopeOrThrow(mergeUpdateCall);
+//        getNamespaceOrThrow(mergeUpdateCall);
+        System.out.println("");
       }
 
       for (int i = 0; i < mergeCall.getInsertCallList().size(); i++) {
         SqlInsert mergeInsertCall = (SqlInsert) mergeCall.getInsertCallList().get(i);
-        if (mergeInsertCall != null) {
-          registerQuery(
-              parentScope,
-              null,
-              mergeInsertCall,
-              enclosingNode,
-              null,
-              false);
-        }
+
+        registerQuery(
+            parentScope,
+            null,
+            mergeInsertCall,
+            enclosingNode,
+            null,
+            false);
       }
 
       break;
@@ -5169,6 +5185,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         sourceRowType,
         targetRowType,
         call);
+
+    //Note: this is needed for merge, since we actually use the source Expression List.
+    expand(call.getSourceExpressionList(), getSelectScope(select));
+    //TODO: should I use validateSelectList here? I could just pass in some bogus row type.
+    // it may be needed, if I have to handle scalar subqueries
 
     checkConstraint(table, call, targetRowType);
 

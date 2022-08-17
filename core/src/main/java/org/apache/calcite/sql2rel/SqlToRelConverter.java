@@ -4181,7 +4181,34 @@ public class SqlToRelConverter {
         rexNodeSourceExpressionListBuilder.build(), false, null, null);
   }
 
+
+  /**
+   *
+   * @param select
+   * @return
+   */
+  private List<Pair<String, RexNode>> getMatchedExpressions(final SqlSelect select,
+      final SqlUpdate update, RelDataType targetRowType, RelOptTable targetTable) {
+    final List<Pair<String, RexNode>> outputList = new ArrayList<>();
+    final SqlValidatorScope selectScope = validator().getWhereScope(select);
+    final Blackboard bb = createBlackboard(selectScope, null, false);
+    for (int i = 0; i < update.getTargetColumnList().size(); i++) {
+      SqlNode targetColumn = update.getTargetColumnList().get(i);
+      SqlNode targetColumnExpr = update.getSourceExpressionList().get(i);
+      SqlIdentifier id = (SqlIdentifier) targetColumn;
+      RelDataTypeField field =
+          SqlValidatorUtil.getTargetField(
+              targetRowType, typeFactory, id, catalogReader, targetTable);
+      RexNode convertedExpression = bb.convertExpression(targetColumnExpr);
+      outputList.add(new Pair<>(field.getName(), convertedExpression));
+    }
+    return outputList;
+  }
+
   private RelNode convertMerge(SqlMerge call) {
+
+    // We're handling this in a bit of a wierd way. The way that Calcite by default
+    // handles MERGE is as follows:
 
     // replace the projection of the source select with a
     // projection that contains the following:
@@ -4190,8 +4217,15 @@ public class SqlToRelConverter {
     // 2) all columns from the target table (if there is an update)
     // 3) the set expressions in the update call (if there is an update)
 
+    // It then does some logic, to ensure that each of the needed columns are properly passed into
+    // the input of the logicalTableModify, in that order. We're taking a different approach,
+    // in order to allow for variable merge match/not all of the logic will be contained
+    // within the relnode itself, with the input being just the source itself.
+
+
     // first, convert the merge's source select to construct the columns
     // from the target table and the set expressions in the update call
+    // NOTE: the set expressions will always be appended to the END of the update call
     RelNode mergeSourceRel = convertSelect(
         requireNonNull(call.getSourceSelect(), () -> "sourceSelect for " + call), false);
 
@@ -4199,8 +4233,8 @@ public class SqlToRelConverter {
 
 
 
-    // convert update column list from SqlIdentifier to String
-
+    // convert update column list from SqlIdentifier to String, and pair it with the appropriate
+    // expression.
     final RelDataType targetRowType = targetTable.getRowType();
     SqlNodeList updateCallList = call.getUpdateCallList();
 
@@ -4208,34 +4242,40 @@ public class SqlToRelConverter {
 
     // First, construct the match list from the update
 
+    //NOTE: in order to convert each of these expressions into the appropriate rexnodes via
+    // ConvertExpression, the current scope for the SqlToRel Converter should be that of the source
+    // select. Unfortualy, this defaults to the parameter scope, so, we'll need to implement
+    // something akin to convertInsert. (Or possibly, add all of the row expressions to the source
+    // select, similarly to how it's already done in calcite)
+
+
     for (int i = 0; i < updateCallList.size(); i++) {
       SqlUpdate curUpdateCall = (SqlUpdate) updateCallList.get(i);
-      List<Pair<String, RexNode>> curUpdateAction = new ArrayList<>();
+      //Convert the update in the scope of the source select
+      List<Pair<String, RexNode>> curUpdateAction = getMatchedExpressions(call.getSourceSelect(), curUpdateCall, targetRowType, targetTable);
       // TODO: is this right?
       assert curUpdateCall.getTargetColumnList().size()
           == curUpdateCall.getSourceExpressionList().size();
-      for (int j = 0; i < curUpdateCall.getTargetColumnList().size(); j++) {
-        SqlNode targetColumn = curUpdateCall.getTargetColumnList().get(j);
-        SqlNode targetColumnExpr = curUpdateCall.getSourceExpressionList().get(j);
-        SqlIdentifier id = (SqlIdentifier) targetColumn;
-        RelDataTypeField field =
-            SqlValidatorUtil.getTargetField(
-                targetRowType, typeFactory, id, catalogReader, targetTable);
-        assert field != null : "column " + id.toString() + " not found";
-        RexNode targetColumnRexExpr = convertExpression(targetColumnExpr);
-        curUpdateAction.add(new Pair<>(field.getName(), targetColumnRexExpr));
-      }
-      TableModify.MatchAction matchAction =
-          new TableModify.MatchAction(false, curUpdateAction);
-      SqlNode curUpdateCondition = curUpdateCall.getCondition();
-      RexNode conditionExpr;
-      if (curUpdateCondition != null) {
-        conditionExpr = convertExpression(curUpdateCall.getCondition());
-      } else {
-        //TODO: how to make a rexLiteral
-        conditionExpr = relBuilder.getRexBuilder().makeLiteral(true);
-      }
-      updateColumnsListList.add(new Pair<>(matchAction, conditionExpr));
+
+//      for (int j = 0; i < curUpdateCall.getTargetColumnList().size(); j++) {
+//
+//        assert field != null : "column " + id.toString() + " not found";
+//
+//        RexNode targetColumnRexExpr = convertExpression(targetColumnExpr);
+//        curUpdateAction.add(new Pair<>(field.getName(), targetColumnRexExpr));
+//      }
+//
+//      TableModify.MatchAction matchAction =
+//          new TableModify.MatchAction(false, curUpdateAction);
+//      SqlNode curUpdateCondition = curUpdateCall.getCondition();
+//      RexNode conditionExpr;
+//      if (curUpdateCondition != null) {
+//        conditionExpr = convertExpression(curUpdateCall.getCondition());
+//      } else {
+//        //TODO: how to make a rexLiteral
+//        conditionExpr = relBuilder.getRexBuilder().makeLiteral(true);
+//      }
+//      updateColumnsListList.add(new Pair<>(matchAction, conditionExpr));
     }
 
 

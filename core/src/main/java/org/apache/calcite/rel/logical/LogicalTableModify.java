@@ -46,7 +46,7 @@ public final class LogicalTableModify extends TableModify {
   public LogicalTableModify(RelOptCluster cluster, RelTraitSet traitSet,
       RelOptTable table, Prepare.CatalogReader schema, RelNode input,
       Operation operation,
-      // For non-merge operations, these columns should now be NULL
+      // For merge operations, these columns should now be NULL
       @Nullable List<String> updateColumnList,
       @Nullable List<RexNode> sourceExpressionList,
       boolean flattened,
