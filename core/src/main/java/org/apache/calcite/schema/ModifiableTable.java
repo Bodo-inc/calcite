@@ -21,7 +21,9 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify;
+import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -50,6 +52,7 @@ public interface ModifiableTable extends QueryableTable {
       TableModify.Operation operation,
       @Nullable List<String> updateColumnList,
       @Nullable List<RexNode> sourceExpressionList,
-      @Nullable RexNode condition,
-      boolean flattened);
+      boolean flattened,
+      @Nullable List<Pair<LogicalTableModify.MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<LogicalTableModify.NotMatchedAction, RexNode>> insertColumnsListList);
 }

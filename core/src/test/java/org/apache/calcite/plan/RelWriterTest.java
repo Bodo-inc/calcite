@@ -1293,8 +1293,9 @@ class RelWriterTest {
         TableModify.Operation.INSERT,
         null,
         null,
+        false,
         null,
-        false);
+        null);
     String relJson = RelOptUtil.dumpPlan("", modify,
         SqlExplainFormat.JSON, SqlExplainLevel.EXPPLAN_ATTRIBUTES);
     String s = deserializeAndDumpToTextFormat(getSchema(modify), relJson);
@@ -1324,8 +1325,9 @@ class RelWriterTest {
         TableModify.Operation.UPDATE,
         ImmutableList.of("ENAME"),
         ImmutableList.of(builder.literal("a")),
+        false,
         null,
-        false);
+        null);
     String relJson = RelOptUtil.dumpPlan("", modify,
         SqlExplainFormat.JSON, SqlExplainLevel.EXPPLAN_ATTRIBUTES);
     String s = deserializeAndDumpToTextFormat(getSchema(modify), relJson);
@@ -1355,8 +1357,7 @@ class RelWriterTest {
         TableModify.Operation.DELETE,
         null,
         null,
-        null,
-        false);
+        false, null, null);
     String relJson = RelOptUtil.dumpPlan("", modify,
         SqlExplainFormat.JSON, SqlExplainLevel.EXPPLAN_ATTRIBUTES);
     String s = deserializeAndDumpToTextFormat(getSchema(modify), relJson);
@@ -1412,8 +1413,9 @@ class RelWriterTest {
         TableModify.Operation.MERGE,
         ImmutableList.of("ENAME"),
         null,
+        false,
         null,
-        false);
+        null);
     String relJson = RelOptUtil.dumpPlan("", modify,
         SqlExplainFormat.JSON, SqlExplainLevel.EXPPLAN_ATTRIBUTES);
     String s = deserializeAndDumpToTextFormat(getSchema(modify), relJson);

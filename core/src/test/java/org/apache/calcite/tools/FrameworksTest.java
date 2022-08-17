@@ -70,6 +70,7 @@ import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.test.CalciteAssert;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.TestUtil;
 import org.apache.calcite.util.Util;
 
@@ -506,9 +507,12 @@ public class FrameworksTest {
     public TableModify toModificationRel(RelOptCluster cluster,
         RelOptTable table, Prepare.CatalogReader catalogReader, RelNode child,
         TableModify.Operation operation, List<String> updateColumnList,
-        List<RexNode> sourceExpressionList, @Nullable RexNode condition, boolean flattened) {
+        List<RexNode> sourceExpressionList, boolean flattened,
+        @Nullable List<Pair<TableModify.MatchAction, RexNode>> updateColumnsListList,
+        @Nullable List<Pair<TableModify.NotMatchedAction, RexNode>> insertColumnsListList) {
       return LogicalTableModify.create(table, catalogReader, child, operation,
-          updateColumnList, sourceExpressionList, condition, flattened);
+          updateColumnList, sourceExpressionList, flattened, updateColumnsListList,
+          insertColumnsListList);
     }
 
     public <T> Queryable<T> asQueryable(QueryProvider queryProvider,

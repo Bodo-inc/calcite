@@ -31,6 +31,7 @@ import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.util.BuiltInMethod;
+import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -47,10 +48,13 @@ public class EnumerableTableModify extends TableModify
   public EnumerableTableModify(RelOptCluster cluster, RelTraitSet traits,
       RelOptTable table, Prepare.CatalogReader catalogReader, RelNode child,
       Operation operation, @Nullable List<String> updateColumnList,
-      @Nullable List<RexNode> sourceExpressionList, @Nullable RexNode condition,
-      boolean flattened) {
+      @Nullable List<RexNode> sourceExpressionList,
+      boolean flattened,
+      @Nullable List<Pair<MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<NotMatchedAction, RexNode>> insertColumnsListList) {
     super(cluster, traits, table, catalogReader, child, operation,
-        updateColumnList, sourceExpressionList, condition, flattened);
+        updateColumnList, sourceExpressionList, flattened,
+        updateColumnsListList, insertColumnsListList);
     assert child.getConvention() instanceof EnumerableConvention;
     assert getConvention() instanceof EnumerableConvention;
     final ModifiableTable modifiableTable =
@@ -70,8 +74,9 @@ public class EnumerableTableModify extends TableModify
         getOperation(),
         getUpdateColumnList(),
         getSourceExpressionList(),
-        getCondition(),
-        isFlattened());
+        isFlattened(),
+        getUpdateColumnsListList(),
+        getInsertColumnsListList());
   }
 
   @Override public Result implement(EnumerableRelImplementor implementor, Prefer pref) {

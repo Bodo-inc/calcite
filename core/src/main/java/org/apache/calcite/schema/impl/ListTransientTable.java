@@ -40,6 +40,7 @@ import org.apache.calcite.schema.ScannableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.TransientTable;
+import org.apache.calcite.util.Pair;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -79,10 +80,12 @@ public class ListTransientTable extends AbstractQueryableTable
       TableModify.Operation operation,
       @Nullable List<String> updateColumnList,
       @Nullable List<RexNode> sourceExpressionList,
-      @Nullable RexNode condition,
-      boolean flattened) {
+      boolean flattened,
+      @Nullable List<Pair<LogicalTableModify.MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<LogicalTableModify.NotMatchedAction, RexNode>> insertColumnsListList) {
     return LogicalTableModify.create(table, catalogReader, child, operation,
-        updateColumnList, sourceExpressionList, condition, flattened);
+        updateColumnList, sourceExpressionList, flattened, updateColumnsListList,
+        insertColumnsListList);
   }
 
   @SuppressWarnings("rawtypes")

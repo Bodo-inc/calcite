@@ -59,7 +59,8 @@ public class EnumerableTableModifyRule extends ConverterRule {
         modify.getOperation(),
         modify.getUpdateColumnList(),
         modify.getSourceExpressionList(),
-        modify.getCondition(),
-        modify.isFlattened());
+        modify.isFlattened(),
+        modify.getUpdateColumnsListList(),
+        modify.getInsertColumnsListList());
   }
 }

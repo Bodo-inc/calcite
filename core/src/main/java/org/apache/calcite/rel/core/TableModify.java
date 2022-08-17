@@ -29,12 +29,14 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.externalize.RelEnumTypes;
+import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeUtil;
+import org.apache.calcite.util.Pair;
 
 import com.google.common.base.Preconditions;
 
@@ -83,10 +85,12 @@ public abstract class TableModify extends SingleRel {
   private final @Nullable List<String> updateColumnList;
   private final @Nullable List<RexNode> sourceExpressionList;
   private @MonotonicNonNull RelDataType inputRowType;
-
-  private final @Nullable RexNode condition;
-
   private final boolean flattened;
+
+  private final @Nullable List<Pair<LogicalTableModify.MatchAction, RexNode>> updateColumnsListList;
+
+  private final @Nullable List<Pair<LogicalTableModify.NotMatchedAction, RexNode>>
+      insertColumnsListList;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -119,15 +123,15 @@ public abstract class TableModify extends SingleRel {
       Operation operation,
       @Nullable List<String> updateColumnList,
       @Nullable List<RexNode> sourceExpressionList,
-      @Nullable RexNode condition,
-      boolean flattened) {
+      boolean flattened,
+      @Nullable List<Pair<MatchAction, RexNode>> updateColumnsListList,
+      @Nullable List<Pair<NotMatchedAction, RexNode>> insertColumnsListList) {
     super(cluster, traitSet, input);
     this.table = table;
     this.catalogReader = catalogReader;
     this.operation = operation;
     this.updateColumnList = updateColumnList;
     this.sourceExpressionList = sourceExpressionList;
-    this.condition = condition;
     if (operation == Operation.UPDATE) {
       requireNonNull(updateColumnList, "updateColumnList");
       requireNonNull(sourceExpressionList, "sourceExpressionList");
@@ -146,6 +150,8 @@ public abstract class TableModify extends SingleRel {
       cluster.getPlanner().registerSchema(relOptSchema);
     }
     this.flattened = flattened;
+    this.updateColumnsListList = updateColumnsListList;
+    this.insertColumnsListList = insertColumnsListList;
   }
 
   /**
@@ -162,8 +168,10 @@ public abstract class TableModify extends SingleRel {
         requireNonNull(input.getEnum("operation", Operation.class), "operation"),
         input.getStringList("updateColumnList"),
         input.getExpressionList("sourceExpressionList"),
-        input.getExpression("condition"),
-        input.getBoolean("flattened", false));
+        input.getBoolean("flattened", false),
+        //Bodo never deals with serialized output, so I'm leaving it like this for now
+        null,
+        null);
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -192,8 +200,12 @@ public abstract class TableModify extends SingleRel {
     return operation;
   }
 
-  public @Nullable RexNode getCondition() {
-    return condition;
+  public @Nullable List<Pair<MatchAction, RexNode>> getUpdateColumnsListList() {
+    return this.updateColumnsListList;
+  }
+
+  public @Nullable List<Pair<NotMatchedAction, RexNode>> getInsertColumnsListList() {
+    return this.insertColumnsListList;
   }
 
   public boolean isInsert() {
@@ -273,5 +285,55 @@ public abstract class TableModify extends SingleRel {
     // REVIEW jvs 21-Apr-2006:  Just for now...
     double rowCount = mq.getRowCount(this);
     return planner.getCostFactory().makeCost(rowCount, 0, 0);
+  }
+
+  /**
+   * MatchAction is a wrapper around either a List of Pairs of String and RexNode,
+   * which is the columns to
+   * update and the expressions to use for updating, or a DELETE action.
+   *
+   * NonMatchedAction is a List of Pairs of String and RexNode,
+   * which is the columns to insert, and the
+   * expression to use for inserting.
+   *
+   * TODO: is there a better way to index into columns besides name? I could probably figure out
+   * how to index properly into the dest table, especially since the columns in the dest table
+   * should be constant, relative to the query's plan.
+   *
+   */
+  public static class MatchAction {
+    private final boolean isDelete;
+    private final @Nullable List<Pair<String, RexNode>> updateAction;
+
+    public MatchAction(boolean isDelete, @Nullable List<Pair<String, RexNode>> updateAction) {
+      this.isDelete = isDelete;
+      this.updateAction = updateAction;
+    }
+
+    public boolean isDelete() {
+      return isDelete;
+    }
+
+    public List<Pair<String, RexNode>> getUpdateAction() {
+      if (updateAction == null) {
+        throw new RuntimeException("Error, attempted to get update action from a Delete action");
+      }
+      return updateAction;
+    }
+  }
+
+  /**
+   * See above.
+   */
+  public static class NotMatchedAction {
+    private final List<Pair<String, RexNode>> insertAction;
+
+    public NotMatchedAction(List<Pair<String, RexNode>> insertAction) {
+      this.insertAction = insertAction;
+    }
+
+    public List<Pair<String, RexNode>> getInsertAction() {
+      return insertAction;
+    }
   }
 }
