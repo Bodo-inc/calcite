@@ -3216,8 +3216,18 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   @Test void testMergeIntoDelete() {
     final String sql = "merge into empnullables_20 as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.empno = source.empno\n"
+        + "on target.sal = source.sal\n"
+          + "when matched then\n"
+          + "  update set sal = target.sal + source.sal\n"
+          + "when not matched then\n"
+          + "  insert (empno, sal, ename)\n"
+          + "  values (ABS(source.empno), source.sal, source.ename)";
+
+    final String sql2 = "merge_into empnullables_20 as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
         + "when matched then\n"
+<<<<<<< HEAD
         + "  delete\n"
         + "when not matched then\n"
         + "  insert (empno, sal, ename)\n"
@@ -3227,12 +3237,85 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test void testMergeIntoDeleteOnly() {
     final String sql = "merge into empnullables_20 as target\n"
+=======
+        + "  update set sal = target.sal + source.sal\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (ABS(source.empno), source.sal, source.ename)";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+  }
+
+  @Test void testMergeInsertOnly() {
+    //Tests a basic merge query with only an insert condition
+    final String sql1 = "merge into empnullables_20 as target\n"
+>>>>>>> bodo-calcite-1.30.0-dev
         + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.empno = source.empno\n"
+        + "on target.sal = source.sal\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (source.empno, source.sal, source.ename)";
+
+    final String sql2 = "merge_into empnullables_20 as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (source.empno, source.sal, source.ename)";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+  }
+
+  @Test void testMergeMatchedOnly() {
+    //Tests a basic merge query with only an matched condition
+    final String sql1 = "merge into empnullables_20 as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
         + "when matched then\n"
+<<<<<<< HEAD
         + "  delete\n";
     sql(sql).ok();
+=======
+        + "  update set sal = target.sal + source.sal\n";
+
+    final String sql2 = "merge_into empnullables_20 as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when matched then\n"
+        + "  update set sal = target.sal + source.sal\n";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
   }
+
+  @Test void testMergeNestedExpressions() {
+    //tests a more complicated merge expression with nested clauses
+
+    final String sql1 = "merge into empnullables_20 as target\n"
+        + "using (select * from (Select * from (select *, emp.sal + dept.deptno as real_sal from dept FULL OUTER JOIN emp on emp.deptno = dept.deptno WHERE emp.sal > 0) as source WHERE deptno = 30)) as source\n"
+        + "on SIN(target.sal + source.sal) > 0\n"
+        + "when matched then\n"
+        + "  update set sal = COS(source.real_sal + target.sal)\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (source.empno, ABS(source.empno + source.real_sal), 'DEFAULT_NAME')";
+
+    final String sql2 = "merge_into empnullables_20 as target\n"
+        + "using (select * from (Select * from (select *, emp.sal + dept.deptno as real_sal from dept FULL OUTER JOIN emp on emp.deptno = dept.deptno WHERE emp.sal > 0) as source WHERE deptno = 30)) as source\n"
+        + "on SIN(target.sal + source.sal) > 0\n"
+        + "when matched then\n"
+        + "  update set sal = COS(source.real_sal + target.sal)\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (source.empno, ABS(source.empno + source.real_sal), 'DEFAULT_NAME')";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+>>>>>>> bodo-calcite-1.30.0-dev
+  }
+
 
   @Test void testSelectView() {
     // translated condition: deptno = 20 and sal > 1000 and empno > 100
