@@ -3230,10 +3230,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql = "merge into empnullables_20 as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
         + "on target.sal = source.sal\n"
-        + "when not matched then\n"
-        + "  insert (empno, sal, ename)\n"
-        + "  values (source.empno, source.sal, source.ename)";
-
+        + "when matched then\n"
+        + "  delete\n";
     sql(sql).ok();
   }
 
@@ -3242,8 +3240,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql = "merge into empnullables_20 as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
         + "on target.sal = source.sal\n"
-        + "when matched then\n"
-        + "  delete\n";
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (source.empno, source.sal, source.ename)";
     sql(sql).ok();
   }
 
