@@ -3223,14 +3223,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
           + "  insert (empno, sal, ename)\n"
           + "  values (ABS(source.empno), source.sal, source.ename)";
 
-    final String sql2 = "merge_into empnullables_20 as target\n"
-        + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.sal = source.sal\n"
-        + "when matched then\n"
-        + "  delete\n"
-        + "when not matched then\n"
-        + "  insert (empno, sal, ename)\n"
-        + "  values (ABS(source.empno), source.sal, source.ename)";
     sql(sql).ok();
   }
 
@@ -3242,20 +3234,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "  insert (empno, sal, ename)\n"
         + "  values (source.empno, source.sal, source.ename)";
 
-    final String sql2 = "merge_into empnullables_20 as target\n"
-        + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.sal = source.sal\n"
-        + "when not matched then\n"
-        + "  insert (empno, sal, ename)\n"
-        + "  values (source.empno, source.sal, source.ename)";
-
-    sql(sql1).ok();
-    sql(sql2).ok();
+    sql(sql).ok();
   }
 
   @Test void testMergeMatchedOnly() {
     //Tests a basic merge query with only an matched condition
-    final String sql1 = "merge into empnullables_20 as target\n"
+    final String sql = "merge into empnullables_20 as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
         + "on target.sal = source.sal\n"
         + "when matched then\n"
