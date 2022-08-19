@@ -3234,7 +3234,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "  delete\n";
     sql(sql).ok();
   }
-  
   @Test void testSelectView() {
     // translated condition: deptno = 20 and sal > 1000 and empno > 100
     final String sql = "select * from emp_20 where empno > 100";

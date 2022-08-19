@@ -4194,9 +4194,9 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES_20]], operation=[MERGE],
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES_20]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
-  LogicalProject($f0=[ABS($0)], ENAME=[CAST($1):VARCHAR(20)], $f2=[null:VARCHAR(10)], $f3=[null:INTEGER], $f4=[null:TIMESTAMP(0)], SAL=[CAST($5):INTEGER], $f6=[null:INTEGER], $f7=[20], $f8=[null:BOOLEAN])
-    LogicalJoin(condition=[=($9, $0)], joinType=[left])
+LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES_20]], operation=[MERGE], updateColumnList=[[SAL]], flattened=[true])
+  LogicalProject($f0=[ABS($0)], ENAME=[CAST($1):VARCHAR(20)], $f2=[null:VARCHAR(10)], $f3=[null:INTEGER], $f4=[null:TIMESTAMP(0)], SAL=[CAST($5):INTEGER], $f6=[null:INTEGER], $f7=[20], $f8=[null:BOOLEAN], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], SLACKER0=[$16], $f17=[+($14, $5)])
+    LogicalJoin(condition=[=($14, $5)], joinType=[left])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
@@ -4218,7 +4218,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES_20]], operation=[MERGE],
       <![CDATA[
 LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES_20]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
   LogicalProject
-    LogicalJoin(condition=[=($9, $0)], joinType=[inner])
+    LogicalJoin(condition=[=($14, $5)], joinType=[inner])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
