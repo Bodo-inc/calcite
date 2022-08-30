@@ -500,10 +500,10 @@ public abstract class SqlLibraryOperators {
   public static final SqlSpecialOperator NOT_RLIKE =
       new SqlLikeOperator("NOT RLIKE", SqlKind.RLIKE, true, true);
 
-  @LibraryOperator(libraries = {})
+  @LibraryOperator(libraries = {MYSQL})
   public static final SqlSpecialOperator REGEXP =
       new SqlLikeOperator("REGEXP", SqlKind.REGEXP, false, true);
-  @LibraryOperator(libraries = {})
+  @LibraryOperator(libraries = {MYSQL})
   public static final SqlSpecialOperator NOT_REGEXP =
       new SqlLikeOperator("NOT REGEXP", SqlKind.REGEXP, true, true);
 
