@@ -1516,6 +1516,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
 
+  /**
+   * Helper function for rewriteMerge. Adds the node to the sqlNodeList if it's non-null
+   * otherwise, adds a literal True.
+   *
+   * @param l The list to append to.
+   * @param node The condition to add
+   * @param pos the parser position for the newly created literal (if the input node is null)
+   */
+  private static void addOrDefaultTrue(SqlNodeList l, @Nullable SqlNode node, SqlParserPos pos) {
+    if (node != null) {
+      l.add(node);
+    } else {
+      l.add(SqlLiteral.createBoolean(true, pos));
+    }
+  }
   private static void rewriteMerge(SqlMerge call) {
 
     /**
@@ -1579,47 +1594,37 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // This project is needed to ensure
     // that nested sub queries are properly evaluated, and any needed joins needed to get the
     // required subquery values are properly created when expanding the select list
+    SqlNodeList matchedCallList = call.getMatchedCallList();
 
-    for (int i = 0; i < call.getMatchedCallList().size(); i++) {
-      SqlNode curMatchCall = call.getMatchedCallList().get(i);
+    for (int i = 0; i < matchedCallList.size(); i++) {
+      SqlNode curMatchCall = matchedCallList.get(i);
       if (curMatchCall instanceof SqlUpdate) {
         SqlUpdate curUpdateCall = (SqlUpdate) curMatchCall;
-        @Nullable SqlNode curCond = curUpdateCall.getCondition();
-        if (curCond != null) {
-          topmostSelectList.add(curCond);
-        } else {
-          topmostSelectList.add(SqlLiteral.createBoolean(true, curUpdateCall.getParserPosition()));
-        }
+        addOrDefaultTrue(topmostSelectList, curUpdateCall.getCondition(),
+            curUpdateCall.getParserPosition());
         for (int j = 0; j < curUpdateCall.getSourceExpressionList().size(); j++) {
-          SqlNode insertVal = curUpdateCall.getSourceExpressionList().get(j);
-          topmostSelectList.add(insertVal);
+          SqlNode updateValue = curUpdateCall.getSourceExpressionList().get(j);
+          topmostSelectList.add(updateValue);
         }
       } else {
         SqlDelete curDeleteCall = (SqlDelete) curMatchCall;
-        @Nullable SqlNode curCond = curDeleteCall.getCondition();
-        if (curCond != null) {
-          topmostSelectList.add(curCond);
-        } else {
-          topmostSelectList.add(SqlLiteral.createBoolean(true, curDeleteCall.getParserPosition()));
-        }
+        addOrDefaultTrue(topmostSelectList, curDeleteCall.getCondition(),
+            curDeleteCall.getParserPosition());
       }
     }
 
     // Add all the conditions and values of the Not matched clauses into the select.
-    for (int i = 0; i < call.getNotMatchedCallList().size(); i++) {
-      SqlInsert curInsertCall = (SqlInsert) call.getNotMatchedCallList().get(i);
-      @Nullable SqlNode curCond = curInsertCall.getCondition();
-      if (curCond != null) {
-        topmostSelectList.add(curCond);
-      } else {
-        topmostSelectList.add(SqlLiteral.createBoolean(true, curInsertCall.getParserPosition()));
-      }
+    for (int i = 0; i < insertCallList.size(); i++) {
+      SqlInsert curInsertCall = (SqlInsert) insertCallList.get(i);
+      addOrDefaultTrue(topmostSelectList, curInsertCall.getCondition(),
+          curInsertCall.getParserPosition());
       // From what I've seen, in merge, the source is always an VALUES statement
       assert curInsertCall.getSource() instanceof SqlBasicCall;
-      assert ((SqlBasicCall) curInsertCall.getSource()).getOperator() instanceof SqlValuesOperator;
+      SqlBasicCall insertSource = (SqlBasicCall) curInsertCall.getSource();
+      assert insertSource.getOperator() instanceof SqlValuesOperator;
 
-      List<SqlNode> curInsertValues = ((SqlBasicCall) ((SqlBasicCall) curInsertCall.getSource())
-          .getOperandList().get(0)).getOperandList();
+      List<SqlNode> curInsertValues = ((SqlBasicCall) insertSource.getOperandList().get(0))
+          .getOperandList();
 
       for (int j = 0; j < curInsertValues.size(); j++) {
         SqlNode insertVal = curInsertValues.get(j);
@@ -1627,7 +1632,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
     }
 
-    //Finally, create the select statment itself.
+    //Finally, create the select statement itself.
     SqlSelect select =
         new SqlSelect(SqlParserPos.ZERO, null, topmostSelectList, outerJoin, null,
             null, null, null, null, null, null,
@@ -3026,7 +3031,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNode condition = ((SqlInsert) node).getCondition();
       if (condition != null) {
         SqlValidatorScope insertScope = getWhereScope((SqlSelect) insertCall.getSource());
-        requireNonNull(condition, "insertCall.getSource()");
         SqlNode expandedCondition = expand(condition, insertScope);
         ((SqlInsert) node).setOperand(4, expandedCondition);
         // NOTE: the error message produced here is a little wonky, but contains the needed

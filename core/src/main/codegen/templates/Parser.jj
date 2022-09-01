@@ -1744,11 +1744,16 @@ SqlNode SqlMerge() :
     <ON> condition = Expression(ExprContext.ACCEPT_SUB_QUERY)
 
     (
-        //Need look ahead here to determine if we have any update call whatsoever
+        // We have two choices, depending on if the first clause is WHEN MATCHED or WHEN NOT MATCHED
+        // Therefore we need LOOKAHEAD 2 to distinguish WHEN MATCHED or WHEN NOT MATCHED
         LOOKAHEAD(2)
         (
-            //Need look ahead here to distinguish WHEN MATCHED from WHEN NOT MATCHED
-            //in the variadic expansion
+            // Case 2, we first clause is WHEN MATCHED
+
+            // Within this expansion, we have two choices, depending on if the next clause is
+            // WHEN MATCHED or WHEN NOT MATCHED
+            // Therefore we need LOOKAHEAD 2 to distinguish WHEN MATCHED or WHEN NOT MATCHED
+            // for this variadic expansion
             LOOKAHEAD(2)
             clauseCondition = WhenMatchedClauseCommon(matchedSpan)
             (
@@ -1767,7 +1772,7 @@ SqlNode SqlMerge() :
                 }
             )
         )+
-
+        // Case 2, we first clause is WHEN NOT MATCHED/ we have no WHEN MATCHED clauses.
         // Note, the matched span will be include the previous token, which is incorrect, and will lead to slightly
         // wrong error messaging. However, I don't see a good
         // way around this, and the error message is still understandable.

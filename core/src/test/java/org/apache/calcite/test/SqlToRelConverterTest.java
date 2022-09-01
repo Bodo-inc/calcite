@@ -3188,7 +3188,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testMergeWithExpressions() {
-    //tests a more complicated merge expression with more complicated clauses
+    //tests a more complicated merge expression, with a heavily nested source expression, and
+    // with insert/update expressions that are more complicated than simple binops.
 
     final String sql1 = "merge into empnullables as target\n"
         + "using (select * from (Select * from (select *, emp.sal + dept.deptno as real_sal from dept FULL OUTER JOIN emp on emp.deptno = dept.deptno WHERE emp.sal > 0) as source WHERE deptno = 30)) as source\n"
