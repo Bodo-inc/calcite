@@ -1884,7 +1884,7 @@ SqlInsert WhenNotMatchedClause(SqlNode table) :
     <WHEN> <NOT> <MATCHED>
 
     // add condition (if it is present)
-    // The condition can be any valid expression that evaluates to boolen
+    // The condition can be any valid expression that evaluates to Boolean
     // see WhenMatchedClause for explanation
     {condition = null;}
     [<AND> condition = Expression(ExprContext.ACCEPT_SUB_QUERY)]
