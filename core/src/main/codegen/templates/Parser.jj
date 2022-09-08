@@ -1719,7 +1719,7 @@ SqlNode SqlMerge() :
     SqlNode sourceTableRef;
     final SqlNode condition;
     Span matchedSpan = Span.of();
-    Span notMatchedSpan;
+    Span notMatchedSpan = Span.of();
     // Should contain only Delete's and Update's
     List<SqlNode> matchedCallList = new ArrayList();
     List<SqlInsert> notMatchedCallList = new ArrayList();
@@ -1748,7 +1748,7 @@ SqlNode SqlMerge() :
         // Therefore we need LOOKAHEAD 2 to distinguish WHEN MATCHED or WHEN NOT MATCHED
         LOOKAHEAD(2)
         (
-            // Case 2, we first clause is WHEN MATCHED
+            // Case 1, the first clause is WHEN MATCHED
 
             // Within this expansion, we have two choices, depending on if the next clause is
             // WHEN MATCHED or WHEN NOT MATCHED
@@ -1772,20 +1772,24 @@ SqlNode SqlMerge() :
                 }
             )
         )+
-        // Case 2, we first clause is WHEN NOT MATCHED/ we have no WHEN MATCHED clauses.
-        // Note, the matched span will be include the previous token, which is incorrect, and will lead to slightly
-        // wrong error messaging. However, I don't see a good
-        // way around this, and the error message is still understandable.
-        // See https://bodo.atlassian.net/browse/BE-3528
-        { notMatchedSpan = span(); }
-        ( insertCall = WhenNotMatchedClause(table)
+
+        ( insertCall = WhenNotMatchedClause(table, notMatchedSpan)
           { notMatchedCallList.add(insertCall); notMatchedSpan.add(insertCall); }
         )*
+        // Note, in the case that we have no not matched clauses, the not matched span will be initialized to include
+        // only the final token of the final matched clause. This is incorrect, but we need to intialize not matched
+        // SqlNodeList with a valid parser position, and it should never be used anyway, since the sqlNodeList is empty
+        // See https://bodo.atlassian.net/browse/BE-3528
+        { notMatchedSpan.add(span().pos()); }
+
     |
-        // In the case that we have no matched objects, just set the matched span to somthing valid.
-        // Even if it's technically incorrect, we'll never used matched span if there's no nodes in the match list.
-        { notMatchedSpan = span(); matchedSpan = span(); }
-        ( insertCall = WhenNotMatchedClause(table) { notMatchedCallList.add(insertCall); notMatchedSpan.add(insertCall); })+
+        // Case 2, the first clause is WHEN NOT MATCHED/ we have no WHEN MATCHED clauses.
+        // Note, since we have no matched clauses, the matched span will be initialized to include only the previous
+        // token. This is incorrect, but we need to intialize matched SqlNodeList with a valid parser position, and
+        // the parser position should never be used anyway, since the sqlNodeList is empty
+        // See https://bodo.atlassian.net/browse/BE-3528
+        { matchedSpan = span(); }
+        ( insertCall = WhenNotMatchedClause(table, notMatchedSpan) { notMatchedCallList.add(insertCall); notMatchedSpan.add(insertCall); })+
     )
     {
 
@@ -1804,7 +1808,7 @@ SqlNode WhenMatchedClauseCommon(Span matchedSpan) :
     <WHEN> { matchedSpan.add(span().pos()); } <MATCHED>
 
     // add condition (if it is present)
-    // The condition can be any valid expression that evaluates to boolen
+    // The condition can be any valid expression that evaluates to boolean
     // Specifically, according to DBR syntax:
     /**
     * { literal |
@@ -1875,7 +1879,7 @@ SqlDelete WhenMatchedClauseDelete(SqlNode table, SqlIdentifier alias) :
     }
 }
 
-SqlInsert WhenNotMatchedClause(SqlNode table) :
+SqlInsert WhenNotMatchedClause(SqlNode table, Span notMatchedSpan) :
 {
     final Span insertSpan, valuesSpan;
     final List<SqlLiteral> keywords = new ArrayList<SqlLiteral>();
@@ -1886,7 +1890,7 @@ SqlInsert WhenNotMatchedClause(SqlNode table) :
     SqlNode condition;
 }
 {
-    <WHEN> <NOT> <MATCHED>
+    <WHEN> { notMatchedSpan.add(span().pos()); }<NOT> <MATCHED>
 
     // add condition (if it is present)
     // The condition can be any valid expression that evaluates to Boolean

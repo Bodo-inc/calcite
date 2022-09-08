@@ -12287,8 +12287,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
     String sql = "merge into empnullables as target\n"
         + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.sal = source.^sal\n"
-        + "when not matched then\n"
+        + "on target.sal = source.sal\n"
+        + "^when not matched then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (source.empno, source.sal, source.ename)\n"
         + "when not matched and source.sal > 0 then\n"

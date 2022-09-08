@@ -3358,6 +3358,47 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql2).ok();
   }
 
+  @Test void testMergeMatchedConditionSubqueryExpr() {
+    // Tests a basic merge query with multiple matched/not matched conditions,
+    // where the values and conditions both contain nested subqueries
+    final String sql1 = "merge into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  update set sal = target.sal + source.sal\n";
+
+    final String sql2 = "merge_into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  update set sal = target.sal + source.sal\n";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+  }
+
+
+  @Test void testMergeNotMatchedConditionSubqueryExpr() {
+    // Tests a basic merge query with multiple matched/not matched conditions,
+    // where the values and conditions both contain nested subqueries
+    final String sql1 = "merge into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when not matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, -1, 'na')";
+
+    final String sql2 = "merge_into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal\n"
+        + "when not matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, -1, 'na')";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+  }
+
   @Test void testMergeConditionMatchedAndNotMatched() {
     //Tests a basic merge query with one matched/not matched condition
     final String sql1 = "merge into empnullables as target\n"
@@ -3442,6 +3483,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "  update set sal = (SELECT MAX(deptno) from dept)\n"
         + "when matched and target.sal IN (SELECT MODE(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
         + "  DELETE\n"
+        + "when matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  update set sal = (SELECT MAX(deptno) + 100 from dept)\n"
         + "when not matched and source.sal > 20 then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (\n"
@@ -3456,6 +3499,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "when not matched and source.sal * 2 NOT IN (SELECT MAX(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (ABS(source.empno), (SELECT MAX(deptno) from dept), source.ename)"
+        + "when not matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, -1, 'na')"
         + "when not matched then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (-1, (SELECT MAX(dept.deptno) from dept), 'NA')";
@@ -3471,6 +3517,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "  update set sal = (SELECT MAX(deptno) from dept)\n"
         + "when matched and target.sal IN (SELECT MODE(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
         + "  DELETE\n"
+        + "when matched and (SELECT MAX(deptno) > 100 from dept) then\n"
+        + "  update set sal = (SELECT MAX(deptno) + 100 from dept)\n"
         + "when not matched and source.sal > 20 then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (\n"
@@ -3485,6 +3533,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "when not matched and source.sal * 2 NOT IN (SELECT MAX(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (ABS(source.empno), (SELECT MAX(deptno) from dept), source.ename)"
+        + "when not matched and (SELECT MIN(emp.sal) < -1 from emp) then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, -1, 'na')"
         + "when not matched then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (-1, (SELECT MAX(dept.deptno) from dept), 'NA')";
@@ -3493,6 +3544,30 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql2).ok();
   }
 
+  @Test void testMergeJoinConditionNested() {
+    // Tests a basic merge query with multiple matched/not matched conditions,
+    // where the values and conditions both contain nested subqueries
+    final String sql1 = "merge into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal and target.sal = (select MAX(sal) from emp)\n"
+        + "when matched and source.sal * 2 NOT IN (SELECT MAX(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
+        + "  update set sal = target.sal + source.sal\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, (SELECT MAX(dept.deptno) from dept), 'NA')";
+
+    final String sql2 = "merge_into empnullables as target\n"
+        + "using (select * from emp where deptno = 30) as source\n"
+        + "on target.sal = source.sal and target.sal = (select MAX(sal) from emp)\n"
+        + "when matched and source.sal * 2 NOT IN (SELECT MAX(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
+        + "  update set sal = target.sal + source.sal\n"
+        + "when not matched then\n"
+        + "  insert (empno, sal, ename)\n"
+        + "  values (-1, (SELECT MAX(dept.deptno) from dept), 'NA')";
+
+    sql(sql1).ok();
+    sql(sql2).ok();
+  }
 
   /**
    * Tests the use of a DELETE clause inside a merge into statement.
