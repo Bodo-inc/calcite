@@ -4205,13 +4205,60 @@ public class SqlToRelConverter {
     // dest has columns A, B, C
     // source has columns X, Y, Z
     //
-    // MERGE INTO dest.. UPDATE SET C = Z, B = Y
-    // results in a targetColumnList of [C, B]
-    // and a mergeSourceRel of Select (sourceCols) (DestCols) (flag), Z, Y
+    // MERGE INTO dest..
+    // WHEN MATCHED AND _cond1_ UPDATE SET C = Z, B = Y
+    // WHEN MATCHED AND _cond2_ UPDATE SET B = X, C = Y
+    // results in a targetColumnList of [C, B] for clause 1, and a targetColumnList of [B, C] for
+    // clause 2.
+    // the overall mergeSourceRel will be
+    // Select (sourceCols:) X, Y, Z, (DestCols:) A, B, C, (flag for matched/not matched:) flag,
+    // (first update condition:) _cond1_, (updateExprs1, same order as targetColumnList:) Z, Y,
+    // (second update condition:) _cond2_, (updateExprs2, same order as targetColumnList:) X, Y
     //
-    // In this case, we would want the Update rows to be ordered in the same way that they
-    // will be added to the destination table: A, Y, Z
+    // In the final projection, it is our specification that each row contains the values to be
+    // inserted/updated in the order that they will apear in the destination table. Therefore,
+    // we want the final ordering in the input to the logical table modify to be:
+    //
+    // A, Y, Z (if condition 1)
+    // A, X, Y (if condition 2)
+    //
+    // Which value is selected will be handled by a case statement, but getting the correct ordering
+    // is a bit tricky. For each update, we find the offset that will bring us to the start to
+    // the start of that update's update expressions:
+    //
+    // (arrow represents offset index at offset N)
+    // ... _cond1_ ====> Z, Y, _cond2_, ...
+    //
+    // Next for each update, we iterate through each of the destination table's columns.
+    // If the destination column
+    // is being updated, we find the expression it's being updated to. If it's not being updated,
+    // we use the original value of the column. For example:
+    //
+    // Iterating over update 1:
+    //    Column A in the dest table is not being updated, we add it to the expression list: [A]
+    //    B in the dest table is being updated. The index of B in targetColumnList1 is 1,
+    // offset + 1 into the mergeSourceRel gives us the expression Y. This is added to the
+    // expression list: [A, Y]
+    //    C in the dest table is being updated. The index of C in targetColumnList1 is 0,
+    // offset + 0 into the mergeSourceRel gives us the expression Z. This is added to the
+    // expression list: [A, Y, Z]
+    //
+    // Iterating over update 1:
+    //    Column A in the dest table is not being updated, we add it to the expression list: [A]
+    //    B in the dest table is being updated. The index of B in targetColumnList1 is 0,
+    // offset + 0 into the mergeSourceRel gives us the expression X. This is added to the
+    // expression list: [A, X]
+    //    C in the dest table is being updated. The index of C in targetColumnList1 is 1,
+    // offset + 1 into the mergeSourceRel gives us the expression Y. This is added to the
+    // expression list: [A, X, Y]
+    //
+    // The final return value for this function, therefore, will be
+    // ([_cond1_, _cond2_], [[A, Y, Z], [A, X, Y]])
 
+    // First, for each update, we construct a hashmap of target column --> offset. This will be used
+    // during the final step where, for each update, we iterate through each of the destination
+    // table's columns. If the destination column is being updated, we find the expression
+    // it's being updated to by using the stored index.
     HashMap<SqlUpdate, HashMap<String, Integer>> updateToTargetColumnSet = new HashMap<>();
     for (int updateCallIdx = 0; updateCallIdx < updateCallList.size(); updateCallIdx++) {
       if (updateCallList.get(updateCallIdx) instanceof SqlUpdate) {
@@ -4237,8 +4284,8 @@ public class SqlToRelConverter {
     // The list of column values to put into the table
     // The outer list should have length of the number of data columns
     // the inner list should have length equal to the number of conditions
-    // IE, if condition X were the first expression to evaluate to TRUE, the expression that
-    // column Y should evaluate to is caseValues[Y][X]
+    // IE, if condition number X were the first expression to evaluate to TRUE, the expression that
+    // the column with index Y should evaluate to is caseValues[Y][X]
     List<List<RexNode>> caseValues = new ArrayList<>();
 
     List<String> destTableFieldNames = destTable.getRowType().getFieldNames();
@@ -4255,8 +4302,11 @@ public class SqlToRelConverter {
     for (int updateColNumber = 0; updateColNumber < updateCallList.size(); updateColNumber++) {
 
       if (updateCallList.get(updateColNumber) instanceof SqlDelete) {
-        // If we have a delete operation, we fill the column values with with original values from
-        // the DEST table. This is needed so we don't lose any row number/file name information
+        // If we have a delete operation, we fill the column values with original values from
+        // the DEST table. This is needed for iceberg. For iceberg, we're going to read two
+        // additional columns, which will be added to the dest table's column list.
+        // Therefore, defaulting to using the original values from the dest table will
+        // persists the two additional needed columns for us.
         caseConditions.add(mergeSourceRelProjects.get(totalOffset));
         totalOffset++;
 
@@ -4268,7 +4318,12 @@ public class SqlToRelConverter {
 
       } else {
         // If we have an update, we fill the column values with the original values, unless
-        // we've specified a different value to update the column with.
+        // we've specified a different value to update the column with. For iceberg,
+        // we're going to read two additional columns, which will be added to that
+        // table's column list. For update, if we don't explicitly reassign values,
+        // the values default to the original values from the dest table. The two additional columns
+        // should NOT be explicitly updated (as they don't exist from the user's perspective).
+        // Therefore, the two additional needed columns should automatically be persisted for us.
         SqlUpdate curUpdateCall = (SqlUpdate) updateCallList.get(updateColNumber);
         caseConditions.add(mergeSourceRelProjects.get(totalOffset));
         totalOffset++;
@@ -4346,8 +4401,8 @@ public class SqlToRelConverter {
     // The list of column values to put into the table
     // The outer list should have length of the number of data columns
     // the inner list should have length equal to the number of conditions
-    // IE, if condition X were the first expression to evaluate to TRUE, the expression that
-    // column Y should evaluate to is caseValues[Y][X]
+    // IE, if condition number X were the first expression to evaluate to TRUE, the expression that
+    // column with index Y should evaluate to is caseValues[Y][X]
     List<List<RexNode>> caseValues = new ArrayList<>();
 
     List<String> destTableFieldNames = destTable.getRowType().getFieldNames();
@@ -4451,7 +4506,8 @@ public class SqlToRelConverter {
     // The enum row should be (IF matched then (case stmt to determine if DELETE_ENUM
     // or UPDATE_ENUM) else INSERT_ENUM)
 
-    //NOTE: there may be some rows that are no ops.
+    //NOTE: there may be some rows that are no ops. These rows will be filled with NULL
+    // by the case statments constructed below.
     //NOTE2: Each of the conditions in the source select have already been filled with TRUE
     // if they are unconditional. This was handled in rewrite_merge
     SqlSelect sourceSelect = call.getSourceSelect();
@@ -4611,6 +4667,7 @@ public class SqlToRelConverter {
           updateCaseArgs.add(curUpdateColExprList.get(updateCondIdx));
         }
         // Append NULL for the else case
+        // Note: the Else is optional/defaults to null for the sql node, but needed for the RexNode
         updateCaseArgs.add(colNullLiteral);
         matchedColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
             updateCaseArgs);
@@ -4629,6 +4686,7 @@ public class SqlToRelConverter {
           insertCaseArgs.add(curInsertColExprList.get(insertCondIdx));
         }
         // Append NULL for the else case
+        // Note: the Else is optional/defaults to null for the sql node, but needed for the RexNode
         insertCaseArgs.add(colNullLiteral);
         insertColExpr = relBuilder.getRexBuilder().makeCall(
             SqlStdOperatorTable.CASE, insertCaseArgs);

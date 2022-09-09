@@ -18,6 +18,7 @@ package org.apache.calcite.sql;
 
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.ImmutableNullableList;
 
@@ -54,6 +55,8 @@ public class SqlInsert extends SqlCall {
 
   @Nullable SqlNode condition;
 
+  @Nullable SqlSelect sourceSelect;
+
   //~ Constructors -----------------------------------------------------------
 
   public SqlInsert(SqlParserPos pos,
@@ -68,6 +71,7 @@ public class SqlInsert extends SqlCall {
     this.source = source;
     this.columnList = columnList;
     this.condition = condition;
+    this.sourceSelect = null;
     assert keywords != null;
   }
 
@@ -163,6 +167,21 @@ public class SqlInsert extends SqlCall {
       }
     }
     return null;
+  }
+
+  /**
+   * Gets the source SELECT expression for the data to be inserted. Returns
+   * null before the statement has been expanded by
+   * {@link SqlValidatorImpl#performUnconditionalRewrites(SqlNode, boolean)}.
+   *
+   * @return the source SELECT for the data to be inserted
+   */
+  public @Nullable SqlSelect getSourceSelect() {
+    return sourceSelect;
+  }
+
+  public void setSourceSelect(SqlSelect sourceSelect) {
+    this.sourceSelect = sourceSelect;
   }
 
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {

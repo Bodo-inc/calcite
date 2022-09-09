@@ -1490,7 +1490,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       break;
     }
-
+    case INSERT: {
+      SqlInsert call = (SqlInsert) node;
+      call.setSourceSelect(createSourceSelectForInsert(call));
+      break;
+    }
     case MERGE: {
       SqlMerge call = (SqlMerge) node;
       rewriteMerge(call);
@@ -1518,7 +1522,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   /**
    * Helper function for rewriteMerge. Adds the node to the sqlNodeList if it's non-null
-   * otherwise, adds a literal True.
+   * otherwise, adds a literal True. This is used for adding the condition nodes for each
+   * matched/not matched clause, as those conditions default to True if not specified.
    *
    * @param l The list to append to.
    * @param node The condition to add
@@ -1542,6 +1547,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * ((Match Condition) (Update Values (If the match condition is Update)))*
      * ((Insert Condition) (Insert Values))*
      *
+     * Note that the Match/Insert Conditions are simply the boolean secondary conditions (WHEN
+     * (NOT) MATCHED AND __COND__), we handle the checks for it a given row was matched/not matched
+     * in sql to rel conversion.
+     *
+     * The source select does NOT enforce that the source/dest cols have the same name, only that
+     * they evaluate to same expression. In fact, the source select should have no naming/aliasing
+     * whatever (it should all be EXPR#X), but this isn't relied upon or enforced in any way.
+     *
      * This is needed so that we can use convertSelect to handle all the subqueries that may
      * be present in the various conditions/clauses.
      */
@@ -1549,7 +1562,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     SqlNode targetTable = call.getTargetTable();
 
     // NOTE, we add a projection onto the dest/target table, which adds a literal TRUE
-    // This is used for checking if a merge has occurred later on.
+    // This is used for checking if a merge has occurred later on. For all rows which did not match
+    // in the join, this column will be set to NA. For all rows which did match, it will be set
+    // to True. This check is implemented during the conversion from SQL node to RelNode.
     SqlNodeList targetTableSelectList = new SqlNodeList(SqlParserPos.ZERO);
     targetTableSelectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     targetTableSelectList.add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
@@ -1600,6 +1615,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNode curMatchCall = matchedCallList.get(i);
       if (curMatchCall instanceof SqlUpdate) {
         SqlUpdate curUpdateCall = (SqlUpdate) curMatchCall;
+        //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+        // matched rows are added durring sql to rel conversion
         addOrDefaultTrue(topmostSelectList, curUpdateCall.getCondition(),
             curUpdateCall.getParserPosition());
         for (int j = 0; j < curUpdateCall.getSourceExpressionList().size(); j++) {
@@ -1608,6 +1625,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
       } else {
         SqlDelete curDeleteCall = (SqlDelete) curMatchCall;
+        //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+        // matched rows are added durring sql to rel conversion
         addOrDefaultTrue(topmostSelectList, curDeleteCall.getCondition(),
             curDeleteCall.getParserPosition());
       }
@@ -1616,6 +1635,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Add all the conditions and values of the Not matched clauses into the select.
     for (int i = 0; i < insertCallList.size(); i++) {
       SqlInsert curInsertCall = (SqlInsert) insertCallList.get(i);
+      //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+      // matched rows are added during sql to rel conversion
       addOrDefaultTrue(topmostSelectList, curInsertCall.getCondition(),
           curInsertCall.getParserPosition());
       // From what I've seen, in merge, the source is always an VALUES statement
@@ -1786,6 +1807,41 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
     return new SqlSelect(SqlParserPos.ZERO, null, selectList, sourceTable,
         call.getCondition(), null, null, null, null, null, null, null, null);
+  }
+
+
+  /**
+   * Creates the SELECT statement that feeds rows into an INSERT
+   * statement to be updated. Currently, this is only used in registerQuery, for the purpose of
+   * verifying the type of the condition.
+   *
+   * @param call Call to the INSERT operator
+   * @return select statement
+   */
+  protected SqlSelect createSourceSelectForInsert(SqlInsert call) {
+    final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
+
+
+    assert call.getSource() instanceof SqlBasicCall;
+    SqlBasicCall insertSource = (SqlBasicCall) call.getSource();
+    assert insertSource.getOperator() instanceof SqlValuesOperator;
+    List<SqlNode> curInsertValues = ((SqlBasicCall) insertSource.getOperandList().get(0))
+        .getOperandList();
+
+    int ordinal = 0;
+    for (SqlNode exp : curInsertValues) {
+      // Force unique aliases to avoid a duplicate for Y with
+      // SET X=Y
+      String alias = SqlUtil.deriveAliasFromOrdinal(ordinal);
+      selectList.add(SqlValidatorUtil.addAlias(exp, alias));
+      ++ordinal;
+    }
+    SqlNode sourceTable = call.getTargetTable();
+
+    return new SqlSelect(SqlParserPos.ZERO, null, selectList, sourceTable,
+        call.getCondition(), null, null, null, null,
+        null, null, null, null);
+
   }
 
   /**
@@ -3028,16 +3084,15 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           null,
           false);
 
-      SqlNode condition = ((SqlInsert) node).getCondition();
-      if (condition != null) {
-        SqlValidatorScope insertScope = getWhereScope((SqlSelect) insertCall.getSource());
-        SqlNode expandedCondition = expand(condition, insertScope);
-        ((SqlInsert) node).setOperand(4, expandedCondition);
-        // NOTE: the error message produced here is a little wonky, but contains the needed
-        // information. See https://bodo.atlassian.net/browse/BE-3528
-        validateWhereOrOn(insertScope, condition, "WHERE");
-        checkRollUp(null, node, condition, insertScope, "WHERE");
-      }
+      // registering the source select is done to verify the condition is boolean
+      // the sourceSelect is not used after this point for Insert
+      registerQuery(
+          parentScope,
+          usingScope,
+          insertCall.getSourceSelect(),
+          enclosingNode,
+          null,
+          false);
       break;
 
     case DELETE:

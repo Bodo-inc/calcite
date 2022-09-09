@@ -3221,7 +3221,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql = ""
         + "SELECT emp.deptno, emp.sal\n"
         + "FROM dept\n"
-        + "JOIN emp ON emp.deptno + dept.deptno in (SELECT sal from emp)";
+        + "JOIN emp ON (emp.deptno + dept.deptno) in (SELECT sal from emp)";
 
     sql(sql).ok();
   }

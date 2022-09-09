@@ -132,7 +132,7 @@ public class SqlMerge extends SqlCall {
     this.source = tableRef;
   }
 
-  /** Returns the UPDATE statements for this MERGE. */
+  /** Returns the list of WHEN MATCHED clauses statements for this MERGE. */
   public SqlNodeList getMatchedCallList() {
     return matchedCallList;
   }
@@ -142,8 +142,7 @@ public class SqlMerge extends SqlCall {
     return notMatchedCallList;
   }
 
-  /** Returns the condition expression to determine whether to UPDATE or
-   * INSERT. */
+  /** Returns the list of WHEN NOT MATCHED clauses statements for this MERGE. */
   public SqlNode getCondition() {
     return condition;
   }

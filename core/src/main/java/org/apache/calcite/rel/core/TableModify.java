@@ -69,26 +69,32 @@ public abstract class TableModify extends SingleRel {
 
     //We assign each enum an integer value. This is used when converting "MERGE INTO" into a
     // LogicalTableModify node, to enumerate which action should be taken for each row.
-    INSERT(1),
-    UPDATE(2),
-    DELETE(3),
-    MERGE(4);
+    INSERT(0),
+    UPDATE(1),
+    DELETE(2),
+    MERGE(3);
 
     private final int value;
-    private static final HashMap VALUEMAP = new HashMap<>();
+    private static final Operation[] VALUEMAP;
 
     Operation(int value) {
       this.value = value;
     }
 
     static {
-      for (Operation op : Operation.values()) {
-        VALUEMAP.put(op.value, op);
-      }
+      VALUEMAP = new Operation[4];
+      VALUEMAP[0] = INSERT;
+      VALUEMAP[1] = UPDATE;
+      VALUEMAP[2] = DELETE;
+      VALUEMAP[3] = MERGE;
     }
 
-    public static @Nullable Operation valueOf(int pageType) {
-      return (Operation) VALUEMAP.get(pageType);
+    public static @Nullable Operation valueOf(int value) {
+      if (0 <= value && value <= 3) {
+        return VALUEMAP[value];
+      } else {
+        return null;
+      }
     }
 
     public int getValue() {
