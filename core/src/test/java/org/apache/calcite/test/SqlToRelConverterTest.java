@@ -3533,7 +3533,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "when not matched and source.sal * 2 NOT IN (SELECT MAX(emp.sal) FROM emp GROUP BY emp.deptno) then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (ABS(source.empno), (SELECT MAX(deptno) from dept), source.ename)"
-        + "when not matched and (SELECT MIN(emp.sal) < -1 from emp) then\n"
+        + "when not matched and (SELECT MAX(deptno) > 100 from dept) then\n"
         + "  insert (empno, sal, ename)\n"
         + "  values (-1, -1, 'na')"
         + "when not matched then\n"

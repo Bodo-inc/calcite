@@ -4303,10 +4303,10 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
           LogicalAggregate(group=[{}], EXPR$0=[MAX($0)])
             LogicalProject(DEPTNO=[$0])
               LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
-        LogicalProject(EXPR$0=[<($0, -1)])
-          LogicalAggregate(group=[{}], agg#0=[MIN($0)])
-            LogicalProject(SAL=[$5])
-              LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+        LogicalProject(EXPR$0=[>($0, 100)])
+          LogicalAggregate(group=[{}], agg#0=[MAX($0)])
+            LogicalProject(DEPTNO=[$0])
+              LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
       LogicalAggregate(group=[{}], EXPR$0=[MAX($0)])
         LogicalProject(DEPTNO=[$0])
           LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
@@ -4409,7 +4409,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
     <Resource name="plan">
       <![CDATA[
 LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
-  LogicalProject($f0=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $9, null:INTEGER), NOT($18), -1, null:INTEGER)], $f1=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $10, null:VARCHAR(20)), NOT($18), 'NA':VARCHAR(20), null:VARCHAR(20))], $f2=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $11, null:VARCHAR(10)), null:VARCHAR(10))], $f3=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $12, null:INTEGER), null:INTEGER)], $f4=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $13, null:TIMESTAMP(0)), null:TIMESTAMP(0))], $f5=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), +($14, $5), null:INTEGER), NOT($18), $23, null:INTEGER)], $f6=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $15, null:INTEGER), null:INTEGER)], $f7=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $16, null:INTEGER), null:INTEGER)], $f8=[OR(AND(IS TRUE(AND(IS NOT TRUE($22), $18)), OR(AND(IS NOT TRUE($22), $17), AND(null, IS TRUE($22)))), AND(null, IS NOT TRUE(AND(IS NOT TRUE($22), $18))))], $f9=[CASE(AND(IS NOT TRUE($22), $18), 2:TINYINT, NOT($18), 1:TINYINT, null:TINYINT)])
+  LogicalProject($f0=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $9, null:INTEGER), NOT($18), -1, null:INTEGER)], $f1=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $10, null:VARCHAR(20)), NOT($18), 'NA':VARCHAR(20), null:VARCHAR(20))], $f2=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $11, null:VARCHAR(10)), null:VARCHAR(10))], $f3=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $12, null:INTEGER), null:INTEGER)], $f4=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $13, null:TIMESTAMP(0)), null:TIMESTAMP(0))], $f5=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), +($14, $5), null:INTEGER), NOT($18), $23, null:INTEGER)], $f6=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $15, null:INTEGER), null:INTEGER)], $f7=[CASE(AND(IS NOT TRUE($22), $18), CASE(IS NOT TRUE($22), $16, null:INTEGER), null:INTEGER)], $f8=[OR(AND(IS TRUE(AND(IS NOT TRUE($22), $18)), OR(AND(IS NOT TRUE($22), $17), AND(null, IS TRUE($22)))), AND(null, IS NOT TRUE(AND(IS NOT TRUE($22), $18))))], $f9=[CASE(AND(IS NOT TRUE($22), $18), 1:TINYINT, NOT($18), 0:TINYINT, null:TINYINT)])
     LogicalJoin(condition=[true], joinType=[left])
       LogicalJoin(condition=[=($20, $21)], joinType=[left])
         LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], EXPR$9=[$18], EXPR$0=[$19], $f20=[*($5, 2)])
@@ -4657,7 +4657,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
     <Resource name="plan">
       <![CDATA[
 LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
-  LogicalProject($f0=[CASE(AND($19, NOT($18)), CASE($19, -1, null:INTEGER), null:INTEGER)], $f1=[CASE(AND($19, NOT($18)), CASE($19, 'na', null:VARCHAR(20)), null:VARCHAR(20))], $f2=[null:VARCHAR(10)], $f3=[null:INTEGER], $f4=[null:TIMESTAMP(0)], $f5=[CASE(AND($19, NOT($18)), CASE($19, -1, null:INTEGER), null:INTEGER)], $f6=[null:INTEGER], $f7=[null:INTEGER], $f8=[null:BOOLEAN], $f9=[CASE(AND($19, NOT($18)), 1:TINYINT, null:TINYINT)])
+  LogicalProject($f0=[CASE(AND($19, NOT($18)), CASE($19, -1, null:INTEGER), null:INTEGER)], $f1=[CASE(AND($19, NOT($18)), CASE($19, 'na', null:VARCHAR(20)), null:VARCHAR(20))], $f2=[null:VARCHAR(10)], $f3=[null:INTEGER], $f4=[null:TIMESTAMP(0)], $f5=[CASE(AND($19, NOT($18)), CASE($19, -1, null:INTEGER), null:INTEGER)], $f6=[null:INTEGER], $f7=[null:INTEGER], $f8=[null:BOOLEAN], $f9=[CASE(AND($19, NOT($18)), 0:TINYINT, null:TINYINT)])
     LogicalJoin(condition=[true], joinType=[left])
       LogicalJoin(condition=[=($14, $5)], joinType=[left])
         LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
