@@ -41,7 +41,6 @@ import com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;

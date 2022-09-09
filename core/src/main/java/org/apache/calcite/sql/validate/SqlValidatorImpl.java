@@ -1818,13 +1818,19 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @param call Call to the INSERT operator
    * @return select statement
    */
-  protected SqlSelect createSourceSelectForInsert(SqlInsert call) {
+  protected @Nullable SqlSelect createSourceSelectForInsert(SqlInsert call) {
     final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
 
-
-    assert call.getSource() instanceof SqlBasicCall;
+    // We only require the source select if the insert is part of a merge into clause.
+    // the merge into clause requires the syntax to be VALUES (x,y,z...) as opposed to any
+    // other type of query.
+    if (!(call.getSource() instanceof SqlBasicCall)) {
+      return null;
+    }
     SqlBasicCall insertSource = (SqlBasicCall) call.getSource();
-    assert insertSource.getOperator() instanceof SqlValuesOperator;
+    if (!(insertSource.getOperator() instanceof SqlValuesOperator)) {
+      return null;
+    }
     List<SqlNode> curInsertValues = ((SqlBasicCall) insertSource.getOperandList().get(0))
         .getOperandList();
 
@@ -3084,15 +3090,23 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           null,
           false);
 
-      // registering the source select is done to verify the condition is boolean
-      // the sourceSelect is not used after this point for Insert
-      registerQuery(
-          parentScope,
-          usingScope,
-          insertCall.getSourceSelect(),
-          enclosingNode,
-          null,
-          false);
+      SqlSelect insertSourceSelect = insertCall.getSourceSelect();
+
+      if (insertSourceSelect != null) {
+        // registering the source select is done to verify if the condition is boolean, which
+        // is only needed in MERGE with a NOT MATCHED clase.
+        // the insertSourceSelect is only set if the inserted values are a VALUES expression, which
+        // is the only supported expression for an INSERT sqlnode which originates form a MERGE
+        // INTO clause.
+        // The sourceSelect is not used after this point for Insert
+        registerQuery(
+            parentScope,
+            usingScope,
+            insertSourceSelect,
+            enclosingNode,
+            null,
+            false);
+      }
       break;
 
     case DELETE:
