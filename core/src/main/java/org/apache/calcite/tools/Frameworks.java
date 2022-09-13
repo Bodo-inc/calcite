@@ -343,6 +343,11 @@ public class Frameworks {
       return this;
     }
 
+    public ConfigBuilder defaultSchemas(List<SchemaPlus> defaultSchemas) {
+      this.defaultSchemas = defaultSchemas;
+      return this;
+    }
+
     public ConfigBuilder costFactory(RelOptCostFactory costFactory) {
       this.costFactory = costFactory;
       return this;
