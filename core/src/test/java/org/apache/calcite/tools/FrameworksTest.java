@@ -220,6 +220,33 @@ public class FrameworksTest {
     assertThat(Util.toLinux(valStr), equalTo(expandedStr));
   }
 
+  /** Tests that the validator expands identifiers by default with
+   * multiple default schema.
+   *
+   */
+  @Test void testFrameworksValidatorWithIdentifierExpansionMultiSchema()
+      throws Exception {
+    final SchemaPlus rootSchema = Frameworks.createRootSchema(true);
+    List<SchemaPlus> defaultSchemas = new ArrayList<>();
+    defaultSchemas.add(CalciteAssert.addSchema(rootSchema, CalciteAssert.SchemaSpec.HR));
+    defaultSchemas.add(CalciteAssert.addSchema(rootSchema, CalciteAssert.SchemaSpec.TPCH));
+
+    final FrameworkConfig config = Frameworks.newConfigBuilder()
+        .defaultSchemas(defaultSchemas)
+        .build();
+    final Planner planner = Frameworks.getPlanner(config);
+    SqlNode parse = planner.parse(
+        "select * from \"emps\" left outer join \"lineitem\" on \"custId\" < \"salary\"");
+    SqlNode val = planner.validate(parse);
+
+    String valStr =
+        val.toSqlString(AnsiSqlDialect.DEFAULT, false).getSql();
+
+    String expandedStr =
+        "SELECT `emps`.`empid`, `emps`.`deptno`, `emps`.`name`, `emps`.`salary`, `emps`.`commission`, `lineitem`.`custId`\nFROM `hr`.`emps` AS `emps`\nLEFT JOIN `tpch`.`lineitem` AS `lineitem` ON `lineitem`.`custId` < `emps`.`salary`";
+    assertThat(Util.toLinux(valStr), equalTo(expandedStr));
+  }
+
   /** Test for {@link Path}. */
   @Test void testSchemaPath() {
     final SchemaPlus rootSchema = Frameworks.createRootSchema(true);
