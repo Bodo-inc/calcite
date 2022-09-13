@@ -227,7 +227,7 @@ public class FrameworksTest {
         .defaultSchema(
             CalciteAssert.addSchema(rootSchema, CalciteAssert.SchemaSpec.HR))
         .build();
-    final Path path = Schemas.path(config.getDefaultSchema());
+    final Path path = Schemas.path(config.getDefaultSchemas().get(0));
     assertThat(path.size(), is(2));
     assertThat(path.get(0).left, is(""));
     assertThat(path.get(1).left, is("hr"));
