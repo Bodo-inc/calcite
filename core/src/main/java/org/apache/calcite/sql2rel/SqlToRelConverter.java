@@ -4439,7 +4439,6 @@ public class SqlToRelConverter {
           Integer curOffset = curInsertTargetColumnMap.get(curFieldName)
               + totalOffset;
           valToAdd = mergeSourceRelProjects.get(curOffset);
-          valToAdd = mergeSourceRelProjects.get(curOffset);
 
         } else {
           // Fill any non specified columns with NULL
