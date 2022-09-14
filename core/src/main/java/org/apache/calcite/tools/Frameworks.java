@@ -422,7 +422,7 @@ public class Frameworks {
         SqlParser.Config parserConfig,
         SqlValidator.Config sqlValidatorConfig,
         SqlToRelConverter.Config sqlToRelConverterConfig,
-        @Nullable List<SchemaPlus> defaultSchemas,
+        List<SchemaPlus> defaultSchemas,
         @Nullable RelOptCostFactory costFactory,
         RelDataTypeSystem typeSystem,
         @Nullable RexExecutor executor,
