@@ -4243,7 +4243,7 @@ public class SqlToRelConverter {
     // offset + 0 into the mergeSourceRel gives us the expression Z. This is added to the
     // expression list: [A, Y, Z]
     //
-    // Iterating over update 1:
+    // Iterating over update 2:
     //    Column A in the dest table is not being updated, we add it to the expression list: [A]
     //    B in the dest table is being updated. The index of B in targetColumnList1 is 0,
     // offset + 0 into the mergeSourceRel gives us the expression X. This is added to the
@@ -4334,16 +4334,18 @@ public class SqlToRelConverter {
           String curFieldName = destTableFieldNames.get(destColIdx);
           HashMap<String, Integer> curUpdateCallMap =
               requireNonNull(updateToTargetColumnSet.get(curUpdateCall));
+
+          //offset into mergeSourceRelProjects where we can find the current column
+          Integer curOffset;
           if (curUpdateCallMap.containsKey(curFieldName)) {
             // Add the offset relative to the current list, and the offset
             // that gets us to the start of the current expression list
-            Integer curOffset = curUpdateCallMap.get(curFieldName)
-                + totalOffset;
-            caseValues.get(destColIdx).add(mergeSourceRelProjects.get(curOffset));
+            curOffset = curUpdateCallMap.get(curFieldName) + totalOffset;
           } else {
-            RexNode defaultColumnValue = mergeSourceRelProjects.get(nSourceFields + destColIdx);
-            caseValues.get(destColIdx).add(defaultColumnValue);
+            curOffset = nSourceFields + destColIdx;
           }
+
+          caseValues.get(destColIdx).add(mergeSourceRelProjects.get(curOffset));
         }
 
         // increment total offset, to put us at the next
@@ -4373,7 +4375,7 @@ public class SqlToRelConverter {
       @Nullable SqlNodeList curInsertTargetColumnList = curInsertCall.getTargetColumnList();
 
       if (curInsertTargetColumnList == null) {
-        //If curInsertTargetColumnList returns NULL, then it means that we're inserting
+        // If curInsertTargetColumnList returns NULL, then it means that we're inserting
         // every column in the destination table
         for (int curColExprIdx = 0;
              curColExprIdx < destTable.getRowType().getFieldCount(); curColExprIdx++) {
@@ -4428,20 +4430,24 @@ public class SqlToRelConverter {
 
         HashMap<String, Integer> curInsertTargetColumnMap =
             requireNonNull(insertToTargetColumnSet.get(curInsertCall));
+
+        RexNode valToAdd;
         if (curInsertTargetColumnMap.containsKey(curFieldName)) {
           // Add the offset relative to the current list, and the offset
           // that gets us to the start of the current list
 
           Integer curOffset = curInsertTargetColumnMap.get(curFieldName)
               + totalOffset;
-          caseValues.get(destColIdx).add(mergeSourceRelProjects.get(curOffset));
+          valToAdd = mergeSourceRelProjects.get(curOffset);
+          valToAdd = mergeSourceRelProjects.get(curOffset);
 
         } else {
           // Fill any non specified columns with NULL
-          RexNode defaultColumnValue = this.relBuilder.getRexBuilder().makeNullLiteral(
+          valToAdd = this.relBuilder.getRexBuilder().makeNullLiteral(
               destTable.getRowType().getFieldList().get(destColIdx).getType());
-          caseValues.get(destColIdx).add(defaultColumnValue);
         }
+
+        caseValues.get(destColIdx).add(valToAdd);
       }
 
       // Increment Total offset by the length of the expression list, so that it now points to the

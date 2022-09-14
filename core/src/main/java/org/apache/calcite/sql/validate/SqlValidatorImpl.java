@@ -1615,8 +1615,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNode curMatchCall = matchedCallList.get(i);
       if (curMatchCall instanceof SqlUpdate) {
         SqlUpdate curUpdateCall = (SqlUpdate) curMatchCall;
-        //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
-        // matched rows are added durring sql to rel conversion
+        // Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+        // matched rows are added during sql to rel conversion
         addOrDefaultTrue(topmostSelectList, curUpdateCall.getCondition(),
             curUpdateCall.getParserPosition());
         for (int j = 0; j < curUpdateCall.getSourceExpressionList().size(); j++) {
@@ -1625,8 +1625,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
       } else {
         SqlDelete curDeleteCall = (SqlDelete) curMatchCall;
-        //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
-        // matched rows are added durring sql to rel conversion
+        // Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+        // matched rows are added during sql to rel conversion
         addOrDefaultTrue(topmostSelectList, curDeleteCall.getCondition(),
             curDeleteCall.getParserPosition());
       }
@@ -1635,7 +1635,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Add all the conditions and values of the Not matched clauses into the select.
     for (int i = 0; i < insertCallList.size(); i++) {
       SqlInsert curInsertCall = (SqlInsert) insertCallList.get(i);
-      //Note: we're only adding the secondary condition (... and cond). Checks for matched/not
+      // Note: we're only adding the secondary condition (... and cond). Checks for matched/not
       // matched rows are added during sql to rel conversion
       addOrDefaultTrue(topmostSelectList, curInsertCall.getCondition(),
           curInsertCall.getParserPosition());
