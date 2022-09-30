@@ -4579,8 +4579,14 @@ public class SqlToRelConverter {
 
 
     // The "matched" flag should always be after the columns from the source and dest table
-    RexNode isMatch = relBuilder.getRexBuilder().makeInputRef(join, numDestCols + numSourceCols);
-    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.NOT, isMatch);
+    RexNode matchedFlag = relBuilder.getRexBuilder().makeInputRef(join, numDestCols + numSourceCols);
+
+    // Note that we need to use IS_NULL/NOT_NULL instead of boolean logic assuming NULL is false.
+    // Calcite will perform some plan optimizations that assume no nullability
+    // (which seems like a bug)
+
+    RexNode isMatch = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NOT_NULL, matchedFlag);
+    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NULL, matchedFlag);
 
     //Seperate the update conditions from the delete conditions
     List<RexNode> updateConds = new ArrayList<>();
