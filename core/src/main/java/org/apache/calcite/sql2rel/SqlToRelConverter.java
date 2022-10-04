@@ -4633,6 +4633,9 @@ public class SqlToRelConverter {
     RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
         deleteCaseNodes);
 
+    RexNode isDeleteOrUpdateRow = relBuilder.getRexBuilder().makeCall(
+        SqlStdOperatorTable.OR, Arrays.asList(isUpdateRow, isDeleteRow));
+
 
     RexNode rowHasInsertCondition;
     if (notMatchedCaseNodes.getKey().size() > 1) {
@@ -4701,7 +4704,8 @@ public class SqlToRelConverter {
       }
 
       RexNode curColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-          Arrays.asList(isUpdateRow, matchedColExpr, isInsertRow, insertColExpr, colNullLiteral));
+          Arrays.asList(isDeleteOrUpdateRow, matchedColExpr,
+              isInsertRow, insertColExpr, colNullLiteral));
       finalProjects.add(curColExpr);
     }
 
