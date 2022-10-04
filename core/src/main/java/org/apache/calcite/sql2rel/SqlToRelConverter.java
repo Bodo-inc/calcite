@@ -4579,14 +4579,17 @@ public class SqlToRelConverter {
 
 
     // The "matched" flag should always be after the columns from the source and dest table
-    RexNode matchedFlag = relBuilder.getRexBuilder().makeInputRef(join, numDestCols + numSourceCols);
+    RexNode matchedFlag = relBuilder.getRexBuilder().makeInputRef(join,
+        numDestCols + numSourceCols);
 
     // Note that we need to use IS_NULL/NOT_NULL instead of boolean logic assuming NULL is false.
     // Calcite will perform some plan optimizations that assume no nullability
     // (which seems like a bug)
 
-    RexNode isMatch = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NOT_NULL, matchedFlag);
-    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NULL, matchedFlag);
+    RexNode isMatch = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NOT_NULL,
+        matchedFlag);
+    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NULL,
+        matchedFlag);
 
     //Seperate the update conditions from the delete conditions
     List<RexNode> updateConds = new ArrayList<>();
@@ -4607,9 +4610,9 @@ public class SqlToRelConverter {
 
     if (updateConds.size() > 1) {
       rowHasUpdateCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          matchCaseNodes.getKey());
+          updateConds);
     } else if (updateConds.size() == 1) {
-      rowHasUpdateCondition = matchCaseNodes.getKey().get(0);
+      rowHasUpdateCondition = updateConds.get(0);
     } else {
       rowHasUpdateCondition = relBuilder.getRexBuilder().makeLiteral(false);
     }
@@ -4621,9 +4624,9 @@ public class SqlToRelConverter {
 
     if (deleteConds.size() > 1) {
       rowHasDeleteCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          matchCaseNodes.getKey());
+          deleteConds);
     } else if (deleteConds.size() == 1) {
-      rowHasDeleteCondition = matchCaseNodes.getKey().get(0);
+      rowHasDeleteCondition = deleteConds.get(0);
     } else {
       rowHasDeleteCondition = relBuilder.getRexBuilder().makeLiteral(false);
     }
