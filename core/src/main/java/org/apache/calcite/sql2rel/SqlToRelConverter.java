@@ -4704,8 +4704,8 @@ public class SqlToRelConverter {
       }
 
       RexNode curColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-          Arrays.asList(isDeleteOrUpdateRow, matchedColExpr,
-              isInsertRow, insertColExpr, colNullLiteral));
+          Arrays.asList(isMatch, matchedColExpr,
+              isNotMatched, insertColExpr, colNullLiteral));
       finalProjects.add(curColExpr);
     }
 
