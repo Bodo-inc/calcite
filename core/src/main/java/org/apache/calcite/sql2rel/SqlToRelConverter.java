@@ -4667,21 +4667,21 @@ public class SqlToRelConverter {
 
       // Calculate the matched case (if we have any updates or deletes)
       if (matchCaseNodes.getKey().size() > 0) {
-        List<RexNode> updateCaseArgs = new ArrayList<>();
+        List<RexNode> matchedCaseArgs = new ArrayList<>();
         List<RexNode> curUpdateColExprList = matchCaseNodes.getValue().get(colIdx);
-        for (int updateCondIdx = 0;
-             updateCondIdx < matchCaseNodes.getKey().size(); updateCondIdx++) {
+        for (int matchCondIdx = 0;
+             matchCondIdx < matchCaseNodes.getKey().size(); matchCondIdx++) {
           // Case operands should are organized as IF, THEN, IF, THEN... ELSE
           // So, add the condition, followed
           // by the expression for that column if the condition is True
-          updateCaseArgs.add(matchCaseNodes.getKey().get(updateCondIdx));
-          updateCaseArgs.add(curUpdateColExprList.get(updateCondIdx));
+          matchedCaseArgs.add(matchCaseNodes.getKey().get(matchCondIdx));
+          matchedCaseArgs.add(curUpdateColExprList.get(matchCondIdx));
         }
         // Append NULL for the else case
         // Note: the Else is optional/defaults to null for the sql node, but needed for the RexNode
-        updateCaseArgs.add(colNullLiteral);
+        matchedCaseArgs.add(colNullLiteral);
         matchedColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-            updateCaseArgs);
+            matchedCaseArgs);
       }
 
       //Calculate the not matched case (if we have any inserts)
