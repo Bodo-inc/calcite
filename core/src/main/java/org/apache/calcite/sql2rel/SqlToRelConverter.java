@@ -4591,52 +4591,47 @@ public class SqlToRelConverter {
     RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NULL,
         matchedFlag);
 
-    //Seperate the update conditions from the delete conditions
-    List<RexNode> updateConds = new ArrayList<>();
-    List<RexNode> deleteConds = new ArrayList<>();
+    //Arguments to the case statement that returns True if the current row is an update
+    List<RexNode> updateCaseNodes = new ArrayList<>();
+    //Arguments to the case statement that returns True if the current row is an delete
+    List<RexNode> deleteCaseNodes = new ArrayList<>();
 
+    //If the row is not matched, it cannot be an update or a delete
+    updateCaseNodes.add(isNotMatched);
+    updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+    deleteCaseNodes.add(isNotMatched);
+    deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+
+    //The action taken depends on the first matched condition.
+    //So, we construct a case statement that returns true/false based on the first matched condition
     for (int clauseIdx = 0; clauseIdx < call.getMatchedCallList().size(); clauseIdx++) {
+      RexNode curCond = matchCaseNodes.getKey().get(clauseIdx);
+      updateCaseNodes.add(curCond);
+      deleteCaseNodes.add(curCond);
       if (call.getMatchedCallList().get(clauseIdx) instanceof SqlUpdate) {
-        updateConds.add(matchCaseNodes.getKey().get(clauseIdx));
+        // If we match an update condition, the row is an update, and therefore
+        // cannot be a delete action
+        updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(true));
+        deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
       } else {
-        deleteConds.add(matchCaseNodes.getKey().get(clauseIdx));
+        // If we match an delete condition, the row is an delete, and therefore
+        // cannot be an update action
+        updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+        deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(true));
       }
     }
 
-    // Do some logic to get the expressions for determining the operation that must be performed
-    // for the current row.
+    //If the row matches none of the update/delete conditions, it is not a delete/update
+    //row
+    updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+    deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
 
-    RexNode rowHasUpdateCondition;
+    //Finally, construct the case statements
+    RexNode isUpdateRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
+        updateCaseNodes);
 
-    if (updateConds.size() > 1) {
-      rowHasUpdateCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          updateConds);
-    } else if (updateConds.size() == 1) {
-      rowHasUpdateCondition = updateConds.get(0);
-    } else {
-      rowHasUpdateCondition = relBuilder.getRexBuilder().makeLiteral(false);
-    }
-
-    RexNode isUpdateRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.AND,
-        Arrays.asList(rowHasUpdateCondition, isMatch));
-
-    RexNode rowHasDeleteCondition;
-
-    if (deleteConds.size() > 1) {
-      rowHasDeleteCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          deleteConds);
-    } else if (deleteConds.size() == 1) {
-      rowHasDeleteCondition = deleteConds.get(0);
-    } else {
-      rowHasDeleteCondition = relBuilder.getRexBuilder().makeLiteral(false);
-    }
-
-    RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.AND,
-        Arrays.asList(rowHasDeleteCondition, isMatch));
-
-
-    RexNode isMatchedRow = relBuilder.getRexBuilder().makeCall(
-        SqlStdOperatorTable.OR, Arrays.asList(isUpdateRow, isDeleteRow));
+    RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
+        deleteCaseNodes);
 
 
     RexNode rowHasInsertCondition;
@@ -4651,7 +4646,6 @@ public class SqlToRelConverter {
 
     RexNode isInsertRow = relBuilder.getRexBuilder().makeCall(
         SqlStdOperatorTable.AND, Arrays.asList(rowHasInsertCondition, isNotMatched));
-
 
 
     List<RexNode> finalProjects = new ArrayList<>();
@@ -4707,7 +4701,7 @@ public class SqlToRelConverter {
       }
 
       RexNode curColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-          Arrays.asList(isMatchedRow, matchedColExpr, isInsertRow, insertColExpr, colNullLiteral));
+          Arrays.asList(isUpdateRow, matchedColExpr, isInsertRow, insertColExpr, colNullLiteral));
       finalProjects.add(curColExpr);
     }
 
