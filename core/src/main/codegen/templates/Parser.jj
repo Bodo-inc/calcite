@@ -1051,13 +1051,13 @@ SqlNode SqlStmt() :
         stmt = SqlDrop()
     |
 </#if>
-        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        LOOKAHEAD(2) stmt = SqlInsert()
     |
         stmt = SqlExplain()
     |
         stmt = SqlDescribe()
     |
-        stmt = SqlInsert()
+        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlDelete()
     |
@@ -1389,9 +1389,9 @@ SqlNode SqlQueryOrDml() :
 }
 {
     (
-        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        LOOKAHEAD(2) stmt = SqlInsert()
     |
-        stmt = SqlInsert()
+        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlDelete()
     |
@@ -8200,6 +8200,7 @@ String NonReservedKeyWord() :
     |   NonReservedKeyWord2of3()
     |   <WIDTH_BUCKET>
     |   <CONTAINS>
+    |   <INSERT>
     )
     {
         return unquotedIdentifier();
