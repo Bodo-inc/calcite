@@ -4596,7 +4596,7 @@ public class SqlToRelConverter {
     //Arguments to the case statement that returns True if the current row is an delete
     List<RexNode> deleteCaseNodes = new ArrayList<>();
 
-    //If the row is not matched, it cannot be an update or a delete
+    //If the row is not matched in the join, it cannot be an update or a delete
     updateCaseNodes.add(isNotMatched);
     updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
     deleteCaseNodes.add(isNotMatched);
@@ -4632,9 +4632,6 @@ public class SqlToRelConverter {
 
     RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
         deleteCaseNodes);
-
-    RexNode isDeleteOrUpdateRow = relBuilder.getRexBuilder().makeCall(
-        SqlStdOperatorTable.OR, Arrays.asList(isUpdateRow, isDeleteRow));
 
 
     RexNode rowHasInsertCondition;
