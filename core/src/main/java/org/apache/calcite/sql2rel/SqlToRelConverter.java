@@ -4579,55 +4579,59 @@ public class SqlToRelConverter {
 
 
     // The "matched" flag should always be after the columns from the source and dest table
-    RexNode isMatch = relBuilder.getRexBuilder().makeInputRef(join, numDestCols + numSourceCols);
-    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.NOT, isMatch);
+    RexNode matchedFlag = relBuilder.getRexBuilder().makeInputRef(join,
+        numDestCols + numSourceCols);
 
-    //Seperate the update conditions from the delete conditions
-    List<RexNode> updateConds = new ArrayList<>();
-    List<RexNode> deleteConds = new ArrayList<>();
+    // Note that we need to use IS_NULL/NOT_NULL instead of boolean logic assuming NULL is false.
+    // Calcite will perform some plan optimizations that assume no nullability
+    // (which seems like a bug)
 
+    RexNode isMatch = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NOT_NULL,
+        matchedFlag);
+    RexNode isNotMatched = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.IS_NULL,
+        matchedFlag);
+
+    //Arguments to the case statement that returns True if the current row is an update
+    List<RexNode> updateCaseNodes = new ArrayList<>();
+    //Arguments to the case statement that returns True if the current row is an delete
+    List<RexNode> deleteCaseNodes = new ArrayList<>();
+
+    //If the row is not matched in the join, it cannot be an update or a delete
+    updateCaseNodes.add(isNotMatched);
+    updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+    deleteCaseNodes.add(isNotMatched);
+    deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+
+    //The action taken depends on the first matched condition.
+    //So, we construct a case statement that returns true/false based on the first matched condition
     for (int clauseIdx = 0; clauseIdx < call.getMatchedCallList().size(); clauseIdx++) {
+      RexNode curCond = matchCaseNodes.getKey().get(clauseIdx);
+      updateCaseNodes.add(curCond);
+      deleteCaseNodes.add(curCond);
       if (call.getMatchedCallList().get(clauseIdx) instanceof SqlUpdate) {
-        updateConds.add(matchCaseNodes.getKey().get(clauseIdx));
+        // If we match an update condition, the row is an update, and therefore
+        // cannot be a delete action
+        updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(true));
+        deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
       } else {
-        deleteConds.add(matchCaseNodes.getKey().get(clauseIdx));
+        // If we match an delete condition, the row is an delete, and therefore
+        // cannot be an update action
+        updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+        deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(true));
       }
     }
 
-    // Do some logic to get the expressions for determining the operation that must be performed
-    // for the current row.
+    //If the row matches none of the update/delete conditions, it is not a delete/update
+    //row
+    updateCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
+    deleteCaseNodes.add(relBuilder.getRexBuilder().makeLiteral(false));
 
-    RexNode rowHasUpdateCondition;
+    //Finally, construct the case statements
+    RexNode isUpdateRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
+        updateCaseNodes);
 
-    if (updateConds.size() > 1) {
-      rowHasUpdateCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          matchCaseNodes.getKey());
-    } else if (updateConds.size() == 1) {
-      rowHasUpdateCondition = matchCaseNodes.getKey().get(0);
-    } else {
-      rowHasUpdateCondition = relBuilder.getRexBuilder().makeLiteral(false);
-    }
-
-    RexNode isUpdateRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.AND,
-        Arrays.asList(rowHasUpdateCondition, isMatch));
-
-    RexNode rowHasDeleteCondition;
-
-    if (deleteConds.size() > 1) {
-      rowHasDeleteCondition = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.OR,
-          matchCaseNodes.getKey());
-    } else if (deleteConds.size() == 1) {
-      rowHasDeleteCondition = matchCaseNodes.getKey().get(0);
-    } else {
-      rowHasDeleteCondition = relBuilder.getRexBuilder().makeLiteral(false);
-    }
-
-    RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.AND,
-        Arrays.asList(rowHasDeleteCondition, isMatch));
-
-
-    RexNode isMatchedRow = relBuilder.getRexBuilder().makeCall(
-        SqlStdOperatorTable.OR, Arrays.asList(isUpdateRow, isDeleteRow));
+    RexNode isDeleteRow = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
+        deleteCaseNodes);
 
 
     RexNode rowHasInsertCondition;
@@ -4642,7 +4646,6 @@ public class SqlToRelConverter {
 
     RexNode isInsertRow = relBuilder.getRexBuilder().makeCall(
         SqlStdOperatorTable.AND, Arrays.asList(rowHasInsertCondition, isNotMatched));
-
 
 
     List<RexNode> finalProjects = new ArrayList<>();
@@ -4661,21 +4664,21 @@ public class SqlToRelConverter {
 
       // Calculate the matched case (if we have any updates or deletes)
       if (matchCaseNodes.getKey().size() > 0) {
-        List<RexNode> updateCaseArgs = new ArrayList<>();
+        List<RexNode> matchedCaseArgs = new ArrayList<>();
         List<RexNode> curUpdateColExprList = matchCaseNodes.getValue().get(colIdx);
-        for (int updateCondIdx = 0;
-             updateCondIdx < matchCaseNodes.getKey().size(); updateCondIdx++) {
+        for (int matchCondIdx = 0;
+             matchCondIdx < matchCaseNodes.getKey().size(); matchCondIdx++) {
           // Case operands should are organized as IF, THEN, IF, THEN... ELSE
           // So, add the condition, followed
           // by the expression for that column if the condition is True
-          updateCaseArgs.add(matchCaseNodes.getKey().get(updateCondIdx));
-          updateCaseArgs.add(curUpdateColExprList.get(updateCondIdx));
+          matchedCaseArgs.add(matchCaseNodes.getKey().get(matchCondIdx));
+          matchedCaseArgs.add(curUpdateColExprList.get(matchCondIdx));
         }
         // Append NULL for the else case
         // Note: the Else is optional/defaults to null for the sql node, but needed for the RexNode
-        updateCaseArgs.add(colNullLiteral);
+        matchedCaseArgs.add(colNullLiteral);
         matchedColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-            updateCaseArgs);
+            matchedCaseArgs);
       }
 
       //Calculate the not matched case (if we have any inserts)
@@ -4698,7 +4701,8 @@ public class SqlToRelConverter {
       }
 
       RexNode curColExpr = relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.CASE,
-          Arrays.asList(isMatchedRow, matchedColExpr, isInsertRow, insertColExpr, colNullLiteral));
+          Arrays.asList(isMatch, matchedColExpr,
+              isNotMatched, insertColExpr, colNullLiteral));
       finalProjects.add(curColExpr);
     }
 
