@@ -368,7 +368,8 @@ public abstract class SqlUtil {
    * @param identifier   SqlIdentifier
    * @param asFunctionID Whether this identifier comes from a SqlFunction
    */
-  public static void unparseSqlIdentifierSyntax(
+  public static void
+  unparseSqlIdentifierSyntax(
       SqlWriter writer,
       SqlIdentifier identifier,
       boolean asFunctionID) {

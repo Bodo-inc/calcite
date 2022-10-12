@@ -117,6 +117,9 @@ public enum SqlKind {
   /** An identifier. */
   IDENTIFIER,
 
+  /** A table identifier with ID. Used by merge into */
+  TABLE_IDENTIFIER_WITH_ID,
+
   /** A literal. */
   LITERAL,
 
