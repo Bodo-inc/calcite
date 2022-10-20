@@ -103,6 +103,15 @@ public class SqlTableIdentifierWithID extends SqlNode {
     return SqlKind.TABLE_IDENTIFIER_WITH_ID;
   }
 
+
+  /**
+   * Returns whether this is a simple identifier. "FOO" is simple
+   * and "FOO.BAR" is not.
+   */
+  public boolean isSimple() {
+    return names.size() == 1;
+  }
+
   public ImmutableList<String> getNames() {
     return names;
   }
