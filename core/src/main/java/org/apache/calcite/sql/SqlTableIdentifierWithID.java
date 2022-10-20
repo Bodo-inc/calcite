@@ -27,6 +27,7 @@ import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 
@@ -101,6 +102,15 @@ public class SqlTableIdentifierWithID extends SqlNode {
   @Override public SqlKind getKind() {
     return SqlKind.TABLE_IDENTIFIER_WITH_ID;
   }
+
+  public ImmutableList<String> getNames() {
+    return names;
+  }
+
+  public SqlIdentifier convertToSQLIdentifier() {
+    return new SqlIdentifier(names, collation, pos, componentPositions);
+  }
+
 
   @Override public SqlNode clone(SqlParserPos pos) {
     return new SqlTableIdentifierWithID(names, collation, pos, componentPositions);
@@ -179,13 +189,10 @@ public class SqlTableIdentifierWithID extends SqlNode {
   }
 
   @Override public void validateExpr(SqlValidator validator, SqlValidatorScope scope) {
-    // TODO: FIXME
-    // First check for builtin functions which don't have parentheses,
-    // like "LOCALTIME".
-    final SqlCall call = validator.makeNullaryCall(this);
-    if (call != null) {
-      validator.validateCall(call, scope);
-      return;
+    try {
+      validator.requireNonCall(this);
+    } catch (ValidationException e) {
+      throw new RuntimeException(e);
     }
     // TODO: FIXME
     validator.validateIdentifier(this, scope);
@@ -231,13 +238,11 @@ public class SqlTableIdentifierWithID extends SqlNode {
 
   @Override public SqlMonotonicity getMonotonicity(@Nullable SqlValidatorScope scope) {
     Objects.requireNonNull(scope, "scope");
-    // First check for builtin functions which don't have parentheses,
-    // like "LOCALTIME".
     final SqlValidator validator = scope.getValidator();
-    // TODO: FIXME
-    final SqlCall call = validator.makeNullaryCall(this);
-    if (call != null) {
-      return call.getMonotonicity(scope);
+    try {
+      validator.requireNonCall(this);
+    } catch (ValidationException e) {
+      throw new RuntimeException(e);
     }
     // TODO: FIXME
     final SqlQualified qualified = scope.fullyQualify(this);

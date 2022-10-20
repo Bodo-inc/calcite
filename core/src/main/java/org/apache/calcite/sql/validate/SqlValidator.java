@@ -23,31 +23,13 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Resources;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlDelete;
-import org.apache.calcite.sql.SqlDynamicParam;
-import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlInsert;
-import org.apache.calcite.sql.SqlIntervalQualifier;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlMatchRecognize;
-import org.apache.calcite.sql.SqlMerge;
-import org.apache.calcite.sql.SqlNamedParam;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlUpdate;
-import org.apache.calcite.sql.SqlWindow;
-import org.apache.calcite.sql.SqlWith;
-import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.type.SqlTypeCoercionRule;
 import org.apache.calcite.sql.validate.implicit.TypeCoercion;
 import org.apache.calcite.sql.validate.implicit.TypeCoercionFactory;
 import org.apache.calcite.sql.validate.implicit.TypeCoercions;
+
+import org.apache.calcite.tools.ValidationException;
 
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -353,6 +335,11 @@ public interface SqlValidator {
    * returns a call to that function, otherwise returns null.
    */
   @Nullable SqlCall makeNullaryCall(SqlIdentifier id);
+
+  /**
+   * Requires that a SQLTableIdentifierWithID does not contain a function.
+   */
+  void requireNonCall(SqlTableIdentifierWithID id) throws ValidationException;
 
   /**
    * Derives the type of a node in a given scope. If the type has already been
