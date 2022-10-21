@@ -238,8 +238,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
       SqlWriter writer,
       int leftPrec,
       int rightPrec) {
-    // TODO: FIXME
-    SqlUtil.unparseSqlIdentifierSyntax(writer, this, false);
+    SqlUtil.unparseSqlTableIdentifierWithIDSyntax(writer, this);
   }
 
   @Override public void validate(SqlValidator validator, SqlValidatorScope scope) {
