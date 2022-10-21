@@ -23,10 +23,7 @@ import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 import org.apache.calcite.sql.util.SqlVisitor;
-import org.apache.calcite.sql.validate.SqlMonotonicity;
-import org.apache.calcite.sql.validate.SqlQualified;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
@@ -283,10 +280,9 @@ public class SqlTableIdentifierWithID extends SqlNode {
     } catch (ValidationException e) {
       throw new RuntimeException(e);
     }
-    // TODO: FIXME
-    final SqlQualified qualified = scope.fullyQualify(this);
+    final SqlTableIdentifierWithIDQualified qualified = scope.fullyQualify(this);
     assert qualified.namespace != null : "namespace must not be null in " + qualified;
-    final SqlIdentifier fqId = qualified.identifier;
+    final SqlTableIdentifierWithID fqId = qualified.identifier;
     return qualified.namespace.resolve().getMonotonicity(Util.last(fqId.names));
   }
 

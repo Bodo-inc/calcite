@@ -705,7 +705,6 @@ public abstract class DelegatingScope implements SqlValidatorScope {
         case PEEK_FIELDS:
         case PEEK_FIELDS_DEFAULT:
         case PEEK_FIELDS_NO_EXPAND:
-          // TODO FIXME: Create a new identifier as a copy
           identifier = identifier.add(k, fieldName, SqlParserPos.ZERO);
           break;
         default:
