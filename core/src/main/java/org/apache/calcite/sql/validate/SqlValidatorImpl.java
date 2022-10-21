@@ -6804,6 +6804,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       return expandedExpr;
     }
 
+    @Override public @Nullable SqlNode visit(SqlTableIdentifierWithID id) {
+      try {
+        validator.requireNonCall(id);
+      } catch (ValidationException e) {
+        throw new RuntimeException(e);
+      }
+      final SqlTableIdentifierWithID fqId = getScope().fullyQualify(id).identifier;
+      validator.setOriginal(fqId, id);
+      return fqId;
+    }
+
     @Override protected SqlNode visitScoped(SqlCall call) {
       switch (call.getKind()) {
       case SCALAR_QUERY:
