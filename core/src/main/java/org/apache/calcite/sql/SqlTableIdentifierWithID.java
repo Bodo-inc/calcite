@@ -34,6 +34,7 @@ import org.apache.calcite.util.Util;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.Pure;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -115,6 +116,35 @@ public class SqlTableIdentifierWithID extends SqlNode {
   public ImmutableList<String> getNames() {
     return names;
   }
+
+  /** Returns a SqlTableIdentifierWithID that is the same as this except one modified name.
+   * Does not modify this identifier. */
+  public SqlTableIdentifierWithID setName(int i, String name) {
+    if (!names.get(i).equals(name)) {
+      String[] nameArray = names.toArray(new String[0]);
+      nameArray[i] = name;
+      return new SqlTableIdentifierWithID(ImmutableList.copyOf(nameArray), collation, pos,
+          componentPositions);
+    } else {
+      return this;
+    }
+  }
+
+  /** Returns a SqlTableIdentifierWithID that is the same as this except with a component
+   * added at a given position. Does not modify this identifier. */
+  public SqlTableIdentifierWithID add(int i, String name, SqlParserPos pos) {
+    final List<String> names2 = new ArrayList<>(names);
+    names2.add(i, name);
+    final List<SqlParserPos> pos2;
+    if (componentPositions == null) {
+      pos2 = null;
+    } else {
+      pos2 = new ArrayList<>(componentPositions);
+      pos2.add(i, pos);
+    }
+    return new SqlTableIdentifierWithID(names2, collation, pos, pos2);
+  }
+
 
   public SqlIdentifier convertToSQLIdentifier() {
     return new SqlIdentifier(names, collation, pos, componentPositions);
