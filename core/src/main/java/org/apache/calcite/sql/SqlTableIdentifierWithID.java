@@ -47,7 +47,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
    * Array of the components of this compound identifier.
    **
    */
-  private final ImmutableList<String> names;
+  public ImmutableList<String> names;
 
   /**
    * This identifier's collation (if any).
@@ -112,6 +112,29 @@ public class SqlTableIdentifierWithID extends SqlNode {
 
   public ImmutableList<String> getNames() {
     return names;
+  }
+
+  /**
+   * Modifies the components of this SqlTableIdentifierWithID and their positions.
+   *
+   * @param names Names of components
+   * @param poses Positions of components
+   */
+  public void setNames(List<String> names, @Nullable List<SqlParserPos> poses) {
+    this.names = ImmutableList.copyOf(names);
+    this.componentPositions = poses == null ? null
+        : ImmutableList.copyOf(poses);
+  }
+
+
+  /**
+   * Copies names and components from another identifier. Does not modify the
+   * cross-component parser position.
+   *
+   * @param other identifier from which to copy
+   */
+  public void assignNamesFrom(SqlTableIdentifierWithID other) {
+    setNames(other.names, other.componentPositions);
   }
 
   /** Returns a SqlTableIdentifierWithID that is the same as this except one modified name.
@@ -220,8 +243,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
   }
 
   @Override public void validate(SqlValidator validator, SqlValidatorScope scope) {
-    // TODO: FIXME
-    validator.validateIdentifier(this, scope);
+    validator.validateTableIdentifierWithID(this, scope);
   }
 
   @Override public void validateExpr(SqlValidator validator, SqlValidatorScope scope) {
@@ -230,8 +252,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
     } catch (ValidationException e) {
       throw new RuntimeException(e);
     }
-    // TODO: FIXME
-    validator.validateIdentifier(this, scope);
+    validator.validateTableIdentifierWithID(this, scope);
   }
 
   @Override public boolean equalsDeep(@Nullable SqlNode node, Litmus litmus) {

@@ -3425,6 +3425,23 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
 
+  /**
+   * Resolves a SqlTableIdentifierWithID to a fully-qualified name.
+   *
+   * @param id    SqlTableIdentifierWithID
+   * @param scope Naming scope
+   */
+  @Override public void validateTableIdentifierWithID(SqlTableIdentifierWithID id, SqlValidatorScope scope) {
+    final SqlTableIdentifierWithIDQualified fqId = scope.fullyQualify(id);
+    if (this.config.columnReferenceExpansion()) {
+      // NOTE jvs 9-Apr-2007: this doesn't cover ORDER BY, which has its
+      // own ideas about qualification.
+      id.assignNamesFrom(fqId.identifier);
+    } else {
+      Util.discard(fqId);
+    }
+  }
+
   @Override public void validateLiteral(SqlLiteral literal) {
     switch (literal.getTypeName()) {
     case DECIMAL:

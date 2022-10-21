@@ -206,6 +206,14 @@ public interface SqlValidator {
   void validateIdentifier(SqlIdentifier id, SqlValidatorScope scope);
 
   /**
+   * Resolves a SqlTableIdentifierWithID to a fully-qualified name.
+   *
+   * @param id    SqlTableIdentifierWithID
+   * @param scope Naming scope
+   */
+  void validateTableIdentifierWithID(SqlTableIdentifierWithID id, SqlValidatorScope scope);
+
+  /**
    * Validates a literal.
    *
    * @param literal Literal
