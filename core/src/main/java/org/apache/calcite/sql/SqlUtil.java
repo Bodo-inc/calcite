@@ -1312,6 +1312,10 @@ public abstract class SqlUtil {
       return check(id);
     }
 
+    @Override public Void visit(SqlTableIdentifierWithID id) {
+      return check(id);
+    }
+
     @Override public Void visit(SqlCall call) {
       preCheck(call);
       for (SqlNode node : call.getOperandList()) {

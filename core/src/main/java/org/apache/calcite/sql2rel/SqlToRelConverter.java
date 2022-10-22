@@ -2440,6 +2440,14 @@ public class SqlToRelConverter {
             return rexBuilder.makeLiteral(id.getSimple());
           }
 
+          @Override public RexNode visit(SqlTableIdentifierWithID id) {
+            // This is probably unnecessary
+            assert id.isSimple();
+            String simpleID = id.getSimple();
+            patternVarsSet.add(simpleID);
+            return rexBuilder.makeLiteral(simpleID);
+          }
+
           @Override public RexNode visit(SqlLiteral literal) {
             if (literal instanceof SqlNumericLiteral) {
               return rexBuilder.makeExactLiteral(BigDecimal.valueOf(literal.intValue(true)));

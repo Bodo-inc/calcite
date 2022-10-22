@@ -114,6 +114,12 @@ public class SqlTableIdentifierWithID extends SqlNode {
     return names;
   }
 
+  public String getSimple() {
+    assert names.size() == 1;
+    return names.get(0);
+  }
+
+
   /**
    * Modifies the components of this SqlTableIdentifierWithID and their positions.
    *
@@ -271,7 +277,6 @@ public class SqlTableIdentifierWithID extends SqlNode {
   }
 
   @Override public <R> R accept(SqlVisitor<R> visitor) {
-    // TODO: FIXME
     return visitor.visit(this);
   }
 
