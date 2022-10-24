@@ -23,7 +23,13 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.CustomColumnResolvingTable;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
+import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
@@ -543,10 +549,11 @@ public abstract class DelegatingScope implements SqlValidatorScope {
    * For example, the dept in "select empno from emp natural join dept" may become
    * "myschema.dept".
    *
-   * @param identifier
+   * @param identifier SqlTableIdentifierWithID to qualify
    * @return A qualified identifier, never null
    */
-  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(
+      SqlTableIdentifierWithID identifier) {
     // This implementation is based on the fullyQualify for regular identifiers above. We skip
     // anything that only pertains to columns because we are only handling tables.
     final SqlTableIdentifierWithID previous = identifier;
@@ -616,71 +623,70 @@ public abstract class DelegatingScope implements SqlValidatorScope {
         resolved);
     final Path path;
     switch (resolved.count()) {
-      case 0:
-        // TODO(REMOVE): This should just refer to columns
-        // Maybe the last component was correct, just wrong case
-        if (nameMatcher.isCaseSensitive()) {
-          SqlNameMatcher liberalMatcher = SqlNameMatchers.liberal();
-          resolved.clear();
-          resolveInNamespace(fromNs, false, suffix.getNames(), liberalMatcher,
-              Path.EMPTY, resolved);
-          if (resolved.count() > 0) {
-            int k = size - 1;
-            final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
-            final SqlTableIdentifierWithID suffix3 = identifier.getComponent(i, k + 1);
-            final Step step = Util.last(resolved.resolves.get(0).path.steps());
-            throw validator.newValidationError(suffix3,
-                RESOURCE.columnNotFoundInTableDidYouMean(suffix3.toString(),
-                    prefix.toString(), step.name));
-          }
+    case 0:
+      // TODO(REMOVE): This should just refer to columns
+      // Maybe the last component was correct, just wrong case
+      if (nameMatcher.isCaseSensitive()) {
+        SqlNameMatcher liberalMatcher = SqlNameMatchers.liberal();
+        resolved.clear();
+        resolveInNamespace(fromNs, false, suffix.getNames(), liberalMatcher,
+            Path.EMPTY, resolved);
+        if (resolved.count() > 0) {
+          int k = size - 1;
+          final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
+          final SqlTableIdentifierWithID suffix3 = identifier.getComponent(i, k + 1);
+          final Step step = Util.last(resolved.resolves.get(0).path.steps());
+          throw validator.newValidationError(suffix3,
+              RESOURCE.columnNotFoundInTableDidYouMean(suffix3.toString(),
+                  prefix.toString(), step.name));
         }
-        // Find the shortest suffix that also fails. Suppose we cannot resolve
-        // "a.b.c"; we find we cannot resolve "a.b" but can resolve "a". So,
-        // the error will be "Column 'a.b' not found".
-        int k = size - 1;
-        for (; k > i; --k) {
-          SqlTableIdentifierWithID suffix2 = identifier.getComponent(i, k);
-          resolved.clear();
-          resolveInNamespace(fromNs, false, suffix2.getNames(), nameMatcher,
-              Path.EMPTY, resolved);
-          if (resolved.count() > 0) {
-            break;
-          }
+      }
+      // Find the shortest suffix that also fails. Suppose we cannot resolve
+      // "a.b.c"; we find we cannot resolve "a.b" but can resolve "a". So,
+      // the error will be "Column 'a.b' not found".
+      int k = size - 1;
+      for (; k > i; --k) {
+        SqlTableIdentifierWithID suffix2 = identifier.getComponent(i, k);
+        resolved.clear();
+        resolveInNamespace(fromNs, false, suffix2.getNames(), nameMatcher,
+            Path.EMPTY, resolved);
+        if (resolved.count() > 0) {
+          break;
         }
-        final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
-        final SqlTableIdentifierWithID suffix3 = identifier.getComponent(i, k + 1);
-        throw validator.newValidationError(suffix3,
-            RESOURCE.columnNotFoundInTable(suffix3.toString(), prefix.toString()));
-      case 1:
-        path = resolved.only().path;
-        break;
-      default:
-        final Comparator<Resolve> c =
-            new Comparator<Resolve>() {
-              @Override public int compare(Resolve o1, Resolve o2) {
+      }
+      final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
+      final SqlTableIdentifierWithID suffix3 = identifier.getComponent(i, k + 1);
+      throw validator.newValidationError(suffix3,
+          RESOURCE.columnNotFoundInTable(suffix3.toString(), prefix.toString()));
+    case 1:
+      path = resolved.only().path;
+      break;
+    default:
+      final Comparator<Resolve> c = new Comparator<Resolve>() {
+        @Override public int compare(Resolve o1, Resolve o2) {
                 // Name resolution that uses fewer implicit steps wins.
-                int c = Integer.compare(worstKind(o1.path), worstKind(o2.path));
-                if (c != 0) {
-                  return c;
-                }
-                // Shorter path wins
-                return Integer.compare(o1.path.stepCount(), o2.path.stepCount());
-              }
-
-              private int worstKind(Path path) {
-                int kind = -1;
-                for (Step step : path.steps()) {
-                  kind = Math.max(kind, step.kind.ordinal());
-                }
-                return kind;
-              }
-            };
-        resolved.resolves.sort(c);
-        if (c.compare(resolved.resolves.get(0), resolved.resolves.get(1)) == 0) {
-          throw validator.newValidationError(suffix,
-              RESOURCE.columnAmbiguous(suffix.toString()));
+          int c = Integer.compare(worstKind(o1.path), worstKind(o2.path));
+          if (c != 0) {
+            return c;
+          }
+          // Shorter path wins
+          return Integer.compare(o1.path.stepCount(), o2.path.stepCount());
         }
-        path = resolved.resolves.get(0).path;
+
+        private int worstKind(Path path) {
+          int kind = -1;
+          for (Step step : path.steps()) {
+            kind = Math.max(kind, step.kind.ordinal());
+          }
+          return kind;
+        }
+      };
+      resolved.resolves.sort(c);
+      if (c.compare(resolved.resolves.get(0), resolved.resolves.get(1)) == 0) {
+        throw validator.newValidationError(suffix,
+            RESOURCE.columnAmbiguous(suffix.toString()));
+      }
+      path = resolved.resolves.get(0).path;
     }
 
     // Normalize case to match definition, make elided fields explicit,
@@ -700,19 +706,19 @@ public abstract class DelegatingScope implements SqlValidatorScope {
           ).getFieldList().get(step.i);
       final String fieldName = field0.getName();
       switch (step.kind) {
-        case PEEK_FIELDS:
-        case PEEK_FIELDS_DEFAULT:
-        case PEEK_FIELDS_NO_EXPAND:
-          identifier = identifier.add(k, fieldName, SqlParserPos.ZERO);
-          break;
-        default:
-          if (!fieldName.equals(name)) {
-            identifier = identifier.setName(k, fieldName);
-          }
-          if (hasAmbiguousField(step.rowType, field0, name, nameMatcher)) {
-            throw validator.newValidationError(identifier,
-                RESOURCE.columnAmbiguous(name));
-          }
+      case PEEK_FIELDS:
+      case PEEK_FIELDS_DEFAULT:
+      case PEEK_FIELDS_NO_EXPAND:
+        identifier = identifier.add(k, fieldName, SqlParserPos.ZERO);
+        break;
+      default:
+        if (!fieldName.equals(name)) {
+          identifier = identifier.setName(k, fieldName);
+        }
+        if (hasAmbiguousField(step.rowType, field0, name, nameMatcher)) {
+          throw validator.newValidationError(identifier,
+              RESOURCE.columnAmbiguous(name));
+        }
       }
       ++k;
     }
