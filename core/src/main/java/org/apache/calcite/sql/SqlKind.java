@@ -106,6 +106,11 @@ public enum SqlKind {
   TABLE_REF,
 
   /**
+   * Table reference with an ID. Used by merge into
+   */
+  TABLE_REF_WITH_ID,
+
+  /**
    * JOIN operator or compound FROM clause.
    *
    * <p>A FROM clause with more than one table is represented as if it were a

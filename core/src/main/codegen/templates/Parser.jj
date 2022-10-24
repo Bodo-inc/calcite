@@ -1273,6 +1273,36 @@ SqlNode TableRefWithHintsOpt() :
 }
 
 /**
+ * Parses a target table reference with optional hints.
+ */
+SqlNode TargetTableRefWithHintsOpt() :
+{
+    SqlNode tableRef;
+    SqlNodeList hintList;
+    final List<SqlNode> hints = new ArrayList<SqlNode>();
+    final Span s;
+}
+{
+    { s = span(); }
+    tableRef = CompoundTargetTableIdentifier()
+    [
+        LOOKAHEAD(2)
+        <HINT_BEG>
+        CommaSeparatedSqlHints(hints)
+        <COMMENT_END>
+        {
+            hintList = new SqlNodeList(hints, s.addAll(hints).end(this));
+            tableRef = new SqlTableRefWithID(Span.of(tableRef, hintList).pos(),
+                    (SqlTableIdentifierWithID) tableRef, hintList);
+        }
+    ]
+    {
+        return tableRef;
+    }
+}
+
+
+/**
  * Parses a leaf SELECT expression without ORDER BY.
  */
 SqlSelect SqlSelect() :
@@ -1732,7 +1762,7 @@ SqlNode SqlMerge() :
 
 }
 {
-    (<MERGE_INTO> { s = span(); } | (<MERGE> { s = span(); } <INTO>)) table = TableRefWithHintsOpt()
+    (<MERGE_INTO> { s = span(); } | (<MERGE> { s = span(); } <INTO>)) table = TargetTableRefWithHintsOpt()
     [
         [ <EXTEND> ]
         extendList = ExtendList() {
@@ -5396,6 +5426,28 @@ SqlIdentifier CompoundIdentifier() :
             return SqlIdentifier.star(nameList, pos, posList);
         }
         return new SqlIdentifier(nameList, null, pos, posList);
+    }
+}
+
+
+/**
+ * Parses a compound target table identifier in the FROM clause.
+ */
+SqlIdentifier CompoundTargetTableIdentifier() :
+{
+    final List<String> nameList = new ArrayList<String>();
+    final List<SqlParserPos> posList = new ArrayList<SqlParserPos>();
+}
+{
+    TableIdentifierSegment(nameList, posList)
+    (
+        LOOKAHEAD(2)
+        <DOT>
+        TableIdentifierSegment(nameList, posList)
+    )*
+    {
+        SqlParserPos pos = SqlParserPos.sum(posList);
+        return new SqlTableIdentifierWithID(nameList, null, pos, posList);
     }
 }
 
