@@ -6589,6 +6589,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       return null;
     }
 
+    @Override public Void visit(SqlTableIdentifierWithID id) {
+      Preconditions.checkArgument(id.isSimple());
+      scope.addPatternVar(id.getSimple());
+      return null;
+    }
+
+
     @Override public Void visit(SqlDataTypeSpec type) {
       throw Util.needToImplement(type);
     }
@@ -6719,6 +6726,82 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           SqlTypeUtil.addCharsetAndCollation(
               type,
               getTypeFactory());
+      return type;
+    }
+
+    @Override public RelDataType visit(SqlTableIdentifierWithID id) {
+      try {
+        requireNonCall(id);
+      } catch (ValidationException e) {
+        throw new RuntimeException(e);
+      }
+
+      RelDataType type = null;
+      if (!(scope instanceof EmptyScope)) {
+        id = scope.fullyQualify(id).identifier;
+      }
+
+      // Resolve the longest prefix of id that we can
+      int i;
+      for (i = id.names.size() - 1; i > 0; i--) {
+        // REVIEW jvs 9-June-2005: The name resolution rules used
+        // here are supposed to match SQL:2003 Part 2 Section 6.6
+        // (identifier chain), but we don't currently have enough
+        // information to get everything right.  In particular,
+        // routine parameters are currently looked up via resolve;
+        // we could do a better job if they were looked up via
+        // resolveColumn.
+
+        final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+        final SqlValidatorScope.ResolvedImpl resolved =
+            new SqlValidatorScope.ResolvedImpl();
+        scope.resolve(id.names.subList(0, i), nameMatcher, false, resolved);
+        if (resolved.count() == 1) {
+          // There's a namespace with the name we seek.
+          final SqlValidatorScope.Resolve resolve = resolved.only();
+          type = resolve.rowType();
+          for (SqlValidatorScope.Step p : Util.skip(resolve.path.steps())) {
+            type = type.getFieldList().get(p.i).getType();
+          }
+          break;
+        }
+      }
+
+      // Give precedence to namespace found, unless there
+      // are no more identifier components.
+      if (type == null || id.names.size() == 1) {
+        // See if there's a column with the name we seek in
+        // precisely one of the namespaces in this scope.
+        RelDataType colType = scope.resolveColumn(id.names.get(0), id);
+        if (colType != null) {
+          type = colType;
+        }
+        ++i;
+      }
+
+      if (type == null) {
+        final SqlTableIdentifierWithID last = id.getComponent(i - 1, i);
+        throw newValidationError(last,
+            RESOURCE.unknownIdentifier(last.toString()));
+      }
+
+      // Resolve rest of identifier
+      for (; i < id.names.size(); i++) {
+        String name = id.names.get(i);
+        final RelDataTypeField field;
+        final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+        field = nameMatcher.field(type, name);
+        if (field == null) {
+          throw newValidationError(id.getComponent(i),
+              RESOURCE.unknownField(name));
+        }
+        type = field.getType();
+      }
+      type =
+          SqlTypeUtil.addCharsetAndCollation(
+              type,
+              getTypeFactory());
+      // TODO(Nick): Update the type to include the ID column
       return type;
     }
 

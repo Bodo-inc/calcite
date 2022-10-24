@@ -5954,6 +5954,10 @@ public class SqlToRelConverter {
       return convertIdentifier(this, id);
     }
 
+    @Override public RexNode visit(SqlTableIdentifierWithID id) {
+      return convertTableIdentifierWithID(this, id);
+    }
+
     @Override public RexNode visit(SqlDataTypeSpec type) {
       throw new UnsupportedOperationException();
     }
