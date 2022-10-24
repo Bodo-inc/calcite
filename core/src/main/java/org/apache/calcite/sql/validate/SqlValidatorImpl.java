@@ -152,6 +152,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
+import static org.apache.calcite.sql.SqlKind.TABLE_IDENTIFIER_WITH_ID;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getCharset;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getCollation;
@@ -1245,12 +1246,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       // fall through
     case TABLE_REF:
+    case TABLE_REF_WITH_ID:
     case SNAPSHOT:
     case OVER:
     case COLLECTION_TABLE:
     case ORDER_BY:
     case TABLESAMPLE:
       return getNamespace(((SqlCall) node).operand(0));
+    case TABLE_IDENTIFIER_WITH_ID:
+      // TODO (NICK): FIXME adding an actual identifier namespace for tables
+      return getNamespace(((SqlTableIdentifierWithID) node).convertToSQLIdentifier());
     default:
       return namespaces.get(node);
     }
@@ -2469,6 +2474,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (alias == null) {
       switch (kind) {
       case IDENTIFIER:
+      case TABLE_IDENTIFIER_WITH_ID:
       case OVER:
         alias = deriveAlias(node, -1);
         if (alias == null) {
@@ -2521,11 +2527,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       parentScope = tableScope;
     }
-
     SqlCall call;
     SqlNode operand;
     SqlNode newOperand;
-
     switch (kind) {
     case AS:
       call = (SqlCall) node;
@@ -2554,7 +2558,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       if (newExpr != expr) {
         call.setOperand(0, newExpr);
       }
-
       // If alias has a column list, introduce a namespace to translate
       // column names. We skipped registering it just now.
       if (needAlias) {
@@ -2565,22 +2568,18 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             forceNullable);
       }
       return node;
-
     case MATCH_RECOGNIZE:
       registerMatchRecognize(parentScope, usingScope,
           (SqlMatchRecognize) node, enclosingNode, alias, forceNullable);
       return node;
-
     case PIVOT:
       registerPivot(parentScope, usingScope, (SqlPivot) node, enclosingNode,
           alias, forceNullable);
       return node;
-
     case UNPIVOT:
       registerUnpivot(parentScope, usingScope, (SqlUnpivot) node, enclosingNode,
           alias, forceNullable);
       return node;
-
     case TABLESAMPLE:
       call = (SqlCall) node;
       expr = call.operand(0);
@@ -2599,7 +2598,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         call.setOperand(0, newExpr);
       }
       return node;
-
     case JOIN:
       final SqlJoin join = (SqlJoin) node;
       final JoinScope joinScope =
@@ -2657,7 +2655,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       return join;
 
     case IDENTIFIER:
-      final SqlIdentifier id = (SqlIdentifier) node;
+    case TABLE_IDENTIFIER_WITH_ID:
+      final SqlIdentifier id;
+      if (node.getKind() == TABLE_IDENTIFIER_WITH_ID) {
+        // TODO(Nick) FIXME: add the proper table identifier namespace
+        id = ((SqlTableIdentifierWithID) node).convertToSQLIdentifier();
+      } else {
+        id = (SqlIdentifier) node;
+      }
       final IdentifierNamespace newNs =
           new IdentifierNamespace(
               this, id, extendList, enclosingNode,
@@ -2668,24 +2673,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         tableScope = new TableScope(parentScope, node);
       }
       tableScope.addChild(newNs, requireNonNull(alias, "alias"), forceNullable);
-      if (extendList != null && extendList.size() != 0) {
-        return enclosingNode;
-      }
-      return newNode;
-
-    case TABLE_IDENTIFIER_WITH_ID:
-      final SqlTableIdentifierWithID tableID = (SqlTableIdentifierWithID) node;
-      // TODO(Nick) FIXME: add the proper table identifier namespace
-      final IdentifierNamespace myNewNS =
-          new IdentifierNamespace(
-              this, tableID.convertToSQLIdentifier(), extendList, enclosingNode,
-              parentScope);
-      registerNamespace(register ? usingScope : null, alias, myNewNS,
-          forceNullable);
-      if (tableScope == null) {
-        tableScope = new TableScope(parentScope, node);
-      }
-      tableScope.addChild(myNewNS, requireNonNull(alias, "alias"), forceNullable);
       if (extendList != null && extendList.size() != 0) {
         return enclosingNode;
       }
@@ -3134,7 +3121,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
       if (insertSourceSelect != null) {
         // registering the source select is done to verify if the condition is boolean, which
-        // is only needed in MERGE with a NOT MATCHED clase.
+        // is only needed in MERGE with a NOT MATCHED clause.
         // the insertSourceSelect is only set if the inserted values are a VALUES expression, which
         // is the only supported expression for an INSERT sqlnode which originates form a MERGE
         // INTO clause.
