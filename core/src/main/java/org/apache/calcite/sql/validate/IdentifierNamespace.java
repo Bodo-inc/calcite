@@ -23,6 +23,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Pair;
 
@@ -101,6 +102,17 @@ public class IdentifierNamespace extends AbstractNamespace {
       final SqlCall tableRef = (SqlCall) node;
       //noinspection ConstantConditions
       return Pair.of(tableRef.operand(0), null);
+    case TABLE_REF_WITH_ID:
+      // TODO (Nick): Does this need to remain a SqlTableIdentifierWithID
+      final SqlCall tableRefWithID = (SqlCall) node;
+      //noinspection ConstantConditions
+      return Pair.of(
+          ((SqlTableIdentifierWithID) tableRefWithID.operand(0)).convertToSQLIdentifier(),
+          null);
+    case TABLE_IDENTIFIER_WITH_ID:
+      // TODO (Nick): Does this need to remain a SqlTableIdentifierWithID
+      //noinspection ConstantConditions
+      return Pair.of(((SqlTableIdentifierWithID) node).convertToSQLIdentifier(), null);
     default:
       //noinspection ConstantConditions
       return Pair.of((SqlIdentifier) node, null);

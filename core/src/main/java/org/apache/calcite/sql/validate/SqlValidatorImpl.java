@@ -2673,6 +2673,24 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       return newNode;
 
+    case TABLE_IDENTIFIER_WITH_ID:
+      final SqlTableIdentifierWithID tableID = (SqlTableIdentifierWithID) node;
+      // TODO(Nick) FIXME: add the proper table identifier namespace
+      final IdentifierNamespace myNewNS =
+          new IdentifierNamespace(
+              this, tableID.convertToSQLIdentifier(), extendList, enclosingNode,
+              parentScope);
+      registerNamespace(register ? usingScope : null, alias, myNewNS,
+          forceNullable);
+      if (tableScope == null) {
+        tableScope = new TableScope(parentScope, node);
+      }
+      tableScope.addChild(myNewNS, requireNonNull(alias, "alias"), forceNullable);
+      if (extendList != null && extendList.size() != 0) {
+        return enclosingNode;
+      }
+      return newNode;
+
     case LATERAL:
       return registerFrom(
           parentScope,
@@ -2774,6 +2792,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       return newNode;
 
     case TABLE_REF:
+    case TABLE_REF_WITH_ID:
       call = (SqlCall) node;
       registerFrom(parentScope,
           usingScope,

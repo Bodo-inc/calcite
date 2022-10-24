@@ -75,7 +75,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
     for (String name : names) {
       assert name != null;
       // We don't support wildcards
-      assert name.equals("");
+      assert !name.equals("");
     }
   }
 
@@ -92,7 +92,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
     for (String name : names) {
       assert name != null;
       // We don't support wildcards
-      assert name.equals("");
+      assert !name.equals("");
     }
 
   }
