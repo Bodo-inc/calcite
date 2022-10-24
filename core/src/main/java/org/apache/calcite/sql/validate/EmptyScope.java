@@ -84,8 +84,10 @@ class EmptyScope implements SqlValidatorScope {
    * @param identifier SqlTableIdentifierWithID to qualify.
    * @return A qualified identifier, never null
    */
-  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
-    return SqlTableIdentifierWithIDQualified.create(this, 1, null, identifier);
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(
+      SqlTableIdentifierWithID identifier) {
+    return SqlTableIdentifierWithIDQualified.create(
+        this, 1, null, identifier);
   }
 
   @Override public SqlNode getNode() {

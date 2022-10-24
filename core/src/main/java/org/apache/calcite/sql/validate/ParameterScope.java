@@ -62,11 +62,13 @@ public class ParameterScope extends EmptyScope {
    * For example, the dept in "select empno from emp natural join dept" may become
    * "myschema.dept".
    *
-   * @param identifier
+   * @param identifier SqlTableIdentifierWithID to qualify.
    * @return A qualified identifier, never null
    */
-  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
-    return SqlTableIdentifierWithIDQualified.create(this, 1, null, identifier);
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(
+      SqlTableIdentifierWithID identifier) {
+    return SqlTableIdentifierWithIDQualified.create(
+        this, 1, null, identifier);
   }
 
   @Override public SqlValidatorScope getOperandScope(SqlCall call) {

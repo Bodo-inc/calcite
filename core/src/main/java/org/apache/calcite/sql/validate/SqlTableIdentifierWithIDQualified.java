@@ -50,8 +50,9 @@ public class SqlTableIdentifierWithIDQualified {
     return "{id: " + identifier + ", prefix: " + prefixLength + "}";
   }
 
-  public static SqlTableIdentifierWithIDQualified create(@Nullable SqlValidatorScope scope, int prefixLength,
-      @Nullable SqlValidatorNamespace namespace, SqlTableIdentifierWithID identifier) {
+  public static SqlTableIdentifierWithIDQualified create(@Nullable SqlValidatorScope scope,
+      int prefixLength, @Nullable SqlValidatorNamespace namespace,
+      SqlTableIdentifierWithID identifier) {
     return new SqlTableIdentifierWithIDQualified(scope, prefixLength, namespace, identifier);
   }
 
