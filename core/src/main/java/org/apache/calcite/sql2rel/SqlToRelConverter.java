@@ -2288,7 +2288,7 @@ public class SqlToRelConverter {
 
     case TABLE_IDENTIFIER_WITH_ID:
       convertTableIdentifierWithID(bb, (SqlTableIdentifierWithID) from, null, null);
-      return
+      return;
 
     case EXTEND:
       call = (SqlCall) from;
