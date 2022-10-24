@@ -18,7 +18,10 @@ package org.apache.calcite.sql;
 
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
-import org.apache.calcite.sql.validate.*;
+import org.apache.calcite.sql.validate.SqlMonotonicity;
+import org.apache.calcite.sql.validate.SqlTableIdentifierWithIDQualified;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
@@ -72,12 +75,12 @@ public class SqlTableIdentifierWithID extends SqlNode {
     for (String name : names) {
       assert name != null;
       // We don't support wildcards
-      assert name != "";
+      assert name.equals("");
     }
   }
 
   /**
-   * Create the identifier from an existing SqlIdentifier
+   * Create the identifier from an existing SqlIdentifier.
    * @param id Original SQL identifier for a table.
    */
   public SqlTableIdentifierWithID(SqlIdentifier id) {
@@ -89,7 +92,7 @@ public class SqlTableIdentifierWithID extends SqlNode {
     for (String name : names) {
       assert name != null;
       // We don't support wildcards
-      assert name != "";
+      assert name.equals("");
     }
 
   }

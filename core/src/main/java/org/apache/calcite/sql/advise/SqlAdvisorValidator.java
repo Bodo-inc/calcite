@@ -19,7 +19,12 @@ package org.apache.calcite.sql.advise;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.runtime.CalciteException;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.OverScope;
@@ -98,7 +103,8 @@ public class SqlAdvisorValidator extends SqlValidatorImpl {
    * @param id    SqlTableIdentifierWithID
    * @param scope Naming scope
    */
-  @Override public void validateTableIdentifierWithID(SqlTableIdentifierWithID id, SqlValidatorScope scope) {
+  @Override public void validateTableIdentifierWithID(
+      SqlTableIdentifierWithID id, SqlValidatorScope scope) {
     // TODO: Fix registerId when we start actually using hints. This entire
     // class is used for hints so we don't need full functionality.
     registerId(id.convertToSQLIdentifier(), scope);

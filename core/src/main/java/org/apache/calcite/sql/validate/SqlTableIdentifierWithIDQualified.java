@@ -62,4 +62,8 @@ public class SqlTableIdentifierWithIDQualified {
   public final List<String> suffix() {
     return Util.skip(identifier.getNames(), prefixLength);
   }
+
+  public SqlQualified convertToQualified() {
+    return SqlQualified.create(null, prefixLength, namespace, identifier.convertToSQLIdentifier());
+  }
 }

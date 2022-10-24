@@ -106,26 +106,10 @@ import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.type.TableFunctionReturnTypeInference;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlVisitor;
-import org.apache.calcite.sql.validate.AggregatingSelectScope;
-import org.apache.calcite.sql.validate.CollectNamespace;
-import org.apache.calcite.sql.validate.DelegatingScope;
-import org.apache.calcite.sql.validate.ListScope;
-import org.apache.calcite.sql.validate.MatchRecognizeScope;
-import org.apache.calcite.sql.validate.ParameterScope;
-import org.apache.calcite.sql.validate.SelectScope;
-import org.apache.calcite.sql.validate.SqlMonotonicity;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
-import org.apache.calcite.sql.validate.SqlQualified;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableMacro;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorImpl;
-import org.apache.calcite.sql.validate.SqlValidatorNamespace;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqlValidatorTable;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
+import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Litmus;
@@ -4745,6 +4729,57 @@ public class SqlToRelConverter {
     return LogicalTableModify.create(targetTable, catalogReader,
         relBuilder.build(), LogicalTableModify.Operation.MERGE,
         new ArrayList<>(), null, false);
+  }
+
+  private RexNode convertTableIdentifierWithID(
+      Blackboard bb,
+      SqlTableIdentifierWithID identifier) {
+    final SqlValidator validator = bb.getValidator();
+    try {
+      validator.requireNonCall(identifier);
+    } catch (ValidationException e) {
+      throw new RuntimeException(e);
+    }
+
+    String pv = null;
+    if (bb.isPatternVarRef && identifier.getNames().size() > 1) {
+      pv = identifier.names.get(0);
+    }
+
+    final SqlTableIdentifierWithIDQualified qualified;
+    if (bb.scope != null) {
+      qualified = bb.scope.fullyQualify(identifier);
+    } else {
+      qualified = SqlTableIdentifierWithIDQualified.create(null, 1, null, identifier);
+    }
+    // TODO(Nick) FIXME: Fix the output types?
+    final Pair<RexNode, @Nullable BiFunction<RexNode, String, RexNode>> e0 =
+        bb.lookupExp(qualified.convertToQualified());
+    RexNode e = e0.left;
+    for (String name : qualified.suffix()) {
+      if (e == e0.left && e0.right != null) {
+        e = e0.right.apply(e, name);
+      } else {
+        final boolean caseSensitive = true; // name already fully-qualified
+        e = rexBuilder.makeFieldAccess(e, name, caseSensitive);
+      }
+    }
+    if (e instanceof RexInputRef) {
+      // adjust the type to account for nulls introduced by outer joins
+      e = adjustInputRef(bb, (RexInputRef) e);
+      if (pv != null) {
+        e = RexPatternFieldRef.of(pv, (RexInputRef) e);
+      }
+    }
+
+    if (e0.left instanceof RexCorrelVariable) {
+      assert e instanceof RexFieldAccess;
+      final RexNode prev =
+          bb.mapCorrelateToRex.put(((RexCorrelVariable) e0.left).id,
+              (RexFieldAccess) e);
+      assert prev == null;
+    }
+    return e;
   }
 
   /**

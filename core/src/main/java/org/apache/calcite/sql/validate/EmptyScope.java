@@ -24,7 +24,15 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.Wrapper;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlDynamicParam;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
+import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
 
@@ -73,7 +81,7 @@ class EmptyScope implements SqlValidatorScope {
    * For example, the dept in "select empno from emp natural join dept" may become
    * "myschema.dept".
    *
-   * @param identifier
+   * @param identifier SqlTableIdentifierWithID to qualify.
    * @return A qualified identifier, never null
    */
   @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {

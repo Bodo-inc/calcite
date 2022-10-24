@@ -368,8 +368,7 @@ public abstract class SqlUtil {
    * @param identifier   SqlIdentifier
    * @param asFunctionID Whether this identifier comes from a SqlFunction
    */
-  public static void
-  unparseSqlIdentifierSyntax(
+  public static void unparseSqlIdentifierSyntax(
       SqlWriter writer,
       SqlIdentifier identifier,
       boolean asFunctionID) {
@@ -424,19 +423,18 @@ public abstract class SqlUtil {
    * @param writer       Writer
    * @param identifier   SqlTableIdentifierWithID
    */
-  public static void
-  unparseSqlTableIdentifierWithIDSyntax(
+  public static void unparseSqlTableIdentifierWithIDSyntax(
       SqlWriter writer,
       SqlTableIdentifierWithID identifier) {
     final SqlWriter.Frame frame =
         writer.startList(SqlWriter.FrameTypeEnum.IDENTIFIER);
 
-      for (int i = 0; i < identifier.names.size(); i++) {
-        writer.sep(".");
-        final String name = identifier.names.get(i);
-        final SqlParserPos pos = identifier.getComponentParserPosition(i);
-        writer.identifier(name, pos.isQuoted());
-      }
+    for (int i = 0; i < identifier.names.size(); i++) {
+      writer.sep(".");
+      final String name = identifier.names.get(i);
+      final SqlParserPos pos = identifier.getComponentParserPosition(i);
+      writer.identifier(name, pos.isQuoted());
+    }
     if (null != identifier.getCollation()) {
       identifier.getCollation().unparse(writer);
     }

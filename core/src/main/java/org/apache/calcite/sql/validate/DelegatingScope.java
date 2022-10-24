@@ -552,71 +552,70 @@ public abstract class DelegatingScope implements SqlValidatorScope {
     final SqlTableIdentifierWithID previous = identifier;
     final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
     SqlValidatorNamespace fromNs = null;
-      Path fromPath = null;
-      RelDataType fromRowType = null;
-      final ResolvedImpl resolved = new ResolvedImpl();
-      int size = identifier.getNames().size();
-      int i = size - 1;
-      for (; i > 0; i--) {
-        final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
-        resolved.clear();
-        resolve(prefix.getNames(), nameMatcher, false, resolved);
-        if (resolved.count() == 1) {
-          final Resolve resolve = resolved.only();
-          fromNs = resolve.namespace;
-          fromPath = resolve.path;
-          fromRowType = resolve.rowType();
-          break;
-        }
-        // Look for a table alias that is the wrong case.
-        if (nameMatcher.isCaseSensitive()) {
-          final SqlNameMatcher liberalMatcher = SqlNameMatchers.liberal();
-          resolved.clear();
-          resolve(prefix.getNames(), liberalMatcher, false, resolved);
-          if (resolved.count() == 1) {
-            final Step lastStep = Util.last(resolved.only().path.steps());
-            throw validator.newValidationError(prefix,
-                RESOURCE.tableNameNotFoundDidYouMean(prefix.toString(),
-                    lastStep.name));
-          }
-        }
-      }
-      if (fromNs == null || fromNs instanceof SchemaNamespace) {
-          final SqlTableIdentifierWithID prefix1 = identifier.skipLast(1);
-          throw validator.newValidationError(prefix1,
-              RESOURCE.tableNameNotFound(prefix1.toString()));
-
-      }
-
-      // If a table alias is part of the identifier, make sure that the table
-      // alias uses the same case as it was defined. For example, in
-      //
-      //    SELECT e.empno FROM Emp as E
-      //
-      // change "e.empno" to "E.empno".
-      if (fromNs.getEnclosingNode() != null
-          && !(this instanceof MatchRecognizeScope)) {
-        String alias =
-            SqlValidatorUtil.getAlias(fromNs.getEnclosingNode(), -1);
-        if (alias != null
-            && i > 0
-            && !alias.equals(identifier.getNames().get(i - 1))) {
-          identifier = identifier.setName(i - 1, alias);
-        }
-      }
-      if (requireNonNull(fromPath, "fromPath").stepCount() > 1) {
-        assert fromRowType != null;
-        for (Step p : fromPath.steps()) {
-          fromRowType = fromRowType.getFieldList().get(p.i).getType();
-        }
-        ++i;
-      }
-      final SqlTableIdentifierWithID suffix = identifier.getComponent(i, size);
+    Path fromPath = null;
+    RelDataType fromRowType = null;
+    final ResolvedImpl resolved = new ResolvedImpl();
+    int size = identifier.getNames().size();
+    int i = size - 1;
+    for (; i > 0; i--) {
+      final SqlTableIdentifierWithID prefix = identifier.getComponent(0, i);
       resolved.clear();
-      resolveInNamespace(fromNs, false, suffix.getNames(), nameMatcher, Path.EMPTY,
-          resolved);
-      final Path path;
-      switch (resolved.count()) {
+      resolve(prefix.getNames(), nameMatcher, false, resolved);
+      if (resolved.count() == 1) {
+        final Resolve resolve = resolved.only();
+        fromNs = resolve.namespace;
+        fromPath = resolve.path;
+        fromRowType = resolve.rowType();
+        break;
+      }
+      // Look for a table alias that is the wrong case.
+      if (nameMatcher.isCaseSensitive()) {
+        final SqlNameMatcher liberalMatcher = SqlNameMatchers.liberal();
+        resolved.clear();
+        resolve(prefix.getNames(), liberalMatcher, false, resolved);
+        if (resolved.count() == 1) {
+          final Step lastStep = Util.last(resolved.only().path.steps());
+          throw validator.newValidationError(prefix,
+              RESOURCE.tableNameNotFoundDidYouMean(prefix.toString(),
+                  lastStep.name));
+        }
+      }
+    }
+    if (fromNs == null || fromNs instanceof SchemaNamespace) {
+      final SqlTableIdentifierWithID prefix1 = identifier.skipLast(1);
+      throw validator.newValidationError(prefix1,
+          RESOURCE.tableNameNotFound(prefix1.toString()));
+    }
+
+    // If a table alias is part of the identifier, make sure that the table
+    // alias uses the same case as it was defined. For example, in
+    //
+    //    SELECT e.empno FROM Emp as E
+    //
+    // change "e.empno" to "E.empno".
+    if (fromNs.getEnclosingNode() != null
+        && !(this instanceof MatchRecognizeScope)) {
+      String alias =
+          SqlValidatorUtil.getAlias(fromNs.getEnclosingNode(), -1);
+      if (alias != null
+          && i > 0
+          && !alias.equals(identifier.getNames().get(i - 1))) {
+        identifier = identifier.setName(i - 1, alias);
+      }
+    }
+    if (requireNonNull(fromPath, "fromPath").stepCount() > 1) {
+      assert fromRowType != null;
+      for (Step p : fromPath.steps()) {
+        fromRowType = fromRowType.getFieldList().get(p.i).getType();
+      }
+      ++i;
+    }
+    final SqlTableIdentifierWithID suffix = identifier.getComponent(i, size);
+    resolved.clear();
+    resolveInNamespace(fromNs, false, suffix.getNames(), nameMatcher, Path.EMPTY,
+        resolved);
+    final Path path;
+    switch (resolved.count()) {
       case 0:
         // TODO(REMOVE): This should just refer to columns
         // Maybe the last component was correct, just wrong case
@@ -682,25 +681,25 @@ public abstract class DelegatingScope implements SqlValidatorScope {
               RESOURCE.columnAmbiguous(suffix.toString()));
         }
         path = resolved.resolves.get(0).path;
-      }
+    }
 
-      // Normalize case to match definition, make elided fields explicit,
-      // and check that references to dynamic stars ("**") are unambiguous.
-      int k = i;
-      for (Step step : path.steps()) {
-        // TODO Is this just column handling???
-        final String name = identifier.getNames().get(k);
-        if (step.i < 0) {
-          throw validator.newValidationError(
-              identifier, RESOURCE.columnNotFound(name));
-        }
-        final RelDataTypeField field0 =
-            requireNonNull(
-                step.rowType,
-                () -> "rowType of step " + step.name
-            ).getFieldList().get(step.i);
-        final String fieldName = field0.getName();
-        switch (step.kind) {
+    // Normalize case to match definition, make elided fields explicit,
+    // and check that references to dynamic stars ("**") are unambiguous.
+    int k = i;
+    for (Step step : path.steps()) {
+      // TODO Is this just column handling???
+      final String name = identifier.getNames().get(k);
+      if (step.i < 0) {
+        throw validator.newValidationError(
+            identifier, RESOURCE.columnNotFound(name));
+      }
+      final RelDataTypeField field0 =
+          requireNonNull(
+              step.rowType,
+              () -> "rowType of step " + step.name
+          ).getFieldList().get(step.i);
+      final String fieldName = field0.getName();
+      switch (step.kind) {
         case PEEK_FIELDS:
         case PEEK_FIELDS_DEFAULT:
         case PEEK_FIELDS_NO_EXPAND:
@@ -714,31 +713,30 @@ public abstract class DelegatingScope implements SqlValidatorScope {
             throw validator.newValidationError(identifier,
                 RESOURCE.columnAmbiguous(name));
           }
-        }
-        ++k;
       }
+      ++k;
+    }
 
-      // Multiple name components may have been resolved as one step by
-      // CustomResolvingTable.
-      if (identifier.getNames().size() > k) {
-        identifier = identifier.getComponent(0, k);
-      }
+    // Multiple name components may have been resolved as one step by
+    // CustomResolvingTable.
+    if (identifier.getNames().size() > k) {
+      identifier = identifier.getComponent(0, k);
+    }
 
-      if (i > 1) {
-        // Simplify overqualified identifiers.
-        // For example, schema.emp.deptno becomes emp.deptno.
-        //
-        // It is safe to convert schema.emp or database.schema.emp to emp
-        // because it would not have resolved if the FROM item had an alias. The
-        // following query is invalid:
-        //   SELECT schema.emp.deptno FROM schema.emp AS e
-        identifier = identifier.getComponent(i - 1, identifier.getNames().size());
-      }
-
-      if (!previous.equals(identifier)) {
-        validator.setOriginal(identifier, previous);
-      }
-      return SqlTableIdentifierWithIDQualified.create(this, i, fromNs, identifier);
+    if (i > 1) {
+      // Simplify overqualified identifiers.
+      // For example, schema.emp.deptno becomes emp.deptno.
+      //
+      // It is safe to convert schema.emp or database.schema.emp to emp
+      // because it would not have resolved if the FROM item had an alias. The
+      // following query is invalid:
+      //   SELECT schema.emp.deptno FROM schema.emp AS e
+      identifier = identifier.getComponent(i - 1, identifier.getNames().size());
+    }
+    if (!previous.equals(identifier)) {
+      validator.setOriginal(identifier, previous);
+    }
+    return SqlTableIdentifierWithIDQualified.create(this, i, fromNs, identifier);
   }
 
   @Override public void validateExpr(SqlNode expr) {
