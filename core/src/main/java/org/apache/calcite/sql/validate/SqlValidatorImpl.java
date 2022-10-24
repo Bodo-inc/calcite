@@ -1738,8 +1738,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Note that we anonymize the source rather than the
     // target because downstream, the optimizer rules
     // don't want to see any projection on top of the target.
-    IdentifierNamespace ns =
-        new IdentifierNamespace(this, target, null,
+    TableIdentifierWithIDNamespace ns =
+        new TableIdentifierWithIDNamespace(this, target, null,
             castNonNull(null));
     RelDataType rowType = ns.getRowType();
     SqlNode source = updateCall.getTargetTable().clone(SqlParserPos.ZERO);
@@ -2656,17 +2656,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     case IDENTIFIER:
     case TABLE_IDENTIFIER_WITH_ID:
-      final SqlIdentifier id;
+      final SqlValidatorNamespace newNs;
       if (node.getKind() == TABLE_IDENTIFIER_WITH_ID) {
-        // TODO(Nick) FIXME: add the proper table identifier namespace
-        id = ((SqlTableIdentifierWithID) node).convertToSQLIdentifier();
+        newNs = new TableIdentifierWithIDNamespace(
+            this, (SqlTableIdentifierWithID) node, extendList, enclosingNode, parentScope
+        );
       } else {
-        id = (SqlIdentifier) node;
+        newNs = new IdentifierNamespace(
+            this, (SqlIdentifier) node, extendList, enclosingNode, parentScope
+        );
       }
-      final IdentifierNamespace newNs =
-          new IdentifierNamespace(
-              this, id, extendList, enclosingNode,
-              parentScope);
       registerNamespace(register ? usingScope : null, alias, newNs,
           forceNullable);
       if (tableScope == null) {

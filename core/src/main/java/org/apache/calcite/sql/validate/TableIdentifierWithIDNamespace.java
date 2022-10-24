@@ -40,13 +40,14 @@ import java.util.Objects;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
- * Namespace whose contents are defined by the type of an
- * {@link org.apache.calcite.sql.SqlIdentifier identifier}.
+ * Namespace whose contents are defined by the type of a
+ * {@link org.apache.calcite.sql.SqlTableIdentifierWithID identifier}.
  */
-public class IdentifierNamespace extends AbstractNamespace {
+
+public class TableIdentifierWithIDNamespace extends AbstractNamespace {
   //~ Instance fields --------------------------------------------------------
 
-  private final SqlIdentifier id;
+  private final SqlTableIdentifierWithID id;
   private final SqlValidatorScope parentScope;
   public final @Nullable SqlNodeList extendList;
 
@@ -72,7 +73,7 @@ public class IdentifierNamespace extends AbstractNamespace {
    * @param enclosingNode Enclosing node
    * @param parentScope   Parent scope which this namespace turns to in order to
    */
-  IdentifierNamespace(SqlValidatorImpl validator, SqlIdentifier id,
+  TableIdentifierWithIDNamespace(SqlValidatorImpl validator, SqlTableIdentifierWithID id,
       @Nullable SqlNodeList extendList, @Nullable SqlNode enclosingNode,
       SqlValidatorScope parentScope) {
     super(validator, enclosingNode);
@@ -81,7 +82,7 @@ public class IdentifierNamespace extends AbstractNamespace {
     this.parentScope = Objects.requireNonNull(parentScope, "parentScope");
   }
 
-  IdentifierNamespace(SqlValidatorImpl validator, SqlNode node,
+  TableIdentifierWithIDNamespace(SqlValidatorImpl validator, SqlNode node,
       @Nullable SqlNode enclosingNode, SqlValidatorScope parentScope) {
     this(validator, split(node).left, split(node).right, enclosingNode,
         parentScope);
@@ -89,26 +90,23 @@ public class IdentifierNamespace extends AbstractNamespace {
 
   //~ Methods ----------------------------------------------------------------
 
-  protected static Pair<SqlIdentifier, @Nullable SqlNodeList> split(SqlNode node) {
+  protected static Pair<SqlTableIdentifierWithID, @Nullable SqlNodeList> split(SqlNode node) {
     switch (node.getKind()) {
-    case EXTEND:
-      final SqlCall call = (SqlCall) node;
-      final SqlNode operand0 = call.operand(0);
-      final SqlIdentifier identifier = operand0.getKind() == SqlKind.TABLE_REF
-          ? ((SqlCall) operand0).operand(0)
-          : (SqlIdentifier) operand0;
-      return Pair.of(identifier, call.operand(1));
-    case TABLE_REF:
-      final SqlCall tableRef = (SqlCall) node;
+    case TABLE_REF_WITH_ID:
+      final SqlCall tableRefWithID = (SqlCall) node;
       //noinspection ConstantConditions
-      return Pair.of(tableRef.operand(0), null);
+      return Pair.of(
+          ((SqlTableIdentifierWithID) tableRefWithID.operand(0)),
+          null);
+    case TABLE_IDENTIFIER_WITH_ID:
+      //noinspection ConstantConditions
+      return Pair.of(((SqlTableIdentifierWithID) node), null);
     default:
-      //noinspection ConstantConditions
-      return Pair.of((SqlIdentifier) node, null);
+      throw new RuntimeException("Unexpected node type for TableIdentifierWithIDNamespace");
     }
   }
 
-  private SqlValidatorNamespace resolveImpl(SqlIdentifier id) {
+  private SqlValidatorNamespace resolveImpl(SqlTableIdentifierWithID id) {
     final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
     final SqlValidatorScope.ResolvedImpl resolved =
         new SqlValidatorScope.ResolvedImpl();
@@ -214,6 +212,7 @@ public class IdentifierNamespace extends AbstractNamespace {
       }
     }
 
+    // TODO(Nick): Update the type with the ID row.
     RelDataType rowType = resolvedNamespace.getRowType();
 
     if (extendList != null) {
@@ -245,7 +244,7 @@ public class IdentifierNamespace extends AbstractNamespace {
     return rowType;
   }
 
-  public SqlIdentifier getId() {
+  public SqlTableIdentifierWithID getId() {
     return id;
   }
 
