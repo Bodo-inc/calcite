@@ -101,8 +101,7 @@ public class OrderByScope extends DelegatingScope {
    * @param identifier
    * @return A qualified identifier, never null
    */
-  @Override
-  public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
     // If it's a simple identifier, look for an alias.
     if (identifier.isSimple()
         && validator.config().conformance().isSortByAlias()) {

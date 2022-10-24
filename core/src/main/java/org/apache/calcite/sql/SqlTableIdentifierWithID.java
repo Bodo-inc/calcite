@@ -14,19 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql;
 
-import com.google.common.collect.ImmutableList;
-
-import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
+
+import com.google.common.collect.ImmutableList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.Pure;

@@ -19,8 +19,6 @@ package org.apache.calcite.sql.validate;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 
-import org.apache.calcite.sql.SqlTableIdentifierWithID;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**

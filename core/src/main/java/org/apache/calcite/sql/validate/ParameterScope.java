@@ -20,7 +20,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-
 import org.apache.calcite.sql.SqlTableIdentifierWithID;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -66,8 +65,7 @@ public class ParameterScope extends EmptyScope {
    * @param identifier
    * @return A qualified identifier, never null
    */
-  @Override
-  public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
     return SqlTableIdentifierWithIDQualified.create(this, 1, null, identifier);
   }
 

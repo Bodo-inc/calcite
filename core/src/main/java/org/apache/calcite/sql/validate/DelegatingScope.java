@@ -546,8 +546,7 @@ public abstract class DelegatingScope implements SqlValidatorScope {
    * @param identifier
    * @return A qualified identifier, never null
    */
-  @Override
-  public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
+  @Override public SqlTableIdentifierWithIDQualified fullyQualify(SqlTableIdentifierWithID identifier) {
     // This implementation is based on the fullyQualify for regular identifiers above. We skip
     // anything that only pertains to columns because we are only handling tables.
     final SqlTableIdentifierWithID previous = identifier;

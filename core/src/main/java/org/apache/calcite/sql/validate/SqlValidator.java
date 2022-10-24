@@ -28,7 +28,6 @@ import org.apache.calcite.sql.type.SqlTypeCoercionRule;
 import org.apache.calcite.sql.validate.implicit.TypeCoercion;
 import org.apache.calcite.sql.validate.implicit.TypeCoercionFactory;
 import org.apache.calcite.sql.validate.implicit.TypeCoercions;
-
 import org.apache.calcite.tools.ValidationException;
 
 import org.apiguardian.api.API;
