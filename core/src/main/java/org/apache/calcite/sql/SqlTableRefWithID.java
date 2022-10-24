@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql;
 
-import com.google.common.collect.ImmutableList;
-
 import org.apache.calcite.sql.parser.SqlParserPos;
+
+import com.google.common.collect.ImmutableList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -55,7 +54,8 @@ public class SqlTableRefWithID extends SqlCall {
 
   //~ Constructors -----------------------------------------------------------
 
-  public SqlTableRefWithID(SqlParserPos pos, SqlTableIdentifierWithID tableName, SqlNodeList hints) {
+  public SqlTableRefWithID(SqlParserPos pos, SqlTableIdentifierWithID tableName,
+      SqlNodeList hints) {
     super(pos);
     this.tableName = tableName;
     this.hints = hints;
