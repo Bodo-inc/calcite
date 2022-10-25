@@ -6711,7 +6711,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return This namespace cast to desired type
      * @throws ClassCastException if no such interface is available
      */
-    @Override public <T> T unwrap(Class<T> clazz) {
+    @Override public <T extends Object> T unwrap(Class<T> clazz) {
       return clazz.cast(this);
     }
 

@@ -555,7 +555,9 @@ public abstract class DelegatingScope implements SqlValidatorScope {
   @Override public SqlTableIdentifierWithIDQualified fullyQualify(
       SqlTableIdentifierWithID identifier) {
     // Delegated scope should always refer to columns based on the regular identifier code.
-    throw new UnsupportedOperationException("fullyQualify with a SqlTableIdentifierWithIDQualified shouldn't occur with a Delegated Scope");
+    throw new UnsupportedOperationException(
+        "fullyQualify with a SqlTableIdentifierWithIDQualified shouldn't occur with a Delegated Scope"
+    );
   }
 
   @Override public void validateExpr(SqlNode expr) {

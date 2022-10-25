@@ -128,10 +128,11 @@ public class SqlValidatorUtil {
       if (resolvedNamespace.isWrapperFor(TableNamespace.class)) {
         final TableNamespace tableNamespace = resolvedNamespace.unwrap(TableNamespace.class);
         final SqlValidatorTable validatorTable = tableNamespace.getTable();
-        final List<RelDataTypeField> extendedFields = dmlNamespace.getExtendList() == null
+        final @Nullable SqlNodeList extendedList = dmlNamespace.getExtendList();
+        final List<RelDataTypeField> extendedFields = extendedList == null
             ? ImmutableList.of()
             : getExtendedColumns(namespace.getValidator(),
-                validatorTable, dmlNamespace.getExtendList());
+                validatorTable, extendedList);
         return getRelOptTable(
             tableNamespace, requireNonNull(catalogReader, "catalogReader"),
             datasetName, usedDataset, extendedFields);
