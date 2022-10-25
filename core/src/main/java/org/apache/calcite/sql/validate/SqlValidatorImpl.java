@@ -6700,7 +6700,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     @Deprecated
     @Override public void makeNullable() {
-      // ignore because its deprecated
+      ns.makeNullable();
     }
 
     /**
