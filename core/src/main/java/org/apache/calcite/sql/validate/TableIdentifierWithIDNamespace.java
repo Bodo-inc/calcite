@@ -20,7 +20,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlTableIdentifierWithID;
@@ -95,12 +94,10 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
     case TABLE_REF_WITH_ID:
       final SqlCall tableRefWithID = (SqlCall) node;
       //noinspection ConstantConditions
-      return Pair.of(
-          ((SqlTableIdentifierWithID) tableRefWithID.operand(0)),
-          null);
+      return Pair.of(tableRefWithID.operand(0), null);
     case TABLE_IDENTIFIER_WITH_ID:
       //noinspection ConstantConditions
-      return Pair.of(((SqlTableIdentifierWithID) node), null);
+      return Pair.of((SqlTableIdentifierWithID) node, null);
     default:
       throw new RuntimeException("Unexpected node type for TableIdentifierWithIDNamespace");
     }

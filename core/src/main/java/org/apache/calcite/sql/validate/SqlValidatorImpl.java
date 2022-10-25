@@ -1253,9 +1253,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case ORDER_BY:
     case TABLESAMPLE:
       return getNamespace(((SqlCall) node).operand(0));
-    case TABLE_IDENTIFIER_WITH_ID:
-      // TODO (NICK): FIXME adding an actual identifier namespace for tables
-      return getNamespace(((SqlTableIdentifierWithID) node).convertToSQLIdentifier());
     default:
       return namespaces.get(node);
     }
@@ -5379,8 +5376,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // REVIEW ksecretan 15-July-2011: They didn't get a chance to
     // since validateSelect() would bail.
     // Let's use the update/insert targetRowType when available.
-    IdentifierNamespace targetNamespace =
-        (IdentifierNamespace) getNamespaceOrThrow(call.getTargetTable());
+    SqlValidatorNamespace targetNamespace = getNamespaceOrThrow(call.getTargetTable());
     validateNamespace(targetNamespace, unknownType);
 
     SqlValidatorTable table = targetNamespace.getTable();
@@ -6536,12 +6532,220 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   //~ Inner Classes ----------------------------------------------------------
 
   /**
-   * Common base class for DML statement namespaces.
+   * Common base class for DML statement namespaces. To handle
+   * both TableIdentifiers and Regular Identifiers we perform all
+   * operations on a stored namespace object.
    */
-  public static class DmlNamespace extends IdentifierNamespace {
+  public static class DmlNamespace implements SqlValidatorNamespace {
+
+
+    // We hold a copy of the extendList so we can directly access it.
+    // TODO(Nick): Replace with a method call
+    public final @Nullable SqlNodeList extendList;
+    private final SqlValidatorNamespace ns;
+
     protected DmlNamespace(SqlValidatorImpl validator, SqlNode id,
         SqlNode enclosingNode, SqlValidatorScope parentScope) {
-      super(validator, id, enclosingNode, parentScope);
+      switch (id.getKind()) {
+      case TABLE_IDENTIFIER_WITH_ID:
+      case TABLE_REF_WITH_ID:
+        ns = new TableIdentifierWithIDNamespace(validator, id, enclosingNode, parentScope);
+        extendList = ((TableIdentifierWithIDNamespace) ns).extendList;
+        break;
+      default:
+        ns = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
+        extendList = ((IdentifierNamespace) ns).extendList;
+      }
+    }
+
+    /**
+     * Returns the validator.
+     *
+     * @return validator
+     */
+    @Override public SqlValidator getValidator() {
+      return ns.getValidator();
+    }
+
+    /**
+     * Returns the underlying table, or null if there is none.
+     */
+    @Override public @Nullable SqlValidatorTable getTable() {
+      return ns.getTable();
+    }
+
+    /**
+     * Returns the row type of this namespace, which comprises a list of names
+     * and types of the output columns. If the scope's type has not yet been
+     * derived, derives it.
+     *
+     * @return Row type of this namespace, never null, always a struct
+     */
+    @Override public RelDataType getRowType() {
+      return ns.getRowType();
+    }
+
+    /**
+     * Returns the type of this namespace.
+     *
+     * @return Row type converted to struct
+     */
+    @Override public RelDataType getType() {
+      return ns.getType();
+    }
+
+    /**
+     * Sets the type of this namespace.
+     *
+     * <p>Allows the type for the namespace to be explicitly set, but usually is
+     * called during {@link #validate(RelDataType)}.</p>
+     *
+     * <p>Implicitly also sets the row type. If the type is not a struct, then
+     * the row type is the type wrapped as a struct with a single column,
+     * otherwise the type and row type are the same.</p>
+     *
+     * @param type Type to set.
+     */
+    @Override public void setType(RelDataType type) {
+      ns.setType(type);
+    }
+
+    /**
+     * Returns the row type of this namespace, sans any system columns.
+     *
+     * @return Row type sans system columns
+     */
+    @Override public RelDataType getRowTypeSansSystemColumns() {
+      return ns.getRowTypeSansSystemColumns();
+    }
+
+    /**
+     * Validates this namespace.
+     *
+     * <p>If the scope has already been validated, does nothing.</p>
+     *
+     * <p>Please call {@link SqlValidatorImpl#validateNamespace} rather than
+     * calling this method directly.</p>
+     *
+     * @param targetRowType Desired row type, must not be null, may be the data
+     *                      type 'unknown'.
+     */
+    @Override public void validate(RelDataType targetRowType) {
+      ns.validate(targetRowType);
+    }
+
+    /**
+     * Returns the parse tree node at the root of this namespace.
+     *
+     * @return parse tree node; null for {@link TableNamespace}
+     */
+    @Override public @Nullable SqlNode getNode() {
+      return ns.getNode();
+    }
+
+    /**
+     * Returns the parse tree node that at is at the root of this namespace and
+     * includes all decorations. If there are no decorations, returns the same
+     * as {@link #getNode()}.
+     */
+    @Override public @Nullable SqlNode getEnclosingNode() {
+      return ns.getEnclosingNode();
+    }
+
+    /**
+     * Looks up a child namespace of a given name.
+     *
+     * <p>For example, in the query <code>select e.name from emps as e</code>,
+     * <code>e</code> is an {@link IdentifierNamespace} which has a child <code>
+     * name</code> which is a {@link FieldNamespace}.
+     *
+     * @param name Name of namespace
+     * @return Namespace
+     */
+    @Override public @Nullable SqlValidatorNamespace lookupChild(String name) {
+      return ns.lookupChild(name);
+    }
+
+    /**
+     * Returns whether this namespace has a field of a given name.
+     *
+     * @param name Field name
+     * @return Whether field exists
+     */
+    @Override public boolean fieldExists(String name) {
+      return ns.fieldExists(name);
+    }
+
+    /**
+     * Returns a list of expressions which are monotonic in this namespace. For
+     * example, if the namespace represents a relation ordered by a column
+     * called "TIMESTAMP", then the list would contain a
+     * {@link SqlIdentifier} called "TIMESTAMP".
+     */
+    @Override public List<Pair<SqlNode, SqlMonotonicity>> getMonotonicExprs() {
+      return ns.getMonotonicExprs();
+    }
+
+    /**
+     * Returns whether and how a given column is sorted.
+     *
+     * @param columnName Name of column to check Monotonicity
+     */
+    @Override public SqlMonotonicity getMonotonicity(String columnName) {
+      return ns.getMonotonicity(columnName);
+    }
+
+    @Deprecated
+    @Override public void makeNullable() {
+      // ignore because its deprecated
+    }
+
+    /**
+     * Returns this namespace, or a wrapped namespace, cast to a particular
+     * class.
+     *
+     * @param clazz Desired type
+     * @return This namespace cast to desired type
+     * @throws ClassCastException if no such interface is available
+     */
+    @Override public <T> T unwrap(Class<T> clazz) {
+      return ns.unwrap(clazz);
+    }
+
+    /**
+     * Returns whether this namespace implements a given interface, or wraps a
+     * class which does.
+     *
+     * @param clazz Interface
+     * @return Whether namespace implements given interface
+     */
+    @Override public boolean isWrapperFor(Class<?> clazz) {
+      return ns.isWrapperFor(clazz);
+    }
+
+    /**
+     * If this namespace resolves to another namespace, returns that namespace,
+     * following links to the end of the chain.
+     *
+     * <p>A {@code WITH}) clause defines table names that resolve to queries
+     * (the body of the with-item). An {@link IdentifierNamespace} typically
+     * resolves to a {@link TableNamespace}.</p>
+     *
+     * <p>You must not call this method before {@link #validate(RelDataType)} has
+     * completed.</p>
+     */
+    @Override public SqlValidatorNamespace resolve() {
+      return ns.resolve();
+    }
+
+    /**
+     * Returns whether this namespace is capable of giving results of the desired
+     * modality. {@code true} means streaming, {@code false} means relational.
+     *
+     * @param modality Modality
+     */
+    @Override public boolean supportsModality(SqlModality modality) {
+      return ns.supportsModality(modality);
     }
   }
 
