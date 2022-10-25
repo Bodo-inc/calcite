@@ -126,6 +126,7 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSetOperator;
 import org.apache.calcite.sql.SqlSnapshot;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
 import org.apache.calcite.sql.SqlUnnestOperator;
 import org.apache.calcite.sql.SqlUnpivot;
 import org.apache.calcite.sql.SqlUpdate;
@@ -156,6 +157,7 @@ import org.apache.calcite.sql.validate.SelectScope;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlQualified;
+import org.apache.calcite.sql.validate.SqlTableIdentifierWithIDQualified;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableMacro;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -166,6 +168,7 @@ import org.apache.calcite.sql.validate.SqlValidatorTable;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Litmus;
@@ -2326,6 +2329,10 @@ public class SqlToRelConverter {
       convertIdentifier(bb, (SqlIdentifier) from, null, null);
       return;
 
+    case TABLE_IDENTIFIER_WITH_ID:
+      convertTableIdentifierWithID(bb, (SqlTableIdentifierWithID) from, null, null);
+      return;
+
     case EXTEND:
       call = (SqlCall) from;
       final SqlNode operand0 = call.getOperandList().get(0);
@@ -2478,6 +2485,14 @@ public class SqlToRelConverter {
             assert id.isSimple();
             patternVarsSet.add(id.getSimple());
             return rexBuilder.makeLiteral(id.getSimple());
+          }
+
+          @Override public RexNode visit(SqlTableIdentifierWithID id) {
+            // This is probably unnecessary
+            assert id.isSimple();
+            String simpleID = id.getSimple();
+            patternVarsSet.add(simpleID);
+            return rexBuilder.makeLiteral(simpleID);
           }
 
           @Override public RexNode visit(SqlLiteral literal) {
@@ -2723,6 +2738,48 @@ public class SqlToRelConverter {
     }
     // Review Danny 2020-01-13: hacky to construct a new table scan
     // in order to apply the hint strategies.
+    final List<RelHint> hints = hintStrategies.apply(
+        SqlUtil.getRelHint(hintStrategies, tableHints),
+        LogicalTableScan.create(cluster, table, ImmutableList.of()));
+    final RelNode tableRel = toRel(table, hints);
+    bb.setRoot(tableRel, true);
+
+    if (RelOptUtil.isPureOrder(castNonNull(bb.root))
+        && removeSortInSubQuery(bb.top)) {
+      bb.setRoot(castNonNull(bb.root).getInput(0), true);
+    }
+
+    if (usedDataset[0]) {
+      bb.setDataset(datasetName);
+    }
+  }
+
+  private void convertTableIdentifierWithID(Blackboard bb, SqlTableIdentifierWithID id,
+      @Nullable SqlNodeList extendedColumns, @Nullable SqlNodeList tableHints) {
+    final SqlValidatorNamespace fromNamespace = getNamespace(id).resolve();
+    if (fromNamespace.getNode() != null) {
+      convertFrom(bb, fromNamespace.getNode());
+      return;
+    }
+    final String datasetName =
+        datasetStack.isEmpty() ? null : datasetStack.peek();
+    final boolean[] usedDataset = {false};
+    RelOptTable table =
+        SqlValidatorUtil.getRelOptTable(fromNamespace, catalogReader,
+            datasetName, usedDataset);
+    assert table != null : "getRelOptTable returned null for " + fromNamespace;
+    if (extendedColumns != null && extendedColumns.size() > 0) {
+      // TODO(NICK): FIXME to update fields?
+      final SqlValidatorTable validatorTable =
+          table.unwrapOrThrow(SqlValidatorTable.class);
+      final List<RelDataTypeField> extendedFields =
+          SqlValidatorUtil.getExtendedColumns(validator, validatorTable,
+              extendedColumns);
+      table = table.extend(extendedFields);
+    }
+    // Review Danny 2020-01-13: hacky to construct a new table scan
+    // in order to apply the hint strategies.
+    // TODO(NICK): FIXME to remove logical table scan.
     final List<RelHint> hints = hintStrategies.apply(
         SqlUtil.getRelHint(hintStrategies, tableHints),
         LogicalTableScan.create(cluster, table, ImmutableList.of()));
@@ -4733,6 +4790,57 @@ public class SqlToRelConverter {
         new ArrayList<>(), null, false);
   }
 
+  private RexNode convertTableIdentifierWithID(
+      Blackboard bb,
+      SqlTableIdentifierWithID identifier) {
+    final SqlValidator validator = bb.getValidator();
+    try {
+      validator.requireNonCall(identifier);
+    } catch (ValidationException e) {
+      throw new RuntimeException(e);
+    }
+
+    String pv = null;
+    if (bb.isPatternVarRef && identifier.getNames().size() > 1) {
+      pv = identifier.names.get(0);
+    }
+
+    final SqlTableIdentifierWithIDQualified qualified;
+    if (bb.scope != null) {
+      qualified = bb.scope.fullyQualify(identifier);
+    } else {
+      qualified = SqlTableIdentifierWithIDQualified.create(null, 1, null, identifier);
+    }
+    // TODO(Nick) FIXME: Fix the output types?
+    final Pair<RexNode, @Nullable BiFunction<RexNode, String, RexNode>> e0 =
+        bb.lookupExp(qualified.convertToQualified());
+    RexNode e = e0.left;
+    for (String name : qualified.suffix()) {
+      if (e == e0.left && e0.right != null) {
+        e = e0.right.apply(e, name);
+      } else {
+        final boolean caseSensitive = true; // name already fully-qualified
+        e = rexBuilder.makeFieldAccess(e, name, caseSensitive);
+      }
+    }
+    if (e instanceof RexInputRef) {
+      // adjust the type to account for nulls introduced by outer joins
+      e = adjustInputRef(bb, (RexInputRef) e);
+      if (pv != null) {
+        e = RexPatternFieldRef.of(pv, (RexInputRef) e);
+      }
+    }
+
+    if (e0.left instanceof RexCorrelVariable) {
+      assert e instanceof RexFieldAccess;
+      final RexNode prev =
+          bb.mapCorrelateToRex.put(((RexCorrelVariable) e0.left).id,
+              (RexFieldAccess) e);
+      assert prev == null;
+    }
+    return e;
+  }
+
   /**
    * Converts an identifier into an expression in a given scope. For example,
    * the "empno" in "select empno from emp join dept" becomes "emp.empno".
@@ -5986,6 +6094,10 @@ public class SqlToRelConverter {
       return convertIdentifier(this, id);
     }
 
+    @Override public RexNode visit(SqlTableIdentifierWithID id) {
+      return convertTableIdentifierWithID(this, id);
+    }
+
     @Override public RexNode visit(SqlDataTypeSpec type) {
       throw new UnsupportedOperationException();
     }
@@ -6207,6 +6319,10 @@ public class SqlToRelConverter {
     }
 
     @Override public Void visit(SqlIdentifier id) {
+      return null;
+    }
+
+    @Override public Void visit(SqlTableIdentifierWithID id) {
       return null;
     }
 
@@ -6844,6 +6960,11 @@ public class SqlToRelConverter {
     }
 
     @Override public Boolean visit(SqlIdentifier identifier) {
+      return true;
+    }
+
+    @Override public Boolean visit(SqlTableIdentifierWithID identifier) {
+      // Treat the SqlTableIdentifierWithID as identifier
       return true;
     }
 
