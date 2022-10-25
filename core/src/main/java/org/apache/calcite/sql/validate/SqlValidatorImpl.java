@@ -6712,7 +6712,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @throws ClassCastException if no such interface is available
      */
     @Override public <T> T unwrap(Class<T> clazz) {
-      return ns.unwrap(clazz);
+      return clazz.cast(this);
     }
 
     /**
@@ -6723,7 +6723,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return Whether namespace implements given interface
      */
     @Override public boolean isWrapperFor(Class<?> clazz) {
-      return ns.isWrapperFor(clazz);
+      return clazz.isInstance(this);
     }
 
     /**

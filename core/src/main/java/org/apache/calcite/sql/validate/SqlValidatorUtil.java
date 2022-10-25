@@ -130,7 +130,8 @@ public class SqlValidatorUtil {
         final SqlValidatorTable validatorTable = tableNamespace.getTable();
         final List<RelDataTypeField> extendedFields = dmlNamespace.getExtendList() == null
             ? ImmutableList.of()
-            : getExtendedColumns(namespace.getValidator(), validatorTable, dmlNamespace.getExtendList());
+            : getExtendedColumns(namespace.getValidator(),
+                validatorTable, dmlNamespace.getExtendList());
         return getRelOptTable(
             tableNamespace, requireNonNull(catalogReader, "catalogReader"),
             datasetName, usedDataset, extendedFields);
