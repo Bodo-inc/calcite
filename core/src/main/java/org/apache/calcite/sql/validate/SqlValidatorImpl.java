@@ -6539,9 +6539,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   public static class DmlNamespace implements SqlValidatorNamespace {
 
 
-    // We hold a copy of the extendList so we can directly access it.
-    // TODO(Nick): Replace with a method call
-    public final @Nullable SqlNodeList extendList;
     private final SqlValidatorNamespace ns;
 
     protected DmlNamespace(SqlValidatorImpl validator, SqlNode id,
@@ -6550,11 +6547,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       case TABLE_IDENTIFIER_WITH_ID:
       case TABLE_REF_WITH_ID:
         ns = new TableIdentifierWithIDNamespace(validator, id, enclosingNode, parentScope);
-        extendList = ((TableIdentifierWithIDNamespace) ns).extendList;
         break;
       default:
         ns = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
-        extendList = ((IdentifierNamespace) ns).extendList;
+      }
+    }
+
+    public @Nullable SqlNodeList getExtendList() {
+      if (ns instanceof TableIdentifierWithIDNamespace) {
+        return ((TableIdentifierWithIDNamespace) ns).extendList;
+      } else {
+        return ((IdentifierNamespace) ns).extendList;
       }
     }
 
