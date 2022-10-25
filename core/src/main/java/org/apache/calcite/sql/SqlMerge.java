@@ -116,7 +116,7 @@ public class SqlMerge extends SqlCall {
   public SqlNode getTargetTable() {
     // Based on parser.jj the TargetTable is 1 of two types:
     //
-    // 1. If there is no hint. We have update the parser to output
+    // 1. If there is no hint. We have updated the parser to output
     // a SqlTableIdentifierWithID
     //
     // 2. There are 1 or more hints. This node is a SqlTableRefWithID

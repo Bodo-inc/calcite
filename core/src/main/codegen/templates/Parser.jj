@@ -1276,6 +1276,10 @@ SqlNode TableRefWithHintsOpt() :
 
 /**
  * Parses a target table reference with optional hints.
+ * This is a copy of TableRefWithHintsOpt except we return a
+ * SqlTableIdentifierWithID instead of a SQLIdentifier or a
+ * SqlTableRefWithID instead of a SqlTableRef when there are hints.
+ * This is only used by merge into.
  */
 SqlNode TargetTableRefWithHintsOpt() :
 {
@@ -5434,6 +5438,9 @@ SqlIdentifier CompoundIdentifier() :
 
 /**
  * Parses a compound target table identifier in the FROM clause.
+ * This is a copy of CompoundIdentifier except we return a
+ * SqlTableIdentifierWithID instead of a SQLIdentifier. This is
+ * only used by merge into.
  */
 SqlTableIdentifierWithID CompoundTargetTableIdentifier() :
 {
