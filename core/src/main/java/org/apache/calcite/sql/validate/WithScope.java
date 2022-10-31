@@ -58,7 +58,8 @@ class WithScope extends ListScope {
   }
 
   @Override public void resolveTable(List<String> names,
-      SqlNameMatcher nameMatcher, Path path, Resolved resolved, List<RelDataTypeField> extensionFields) {
+      SqlNameMatcher nameMatcher, Path path, Resolved resolved,
+      List<RelDataTypeField> extensionFields) {
     if (names.size() == 1
         && names.equals(withItem.name.names)) {
       final SqlValidatorNamespace ns = validator.getNamespaceOrThrow(withItem);

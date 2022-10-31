@@ -16,8 +16,16 @@
  */
 package org.apache.calcite.sql.validate;
 
-import org.apache.calcite.rel.type.*;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -113,12 +121,6 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
   }
 
   private SqlValidatorNamespace resolveImpl(SqlTableIdentifierWithID id) {
-    SqlValidatorNamespace temp = _resolveImpl_inner(id);
-
-    return temp;
-  }
-
-  private SqlValidatorNamespace _resolveImpl_inner(SqlTableIdentifierWithID id) {
     final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
 
 //    List<RelDataTypeField> fieldList = type.getFieldList();
