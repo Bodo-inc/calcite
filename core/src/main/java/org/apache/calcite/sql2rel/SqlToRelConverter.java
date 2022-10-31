@@ -67,9 +67,7 @@ import org.apache.calcite.rel.metadata.RelColumnMapping;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.stream.Delta;
 import org.apache.calcite.rel.stream.LogicalDelta;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.*;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexCorrelVariable;
@@ -141,10 +139,7 @@ import org.apache.calcite.sql.fun.SqlQuantifyOperator;
 import org.apache.calcite.sql.fun.SqlRowOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlReturnTypeInference;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.type.SqlTypeUtil;
-import org.apache.calcite.sql.type.TableFunctionReturnTypeInference;
+import org.apache.calcite.sql.type.*;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.AggregatingSelectScope;
@@ -2775,8 +2770,19 @@ public class SqlToRelConverter {
       final List<RelDataTypeField> extendedFields =
           SqlValidatorUtil.getExtendedColumns(validator, validatorTable,
               extendedColumns);
+
       table = table.extend(extendedFields);
     }
+
+    BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
+    // TODO: check if there is a valid way to get index
+    int newIdx = 999;
+    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
+        newIdx, int_typ);
+    List<RelDataTypeField> extensionFields = new ArrayList<>();
+    extensionFields.add(rowIdFieldType);
+    table = table.extend(extensionFields);
+
     // Review Danny 2020-01-13: hacky to construct a new table scan
     // in order to apply the hint strategies.
     // TODO(NICK): FIXME to remove logical table scan.
@@ -4587,7 +4593,10 @@ public class SqlToRelConverter {
 
 
     int numSourceCols = origSourceRel.rel.getRowType().getFieldCount();
-    int numDestCols = targetTable.getRowType().getFieldCount();
+
+    //NOTE: targetTable.getRowType().getFieldCount() would give the wrong value, since it wouldn't
+    //include the added row id column
+    int numDestColsIncludingRowIdCol = targetTable.getRowType().getFieldCount() + 1;
 
     // the rightmost integer is the offset for the start of the end of the matched clauses/ the
     // start of the not matched clauses
@@ -4596,7 +4605,8 @@ public class SqlToRelConverter {
     // the right inner list should have length equal to the number of conditions
     Pair<Pair<List<RexNode>, List<List<RexNode>>>, Integer> matchCaseNodesAndOffset =
         extractMatchExprs(
-        call.getMatchedCallList(), mergeSourceRel, numSourceCols, numDestCols, targetTable);
+        call.getMatchedCallList(), mergeSourceRel, numSourceCols, numDestColsIncludingRowIdCol,
+            targetTable);
 
     Pair<List<RexNode>, List<List<RexNode>>> matchCaseNodes = matchCaseNodesAndOffset.getKey();
     Integer matchedClausesEndOffset = matchCaseNodesAndOffset.getValue();
@@ -4616,7 +4626,8 @@ public class SqlToRelConverter {
     Integer notMatchedEndOffset = notMatchedCaseNodesAndOffset.getValue();
 
     // At this point, we should have traversed all the elements of the source select, so
-    // we expect the offset to point to the end of the table.
+    // we expect the offset to point to the end of the table (not counting the final appended
+    // row ID).
     assert notMatchedEndOffset == mergeSourceRel.getRowType().getFieldCount();
 
     // NOTE: this assertion will not be true if we do inserts into a modifiable view that has
@@ -4637,7 +4648,7 @@ public class SqlToRelConverter {
 
     // The "matched" flag should always be after the columns from the source and dest table
     RexNode matchedFlag = relBuilder.getRexBuilder().makeInputRef(join,
-        numDestCols + numSourceCols);
+        numDestColsIncludingRowIdCol + numSourceCols);
 
     // Note that we need to use IS_NULL/NOT_NULL instead of boolean logic assuming NULL is false.
     // Calcite will perform some plan optimizations that assume no nullability

@@ -16,14 +16,11 @@
  */
 package org.apache.calcite.sql.validate;
 
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlTableIdentifierWithID;
+import org.apache.calcite.rel.type.*;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 
 import com.google.common.collect.ImmutableList;
@@ -68,16 +65,28 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
    *
    * @param validator     Validator
    * @param id            Identifier node (or "identifier EXTEND column-list")
-   * @param extendList    Extension columns, or null
+   * @param inputExtendList    Extension columns, or null
    * @param enclosingNode Enclosing node
    * @param parentScope   Parent scope which this namespace turns to in order to
    */
   TableIdentifierWithIDNamespace(SqlValidatorImpl validator, SqlTableIdentifierWithID id,
-      @Nullable SqlNodeList extendList, @Nullable SqlNode enclosingNode,
+      @Nullable SqlNodeList inputExtendList, @Nullable SqlNode enclosingNode,
       SqlValidatorScope parentScope) {
     super(validator, enclosingNode);
     this.id = id;
-    this.extendList = extendList;
+    SqlLiteral tmp =  SqlLiteral.createApproxNumeric("1", SqlParserPos.ZERO);
+    List<SqlNode> tmp2;
+    SqlNodeList newExtendList = inputExtendList;
+    if (inputExtendList == null) {
+      tmp2 = new ArrayList<>();
+      tmp2.add(tmp);
+      newExtendList = new SqlNodeList(tmp2, SqlParserPos.ZERO);
+    } else {
+      tmp2 = inputExtendList.getList();
+      tmp2.add(tmp);
+      newExtendList = new SqlNodeList(tmp2, SqlParserPos.ZERO);
+    }
+    this.extendList = newExtendList;
     this.parentScope = Objects.requireNonNull(parentScope, "parentScope");
   }
 
@@ -104,13 +113,33 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
   }
 
   private SqlValidatorNamespace resolveImpl(SqlTableIdentifierWithID id) {
+    SqlValidatorNamespace temp = _resolveImpl_inner(id);
+
+    return temp;
+  }
+
+  private SqlValidatorNamespace _resolveImpl_inner(SqlTableIdentifierWithID id) {
     final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
+
+//    List<RelDataTypeField> fieldList = type.getFieldList();
+//    // TODO: I think we have our own type system in BodoSql.
+//    // How do I propagate that information here?
+//    //NOTE: defaults to non null
+    BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
+    // TODO: check if there is a valid way to get index
+    int newIdx = 999;
+    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
+        newIdx, int_typ);
+    List<RelDataTypeField> extensionFields = new ArrayList<>();
+    extensionFields.add(rowIdFieldType);
+
     final SqlValidatorScope.ResolvedImpl resolved =
         new SqlValidatorScope.ResolvedImpl();
     final List<String> names = SqlIdentifier.toStar(id.names);
     try {
+
       parentScope.resolveTable(names, nameMatcher,
-          SqlValidatorScope.Path.EMPTY, resolved);
+          SqlValidatorScope.Path.EMPTY, resolved, extensionFields);
     } catch (CyclicDefinitionException e) {
       if (e.depth == 1) {
         throw validator.newValidationError(id,
@@ -143,7 +172,7 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
       final SqlNameMatcher liberalMatcher = SqlNameMatchers.liberal();
       resolved.clear();
       parentScope.resolveTable(names, liberalMatcher,
-          SqlValidatorScope.Path.EMPTY, resolved);
+          SqlValidatorScope.Path.EMPTY, resolved, extensionFields);
       if (resolved.count() == 1) {
         final SqlValidatorScope.Resolve resolve = resolved.only();
         if (resolve.remainingNames.isEmpty()
@@ -277,5 +306,29 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
       return modality == SqlModality.RELATION;
     }
     return table.supportsModality(modality);
+  }
+
+  @Override public void setType(RelDataType type) {
+    // Since we're appending a row ID column in the codegen,
+    // whenever we would otherwise set the type of this identifier,
+    // add row ID column with type int
+//    List<RelDataTypeField> fieldList = type.getFieldList();
+//
+//    // TODO: I think we have our own type system in BodoSql.
+//    // How do I propagate that information here?
+//    //NOTE: defaults to non null
+//    BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
+////
+////    // TODO: check if this is valid way to get index
+//    int newIdx = fieldList.size();
+//    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
+//        newIdx, int_typ);
+//    fieldList.add(rowIdFieldType);
+//    RelDataType typeWithRowId = new RelRecordType(type.getStructKind(), fieldList,
+//        type.isNullable());
+
+    RelDataType typeWithRowId = type;
+    this.type = typeWithRowId;
+    this.rowType = convertToStruct(typeWithRowId);
   }
 }

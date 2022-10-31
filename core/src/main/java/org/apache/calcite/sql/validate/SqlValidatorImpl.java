@@ -4371,7 +4371,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlValidatorScope.ResolvedImpl resolved =
         new SqlValidatorScope.ResolvedImpl();
     scope.resolveTable(id.names, catalogReader.nameMatcher(),
-        SqlValidatorScope.Path.EMPTY, resolved);
+        SqlValidatorScope.Path.EMPTY, resolved, new ArrayList<>());
     if (resolved.count() != 1) {
       throw newValidationError(id, RESOURCE.tableNameNotFound(id.toString()));
     }

@@ -17,6 +17,7 @@
 package org.apache.calcite.sql.validate;
 
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -211,7 +212,7 @@ public interface SqlValidatorScope {
    * @param path List of names that we have traversed through so far
    */
   void resolveTable(List<String> names, SqlNameMatcher nameMatcher, Path path,
-      Resolved resolved);
+      Resolved resolved, List<RelDataTypeField> extensionCols);
 
   /** Converts the type of an expression to nullable, if the context
    * warrants it. */

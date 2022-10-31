@@ -101,7 +101,8 @@ public abstract class ListScope extends DelegatingScope {
       final SqlValidatorTable table = child.namespace.getTable();
       if (table != null) {
         final ResolvedImpl resolved = new ResolvedImpl();
-        resolveTable(names, nameMatcher, Path.EMPTY, resolved);
+        //TODO: Do I need to pass info in?
+        resolveTable(names, nameMatcher, Path.EMPTY, resolved, new ArrayList<>());
         if (resolved.count() == 1) {
           Resolve only = resolved.only();
           List<String> qualifiedName = table.getQualifiedName();
