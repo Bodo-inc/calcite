@@ -4359,7 +4359,10 @@ public class SqlToRelConverter {
     // the column with index Y should evaluate to is caseValues[Y][X]
     List<List<RexNode>> caseValues = new ArrayList<>();
 
-    List<String> destTableFieldNames = destTable.getRowType().getFieldNames();
+    List<String> destTableFieldNames = new ArrayList<>();
+    destTableFieldNames.addAll(destTable.getRowType().getFieldNames());
+    //Add the Row ID column
+    destTableFieldNames.add("_BODO_ROW_ID");
 
     for (int destColIdx = 0; destColIdx < destTableFieldNames.size(); destColIdx++) {
       caseValues.add(new ArrayList<>());
@@ -4478,7 +4481,9 @@ public class SqlToRelConverter {
     // column with index Y should evaluate to is caseValues[Y][X]
     List<List<RexNode>> caseValues = new ArrayList<>();
 
-    List<String> destTableFieldNames = destTable.getRowType().getFieldNames();
+    List<String> destTableFieldNames = new ArrayList<>();
+    destTableFieldNames.addAll(destTable.getRowType().getFieldNames());
+    destTableFieldNames.add("_BODO_ROW_ID");
 
     for (int destColIdx = 0; destColIdx < destTableFieldNames.size(); destColIdx++) {
       caseValues.add(new ArrayList<>());
@@ -4487,7 +4492,7 @@ public class SqlToRelConverter {
     List<RexNode> mergeSourceRelProjects = mergeSourceRel.getProjects();
 
 
-    // Now, iterate through all the update/Delete clauses, and extract the needed
+    // Now, iterate through all the insert clauses, and extract the needed
     // conditions and values. In the loop, it is an invariant that totalOffset will point to
     // the start of current not matched clause at the start loop.
     for (int insertColNumber = 0; insertColNumber < insertCallList.size(); insertColNumber++) {
@@ -4510,7 +4515,10 @@ public class SqlToRelConverter {
           Integer curOffset = curInsertTargetColumnMap.get(curFieldName)
               + totalOffset;
           valToAdd = mergeSourceRelProjects.get(curOffset);
-
+        } else if (curFieldName.equals("_BODO_ROW_ID")) {
+          // Don't need BODO_ROW_ID for insert rows
+          valToAdd = this.relBuilder.getRexBuilder()
+              .makeNullLiteral(typeFactory.createSqlType(SqlTypeName.BIGINT));
         } else {
           // Fill any non specified columns with NULL
           valToAdd = this.relBuilder.getRexBuilder().makeNullLiteral(
@@ -4555,6 +4563,7 @@ public class SqlToRelConverter {
      * Due to our changes, the values present in the source select should be as follows:
      * (All cols from source)
      * (All cols from dest)
+     * (Row ID col)
      * (bool flag for checking if the row is a "match" or a "not match")
      * ((Match Condition) (Update Values (If the match condition is Update)))*
      * ((Insert Condition) (Insert Values))*
@@ -4620,7 +4629,7 @@ public class SqlToRelConverter {
     Integer matchedClausesEndOffset = matchCaseNodesAndOffset.getValue();
 
     //Check that our assumptions in the above comment hold true
-    assert (matchCaseNodes.getValue().size() == targetTable.getRowType().getFieldCount())
+    assert (matchCaseNodes.getValue().size() == targetTable.getRowType().getFieldCount() + 1)
         || matchCaseNodes.getValue().size() == 0;
 
     assert matchCaseNodes.getKey().size() == call.getMatchedCallList().size();
@@ -4643,7 +4652,8 @@ public class SqlToRelConverter {
     // does not have. I don't know if this is an issue with the rowType, or something else.
     // Since we don't currently allow views in BodoSQL, I've made a note to return to this later:
     // https://bodo.atlassian.net/browse/BE-3494
-    assert (notMatchedCaseNodes.getValue().size() == targetTable.getRowType().getFieldCount())
+    // (+1 to account for ROW ID)
+    assert (notMatchedCaseNodes.getValue().size() == targetTable.getRowType().getFieldCount() + 1)
         || notMatchedCaseNodes.getValue().size() == 0;
 
     assert notMatchedCaseNodes.getKey().size() == call.getNotMatchedCallList().size();
