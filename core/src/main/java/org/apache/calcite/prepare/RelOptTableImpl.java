@@ -28,6 +28,7 @@ import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelReferentialConstraint;
 import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rel.logical.LogicalTargetTableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -288,7 +289,13 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
     if (table instanceof TranslatableTable) {
       return ((TranslatableTable) table).toRel(context, this);
     }
-    return LogicalTableScan.create(context.getCluster(), this, context.getTableHints());
+    if (isTargetTable) {
+      return LogicalTargetTableScan.create(context.getCluster(),
+          this, context.getTableHints());
+    } else {
+      return LogicalTableScan.create(context.getCluster(), this, context.getTableHints());
+    }
+
   }
 
   @Override public @Nullable List<RelCollation> getCollationList() {
