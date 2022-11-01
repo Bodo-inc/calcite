@@ -102,7 +102,7 @@ public class RelOptMaterialization {
 
               final RelOptCluster cluster = scan.getCluster();
               final RelNode scan2 =
-                  starRelOptTable.toRel(ViewExpanders.simpleContext(cluster));
+                  starRelOptTable.toRel(ViewExpanders.simpleContext(cluster), false);
               return RelOptUtil.createProject(scan2,
                   Mappings.asListNonNull(mapping.inverse()));
             }
@@ -155,7 +155,7 @@ public class RelOptMaterialization {
                           Mappings.offsetSource(rightMapping, offset),
                           leftMapping.getTargetCount()));
               final RelNode project = RelOptUtil.createProject(
-                  leftRelOptTable.toRel(ViewExpanders.simpleContext(cluster)),
+                  leftRelOptTable.toRel(ViewExpanders.simpleContext(cluster), false),
                   Mappings.asListNonNull(mapping.inverse()));
               final List<RexNode> conditions = new ArrayList<>();
               if (left.condition != null) {
@@ -180,7 +180,7 @@ public class RelOptMaterialization {
                       Mappings.offsetSource(leftMapping, offset),
                       Mappings.offsetTarget(rightMapping, leftCount));
               final RelNode project = RelOptUtil.createProject(
-                  rightRelOptTable.toRel(ViewExpanders.simpleContext(cluster)),
+                  rightRelOptTable.toRel(ViewExpanders.simpleContext(cluster), false),
                   Mappings.asListNonNull(mapping.inverse()));
               final List<RexNode> conditions = new ArrayList<>();
               if (left.condition != null) {

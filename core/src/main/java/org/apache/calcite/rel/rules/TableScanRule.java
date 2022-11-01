@@ -62,7 +62,7 @@ public class TableScanRule extends RelRule<RelRule.Config>
     final LogicalTableScan oldRel = call.rel(0);
     RelNode newRel =
         oldRel.getTable().toRel(
-            ViewExpanders.simpleContext(oldRel.getCluster()));
+            ViewExpanders.simpleContext(oldRel.getCluster()), false);
     call.transformTo(newRel);
   }
 

@@ -61,6 +61,7 @@ import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rel.logical.LogicalTargetTableScan;
 import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.metadata.RelColumnMapping;
@@ -2744,7 +2745,7 @@ public class SqlToRelConverter {
     final List<RelHint> hints = hintStrategies.apply(
         SqlUtil.getRelHint(hintStrategies, tableHints),
         LogicalTableScan.create(cluster, table, ImmutableList.of()));
-    final RelNode tableRel = toRel(table, hints);
+    final RelNode tableRel = toRel(table, hints, false);
     bb.setRoot(tableRel, true);
 
     if (RelOptUtil.isPureOrder(castNonNull(bb.root))
@@ -2796,8 +2797,8 @@ public class SqlToRelConverter {
     // TODO(NICK): FIXME to remove logical table scan.
     final List<RelHint> hints = hintStrategies.apply(
         SqlUtil.getRelHint(hintStrategies, tableHints),
-        LogicalTableScan.create(cluster, table, ImmutableList.of()));
-    final RelNode tableRel = toRel(table, hints);
+        LogicalTargetTableScan.create(cluster, table, ImmutableList.of()));
+    final RelNode tableRel = toRel(table, hints, true);
     bb.setRoot(tableRel, true);
 
     if (RelOptUtil.isPureOrder(castNonNull(bb.root))
@@ -2838,7 +2839,7 @@ public class SqlToRelConverter {
       final RelDataType rowType = table.getRowType(typeFactory);
       RelOptTable relOptTable = RelOptTableImpl.create(null, rowType, table,
           udf.getNameAsId().names);
-      RelNode converted = toRel(relOptTable, ImmutableList.of());
+      RelNode converted = toRel(relOptTable, ImmutableList.of(), false);
       bb.setRoot(converted, true);
       return;
     }
@@ -3941,8 +3942,8 @@ public class SqlToRelConverter {
     return ViewExpanders.toRelContext(viewExpander, cluster, hints);
   }
 
-  public RelNode toRel(final RelOptTable table, final List<RelHint> hints) {
-    final RelNode scan = table.toRel(createToRelContext(hints));
+  public RelNode toRel(final RelOptTable table, final List<RelHint> hints, boolean isTargetTable) {
+    final RelNode scan = table.toRel(createToRelContext(hints), isTargetTable);
 
     final InitializerExpressionFactory ief =
         table.maybeUnwrap(InitializerExpressionFactory.class)

@@ -252,13 +252,13 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
     return schema;
   }
 
-  @Override public RelNode toRel(ToRelContext context) {
+  @Override public RelNode toRel(ToRelContext context, boolean isTargetTable) {
     // Make sure rowType's list is immutable. If rowType is DynamicRecordType, creates a new
     // RelOptTable by replacing with immutable RelRecordType using the same field list.
     if (this.getRowType().isDynamicStruct()) {
       final RelDataType staticRowType = new RelRecordType(getRowType().getFieldList());
       final RelOptTable relOptTable = this.copy(staticRowType);
-      return relOptTable.toRel(context);
+      return relOptTable.toRel(context, isTargetTable);
     }
 
     // If there are any virtual columns, create a copy of this table without
@@ -282,7 +282,7 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
               return super.unwrap(clazz);
             }
           };
-      return relOptTable.toRel(context);
+      return relOptTable.toRel(context, isTargetTable);
     }
 
     if (table instanceof TranslatableTable) {
