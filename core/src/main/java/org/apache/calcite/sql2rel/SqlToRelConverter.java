@@ -4738,10 +4738,17 @@ public class SqlToRelConverter {
 
     // NOTE: there is a lot of repeated case logic. We should make sure that the
     // appropriate Rex Nodes are actually being cached/reused when possible
-    for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount(); colIdx++) {
+    for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount() + 1; colIdx++) {
 
-      RexNode colNullLiteral = relBuilder.getRexBuilder()
-          .makeNullLiteral(targetTable.getRowType().getFieldList().get(colIdx).getType());
+      RexNode colNullLiteral;
+      if (colIdx < targetTable.getRowType().getFieldCount()) {
+        colNullLiteral = relBuilder.getRexBuilder()
+            .makeNullLiteral(targetTable.getRowType().getFieldList().get(colIdx).getType());
+      } else {
+        //ROW_ID case
+        colNullLiteral = relBuilder.getRexBuilder()
+            .makeNullLiteral(typeFactory.createSqlType(SqlTypeName.BIGINT));
+      }
 
       // Default the update and insert expressions to be NULL literals.
       // They will be initialized to the appropriate values if we have a matched/insert expression
@@ -4791,6 +4798,8 @@ public class SqlToRelConverter {
               isNotMatched, insertColExpr, colNullLiteral));
       finalProjects.add(curColExpr);
     }
+
+
 
     // Finally, append the row that checks what operation we're performing
     // This will be NULL if the row is a no op. This row will be used when constructing
