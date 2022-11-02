@@ -194,7 +194,7 @@ public interface SqlValidatorScope {
 
   // CHECKSTYLE: IGNORE 1
   /** @deprecated Use
-   * {@link #resolveTable(List, SqlNameMatcher, Path, Resolved)}. */
+   * {@link #resolveTable(List, SqlNameMatcher, Path, Resolved, List)}. */
   @Deprecated // to be removed before 2.0
   @Nullable SqlValidatorNamespace getTableNamespace(List<String> names);
 

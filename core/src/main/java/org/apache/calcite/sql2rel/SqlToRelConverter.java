@@ -2783,7 +2783,8 @@ public class SqlToRelConverter {
     }
 
     BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
-    // TODO: check if there is a valid way to get index
+    //NOTE: we're defaulting this value to a random index, as we don't actually need
+    // a physical index for this 'extension field'
     int newIdx = 999;
     RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
         newIdx, int_typ);

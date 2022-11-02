@@ -22,7 +22,6 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlTableIdentifierWithID;
@@ -73,7 +72,7 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
    *
    * @param validator     Validator
    * @param id            Identifier node (or "identifier EXTEND column-list")
-   * @param inputExtendList    Extension columns, or null
+   * @param extendList    Extension columns, or null
    * @param enclosingNode Enclosing node
    * @param parentScope   Parent scope which this namespace turns to in order to
    */
