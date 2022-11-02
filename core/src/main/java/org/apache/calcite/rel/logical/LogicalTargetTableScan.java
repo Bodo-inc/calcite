@@ -32,8 +32,8 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /**
- * Dummy copy of logical table scan, used for identifying what table is the target table of
- * a merge into.
+ * Exact copy of logical table scan, except for the class name. This node is used exclusively
+ * for identifying the target table of a merge into.
  */
 public class LogicalTargetTableScan extends TableScan {
   //~ Constructors -----------------------------------------------------------
@@ -60,7 +60,7 @@ public class LogicalTargetTableScan extends TableScan {
   }
 
   /**
-   * Creates a LogicalTableScan by parsing serialized output.
+   * Creates a LogicalTargetTableScan by parsing serialized output.
    */
   public LogicalTargetTableScan(RelInput input) {
     super(input);
@@ -72,7 +72,7 @@ public class LogicalTargetTableScan extends TableScan {
     return this;
   }
 
-  /** Creates a LogicalTableScan.
+  /** Creates a LogicalTargetTableScan.
    *
    * @param cluster     Cluster
    * @param relOptTable Table

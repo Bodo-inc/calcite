@@ -288,8 +288,7 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
 
     if (table instanceof TranslatableTable) {
       return ((TranslatableTable) table).toRel(context, this);
-    }
-    if (isTargetTable) {
+    } else if (isTargetTable) {
       return LogicalTargetTableScan.create(context.getCluster(),
           this, context.getTableHints());
     } else {

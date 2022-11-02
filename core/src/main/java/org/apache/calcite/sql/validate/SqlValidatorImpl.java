@@ -7060,7 +7060,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           SqlTypeUtil.addCharsetAndCollation(
               type,
               getTypeFactory());
-      // TODO(Nick): Update the type to include the ID column
       return type;
     }
 

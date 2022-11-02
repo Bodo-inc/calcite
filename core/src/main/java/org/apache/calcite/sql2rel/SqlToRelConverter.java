@@ -2773,7 +2773,6 @@ public class SqlToRelConverter {
             datasetName, usedDataset);
     assert table != null : "getRelOptTable returned null for " + fromNamespace;
     if (extendedColumns != null && extendedColumns.size() > 0) {
-      // TODO(NICK): FIXME to update fields?
       final SqlValidatorTable validatorTable =
           table.unwrapOrThrow(SqlValidatorTable.class);
       final List<RelDataTypeField> extendedFields =
@@ -2794,7 +2793,6 @@ public class SqlToRelConverter {
 
     // Review Danny 2020-01-13: hacky to construct a new table scan
     // in order to apply the hint strategies.
-    // TODO(NICK): FIXME to remove logical table scan.
     final List<RelHint> hints = hintStrategies.apply(
         SqlUtil.getRelHint(hintStrategies, tableHints),
         LogicalTargetTableScan.create(cluster, table, ImmutableList.of()));
@@ -4517,7 +4515,8 @@ public class SqlToRelConverter {
               + totalOffset;
           valToAdd = mergeSourceRelProjects.get(curOffset);
         } else if (curFieldName.equals("_BODO_ROW_ID")) {
-          // Don't need BODO_ROW_ID for insert rows
+          // Don't have a BODO_ROW_ID for insert rows, so
+          // we just default to null
           valToAdd = this.relBuilder.getRexBuilder()
               .makeNullLiteral(typeFactory.createSqlType(SqlTypeName.BIGINT));
         } else {
@@ -4612,8 +4611,7 @@ public class SqlToRelConverter {
 
     int numSourceCols = origSourceRel.rel.getRowType().getFieldCount();
 
-    //NOTE: targetTable.getRowType().getFieldCount() would give the wrong value, since it wouldn't
-    //include the added row id column
+    //+1 to include the added row id column
     int numDestColsIncludingRowIdCol = targetTable.getRowType().getFieldCount() + 1;
 
     // the rightmost integer is the offset for the start of the end of the matched clauses/ the
@@ -4644,8 +4642,7 @@ public class SqlToRelConverter {
     Integer notMatchedEndOffset = notMatchedCaseNodesAndOffset.getValue();
 
     // At this point, we should have traversed all the elements of the source select, so
-    // we expect the offset to point to the end of the table (not counting the final appended
-    // row ID).
+    // we expect the offset to point to the end of the mergeSourceRel table
     assert notMatchedEndOffset == mergeSourceRel.getRowType().getFieldCount();
 
     // NOTE: this assertion will not be true if we do inserts into a modifiable view that has
@@ -4739,6 +4736,7 @@ public class SqlToRelConverter {
 
     // NOTE: there is a lot of repeated case logic. We should make sure that the
     // appropriate Rex Nodes are actually being cached/reused when possible
+    // +1 to allow us to handle ROW_ID column
     for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount() + 1; colIdx++) {
 
       RexNode colNullLiteral;
@@ -4850,7 +4848,6 @@ public class SqlToRelConverter {
     } else {
       qualified = SqlTableIdentifierWithIDQualified.create(null, 1, null, identifier);
     }
-    // TODO(Nick) FIXME: Fix the output types?
     final Pair<RexNode, @Nullable BiFunction<RexNode, String, RexNode>> e0 =
         bb.lookupExp(qualified.convertToQualified());
     RexNode e = e0.left;

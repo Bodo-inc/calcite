@@ -23,6 +23,7 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalTargetTableScan;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rex.RexNode;
@@ -102,7 +103,8 @@ public class RelOptMaterialization {
 
               final RelOptCluster cluster = scan.getCluster();
               final RelNode scan2 =
-                  starRelOptTable.toRel(ViewExpanders.simpleContext(cluster), false);
+                  starRelOptTable.toRel(ViewExpanders.simpleContext(cluster),
+                      scan instanceof LogicalTargetTableScan);
               return RelOptUtil.createProject(scan2,
                   Mappings.asListNonNull(mapping.inverse()));
             }

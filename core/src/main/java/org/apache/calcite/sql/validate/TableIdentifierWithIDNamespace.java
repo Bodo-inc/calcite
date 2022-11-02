@@ -78,23 +78,11 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
    * @param parentScope   Parent scope which this namespace turns to in order to
    */
   TableIdentifierWithIDNamespace(SqlValidatorImpl validator, SqlTableIdentifierWithID id,
-      @Nullable SqlNodeList inputExtendList, @Nullable SqlNode enclosingNode,
+      @Nullable SqlNodeList extendList, @Nullable SqlNode enclosingNode,
       SqlValidatorScope parentScope) {
     super(validator, enclosingNode);
     this.id = id;
-    SqlLiteral tmp =  SqlLiteral.createApproxNumeric("1", SqlParserPos.ZERO);
-    List<SqlNode> tmp2;
-    SqlNodeList newExtendList = inputExtendList;
-    if (inputExtendList == null) {
-      tmp2 = new ArrayList<>();
-      tmp2.add(tmp);
-      newExtendList = new SqlNodeList(tmp2, SqlParserPos.ZERO);
-    } else {
-      tmp2 = inputExtendList.getList();
-      tmp2.add(tmp);
-      newExtendList = new SqlNodeList(tmp2, SqlParserPos.ZERO);
-    }
-    this.extendList = newExtendList;
+    this.extendList = extendList;
     this.parentScope = Objects.requireNonNull(parentScope, "parentScope");
   }
 
@@ -123,12 +111,9 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
   private SqlValidatorNamespace resolveImpl(SqlTableIdentifierWithID id) {
     final SqlNameMatcher nameMatcher = validator.catalogReader.nameMatcher();
 
-//    List<RelDataTypeField> fieldList = type.getFieldList();
-//    // TODO: I think we have our own type system in BodoSql.
-//    // How do I propagate that information here?
-//    //NOTE: defaults to non null
+    //NOTE: BasicSqlType defaults to non null
     BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
-    // TODO: check if there is a valid way to get index
+    // NOTE: we don't use this index anywhere, so we just default it to a random value
     int newIdx = 999;
     RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
         newIdx, int_typ);
@@ -240,7 +225,6 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
       }
     }
 
-    // TODO(Nick): Update the type with the ID row.
     RelDataType rowType = resolvedNamespace.getRowType();
 
     if (extendList != null) {
@@ -311,26 +295,7 @@ public class TableIdentifierWithIDNamespace extends AbstractNamespace {
   }
 
   @Override public void setType(RelDataType type) {
-    // Since we're appending a row ID column in the codegen,
-    // whenever we would otherwise set the type of this identifier,
-    // add row ID column with type int
-//    List<RelDataTypeField> fieldList = type.getFieldList();
-//
-//    // TODO: I think we have our own type system in BodoSql.
-//    // How do I propagate that information here?
-//    //NOTE: defaults to non null
-//    BasicSqlType int_typ = new BasicSqlType(RelDataTypeSystem.DEFAULT, SqlTypeName.BIGINT);
-////
-////    // TODO: check if this is valid way to get index
-//    int newIdx = fieldList.size();
-//    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
-//        newIdx, int_typ);
-//    fieldList.add(rowIdFieldType);
-//    RelDataType typeWithRowId = new RelRecordType(type.getStructKind(), fieldList,
-//        type.isNullable());
-
-    RelDataType typeWithRowId = type;
-    this.type = typeWithRowId;
-    this.rowType = convertToStruct(typeWithRowId);
+    this.type = type;
+    this.rowType = convertToStruct(type);
   }
 }
