@@ -32,7 +32,7 @@ import org.immutables.value.Value;
  * of calling {@link RelOptTable#toRel}.
  *
  * @deprecated {@code org.apache.calcite.rel.core.RelFactories.TableScanFactoryImpl}
- * has called {@link RelOptTable#toRel(RelOptTable.ToRelContext)}.
+ * has called {@link RelOptTable#toRel(RelOptTable.ToRelContext, boolean)}.
  */
 @Deprecated // to be removed before 2.0
 @Value.Enclosing
