@@ -8200,6 +8200,11 @@ String NonReservedKeyWord() :
     |   NonReservedKeyWord2of3()
     |   <WIDTH_BUCKET>
     |   <CONTAINS>
+<<<<<<< Updated upstream
+=======
+    |   <INSERT>
+    |   <DAY>
+>>>>>>> Stashed changes
     )
     {
         return unquotedIdentifier();
