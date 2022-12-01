@@ -1051,7 +1051,7 @@ SqlNode SqlStmt() :
         stmt = SqlDrop()
     |
 </#if>
-        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        LOOKAHEAD(3) stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlExplain()
     |
@@ -1389,7 +1389,7 @@ SqlNode SqlQueryOrDml() :
 }
 {
     (
-        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        LOOKAHEAD(4) stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlInsert()
     |
