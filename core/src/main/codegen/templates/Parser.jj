@@ -1051,7 +1051,7 @@ SqlNode SqlStmt() :
         stmt = SqlDrop()
     |
 </#if>
-        LOOKAHEAD(3) stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlExplain()
     |
@@ -1389,7 +1389,7 @@ SqlNode SqlQueryOrDml() :
 }
 {
     (
-        LOOKAHEAD(4) stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+        stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
     |
         stmt = SqlInsert()
     |
@@ -8200,7 +8200,6 @@ String NonReservedKeyWord() :
     |   NonReservedKeyWord2of3()
     |   <WIDTH_BUCKET>
     |   <CONTAINS>
-    |   <INSERT>
     |   <DAY>
     )
     {
