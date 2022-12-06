@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.type;
 
 import org.apache.calcite.rel.type.RelDataTypeSystem;
@@ -40,17 +39,7 @@ public class TZAwareSqlType extends AbstractSqlType {
    *
    * @param typeSystem Type system
    * @param tzInfo Timezone information
-   */
-  public TZAwareSqlType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo) {
-    this(typeSystem, tzInfo, false);
-  }
-
-  /**
-   * Constructs a tzAware sql type. This should only be called from a factory
-   * method.
-   *
-   * @param typeSystem Type system
-   * @param tzInfo Timezone information
+   * @param nullable Does this contain null values?
    */
   public TZAwareSqlType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo, boolean nullable) {
     super(TIMESTAMP_WITH_LOCAL_TIME_ZONE, nullable, null);
@@ -67,10 +56,13 @@ public class TZAwareSqlType extends AbstractSqlType {
    *                   unique digest (and return from getFullTypeString) should
    *                   be included;
    */
-  @Override
-  protected void generateTypeString(StringBuilder sb, boolean withDetail) {
+  @Override protected void generateTypeString(StringBuilder sb, boolean withDetail) {
     sb.append("TIMESTAMP(");
     sb.append(tzInfo.getPyZone());
     sb.append(")");
+  }
+
+  @Override public BodoTZInfo getTZInfo() {
+    return tzInfo;
   }
 }

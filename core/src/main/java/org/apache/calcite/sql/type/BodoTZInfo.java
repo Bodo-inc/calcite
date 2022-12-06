@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.type;
+
+import java.util.Locale;
 
 /**
  * Class that serves a struct for the tz-info needed to generate proper
@@ -35,17 +36,19 @@ public class BodoTZInfo {
   BodoTZInfo(String zone, String pyType) {
     this.zone = zone;
     // Standardize to lower case.
-    this.pyType = pyType.toLowerCase();
+    this.pyType = pyType.toLowerCase(Locale.ROOT);
   }
 
   /**
+   * Get the zone information as it will be passed to Python.
+   *
    * @return A string of the generated Python code for
    * the zone.
    */
   public String getPyZone() {
     if (pyType.equals("str")) {
       // Append single quotes for Python strings.
-      return String.format("'%s'", pyType);
+      return String.format(Locale.ROOT, "'%s'", pyType);
     } else {
       assert pyType.equals("int");
       return zone;
