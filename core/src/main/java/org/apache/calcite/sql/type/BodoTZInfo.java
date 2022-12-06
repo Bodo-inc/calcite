@@ -48,7 +48,7 @@ public class BodoTZInfo {
   public String getPyZone() {
     if (pyType.equals("str")) {
       // Append single quotes for Python strings.
-      return String.format(Locale.ROOT, "'%s'", pyType);
+      return String.format(Locale.ROOT, "'%s'", zone);
     } else {
       assert pyType.equals("int");
       return zone;
