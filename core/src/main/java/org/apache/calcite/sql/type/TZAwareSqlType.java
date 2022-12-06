@@ -24,10 +24,10 @@ import java.util.Objects;
 import static org.apache.calcite.sql.type.SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
 
 /**
- * TZAwareSQLType represents a Bodo SQL type that contains
+ * TZAwareSqlType represents a Bodo SQL type that contains
  * tz information.
  */
-public class TZAwareSQLType extends AbstractSqlType {
+public class TZAwareSqlType extends AbstractSqlType {
   private final RelDataTypeSystem typeSystem;
   // The tz info
   private final BodoTZInfo tzInfo;
@@ -41,7 +41,7 @@ public class TZAwareSQLType extends AbstractSqlType {
    * @param typeSystem Type system
    * @param tzInfo Timezone information
    */
-  public TZAwareSQLType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo) {
+  public TZAwareSqlType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo) {
     this(typeSystem, tzInfo, false);
   }
 
@@ -52,7 +52,7 @@ public class TZAwareSQLType extends AbstractSqlType {
    * @param typeSystem Type system
    * @param tzInfo Timezone information
    */
-  public TZAwareSQLType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo, boolean nullable) {
+  public TZAwareSqlType(RelDataTypeSystem typeSystem, BodoTZInfo tzInfo, boolean nullable) {
     super(TIMESTAMP_WITH_LOCAL_TIME_ZONE, nullable, null);
     this.typeSystem = Objects.requireNonNull(typeSystem, "typeSystem");
     this.tzInfo = Objects.requireNonNull(tzInfo, "tzInfo");
