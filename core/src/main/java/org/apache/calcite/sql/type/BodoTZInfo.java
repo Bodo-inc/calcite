@@ -33,7 +33,7 @@ public class BodoTZInfo {
   // zone should be an integer.
   private final String pyType;
 
-  BodoTZInfo(String zone, String pyType) {
+  public BodoTZInfo(String zone, String pyType) {
     this.zone = zone;
     // Standardize to lower case.
     this.pyType = pyType.toLowerCase(Locale.ROOT);
