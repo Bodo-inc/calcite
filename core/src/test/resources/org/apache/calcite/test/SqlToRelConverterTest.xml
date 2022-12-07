@@ -4672,6 +4672,30 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testMergeUpdateAlias">
+    <Resource name="sql">
+      <![CDATA[merge_into empnullables as target
+using (select * from emp where deptno = 30) as source
+on target.sal = source.sal
+when matched then
+  update set target.sal = target.sal + source.sal
+when not matched then
+  insert (empno, sal, ename)
+  values (ABS(source.empno), source.sal, source.ename)]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
+  LogicalProject($f0=[CASE(IS NOT NULL($19), $9, IS NULL($19), ABS($0), null:INTEGER)], $f1=[CASE(IS NOT NULL($19), $10, IS NULL($19), $1, null:VARCHAR(20))], $f2=[CASE(IS NOT NULL($19), $11, null:VARCHAR(10))], $f3=[CASE(IS NOT NULL($19), $12, null:INTEGER)], $f4=[CASE(IS NOT NULL($19), $13, null:TIMESTAMP(0))], $f5=[CASE(IS NOT NULL($19), +($14, $5), IS NULL($19), $5, null:INTEGER)], $f6=[CASE(IS NOT NULL($19), $15, null:INTEGER)], $f7=[CASE(IS NOT NULL($19), $16, null:INTEGER)], $f8=[OR(AND(IS NOT NULL($19), $17), AND(null, IS NULL($19)))], $f9=[CASE(IS NOT NULL($19), $18, null:BIGINT)], $f10=[CASE(IS NOT NULL($19), 2:TINYINT, IS NULL($19), 1:TINYINT, null:TINYINT)])
+    LogicalJoin(condition=[=($14, $5)], joinType=[left])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
+        LogicalFilter(condition=[=($7, 30)])
+          LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
+        LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testMergeWithExpressions">
     <Resource name="sql">
       <![CDATA[merge_into empnullables as target
