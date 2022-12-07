@@ -36,6 +36,7 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
+import org.apache.calcite.schema.CustomColumnResolvingTable;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;
@@ -4894,9 +4895,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         ? ((RelOptTable) table) : null;
     for (SqlNode node : targetColumnList) {
       SqlIdentifier id = (SqlIdentifier) node;
-      if (!id.isSimple()) {
+      // Workaround to check CustomColumnResolvingTable
+      final Table t = table == null ? null : table.unwrap(Table.class);
+      if (!id.isSimple() && !(t instanceof CustomColumnResolvingTable)) {
         // fullyQualify identifier to ensure it is part of the target table
-        // in case if its of the form table.id
+        // in case if its of the form table.id and not from a struct.
         try {
           SqlQualified qualified = scope.fullyQualify(id);
           SqlIdentifier fqId = qualified.identifier;
