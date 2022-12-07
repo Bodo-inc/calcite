@@ -4152,7 +4152,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4166,7 +4166,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4229,7 +4229,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalJoin(condition=[true], joinType=[left])
         LogicalJoin(condition=[true], joinType=[left])
           LogicalJoin(condition=[=($38, $39)], joinType=[left])
-            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$23], EXPR$00=[$24], $f10=[$25], EXPR$01=[$26], $f0=[$27], $f11=[$28], SAL01=[$29], EXPR$02=[$30], $f12=[$31], EXPR$03=[$32], EXPR$04=[$33], EXPR$05=[$34], EXPR$06=[$35], EXPR$07=[$36], EXPR$08=[$37], $f38=[*($5, 2)])
+            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$23], EXPR$00=[$24], $f10=[$25], EXPR$01=[$26], $f0=[$27], $f11=[$28], SAL01=[$29], EXPR$02=[$30], $f12=[$31], EXPR$03=[$32], EXPR$04=[$33], EXPR$05=[$34], EXPR$06=[$35], EXPR$07=[$36], EXPR$08=[$37], $f38=[*($5, 2)])
               LogicalJoin(condition=[true], joinType=[left])
                 LogicalJoin(condition=[true], joinType=[left])
                   LogicalJoin(condition=[true], joinType=[left])
@@ -4237,18 +4237,18 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
                       LogicalJoin(condition=[true], joinType=[left])
                         LogicalJoin(condition=[true], joinType=[left])
                           LogicalJoin(condition=[=($29, $30)], joinType=[left])
-                            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$23], EXPR$00=[$24], $f10=[$25], EXPR$01=[$26], $f0=[$27], $f11=[$28], SAL01=[$14])
+                            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$23], EXPR$00=[$24], $f10=[$25], EXPR$01=[$26], $f0=[$27], $f11=[$28], SAL01=[$14])
                               LogicalJoin(condition=[true], joinType=[inner])
                                 LogicalJoin(condition=[true], joinType=[left])
                                   LogicalJoin(condition=[=($23, $24)], joinType=[left])
-                                    LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$14])
+                                    LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f20=[$20], EXPR$0=[$21], $f1=[$22], SAL00=[$14])
                                       LogicalJoin(condition=[=($20, $21)], joinType=[left])
-                                        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f20=[*($5, 2)])
+                                        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f20=[*($5, 2)])
                                           LogicalJoin(condition=[=($14, $5)], joinType=[left])
                                             LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
                                               LogicalFilter(condition=[=($7, 30)])
                                                 LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-                                            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+                                            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
                                               LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
                                         LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
                                           LogicalProject(EXPR$0=[$1], $f1=[true])
@@ -4322,7 +4322,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4354,7 +4354,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4378,7 +4378,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4395,12 +4395,12 @@ when matched then
     <Resource name="plan">
       <![CDATA[
 LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
-  LogicalProject(EMPNO0=[CAST($9):INTEGER], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[CAST($18):BIGINT], $f10=[0:TINYINT])
+  LogicalProject(EMPNO0=[CAST($9):INTEGER], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[CAST($18):BIGINT], $f10=[0:TINYINT])
     LogicalJoin(condition=[=($14, $5)], joinType=[inner])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4412,13 +4412,13 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
   LogicalProject($f0=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $9, null:INTEGER), IS NULL($19), -1, null:INTEGER)], $f1=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $10, null:VARCHAR(20)), IS NULL($19), 'NA':VARCHAR(20), null:VARCHAR(20))], $f2=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $11, null:VARCHAR(10)), null:VARCHAR(10))], $f3=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $12, null:INTEGER), null:INTEGER)], $f4=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $13, null:TIMESTAMP(0)), null:TIMESTAMP(0))], $f5=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), +($14, $5), null:INTEGER), IS NULL($19), $24, null:INTEGER)], $f6=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $15, null:INTEGER), null:INTEGER)], $f7=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $16, null:INTEGER), null:INTEGER)], $f8=[OR(AND(IS NOT NULL($19), OR(AND(IS NOT TRUE($23), $17), AND(null, IS TRUE($23)))), AND(null, IS NULL($19)))], $f9=[CASE(IS NOT NULL($19), CASE(IS NOT TRUE($23), $18, null:BIGINT), null:BIGINT)], $f10=[CASE(AND(IS NOT TRUE($23), IS NOT NULL($19)), 2:TINYINT, IS NULL($19), 1:TINYINT, null:TINYINT)])
     LogicalJoin(condition=[true], joinType=[left])
       LogicalJoin(condition=[=($21, $22)], joinType=[left])
-        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], EXPR$0=[$20], $f21=[*($5, 2)])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], EXPR$0=[$20], $f21=[*($5, 2)])
           LogicalJoin(condition=[AND(=($14, $5), =($14, $0))], joinType=[left])
             LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
               LogicalFilter(condition=[=($7, 30)])
                 LogicalTableScan(table=[[CATALOG, SALES, EMP]])
             LogicalJoin(condition=[true], joinType=[left])
-              LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+              LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
                 LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
               LogicalAggregate(group=[{}], EXPR$0=[MAX($0)])
                 LogicalProject(SAL=[$5])
@@ -4451,7 +4451,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4479,13 +4479,13 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
   LogicalProject($f0=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $9, null:INTEGER)], $f1=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $10, null:VARCHAR(20))], $f2=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $11, null:VARCHAR(10))], $f3=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $12, null:INTEGER)], $f4=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $13, null:TIMESTAMP(0))], $f5=[CASE(AND(<>($20, 0), IS NOT NULL($24)), +($14, $25), null:INTEGER)], $f6=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $15, null:INTEGER)], $f7=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $16, null:INTEGER)], $f8=[OR(AND(<>($20, 0), IS NOT NULL($24), $17), AND(null, OR(IS NULL($24), =($20, 0))))], $f9=[CASE(AND(<>($20, 0), IS NOT NULL($24)), $18, null:BIGINT)], $f10=[CASE(AND(<>($20, 0), IS NOT NULL($24)), 2:TINYINT, null:TINYINT)])
     LogicalJoin(condition=[true], joinType=[left])
       LogicalJoin(condition=[=($22, $23)], joinType=[left])
-        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f0=[$20], $f1=[$21], $f22=[+($5, $14)])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f0=[$20], $f1=[$21], $f22=[+($5, $14)])
           LogicalJoin(condition=[true], joinType=[inner])
             LogicalJoin(condition=[=($14, $5)], joinType=[inner])
               LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
                 LogicalFilter(condition=[=($7, 30)])
                   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-              LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+              LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
                 LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
             LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0)])
               LogicalProject(EMPNO=[$0], $f1=[true])
@@ -4508,7 +4508,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4530,7 +4530,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4553,7 +4553,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
         LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
           LogicalFilter(condition=[=($7, 30)])
             LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
           LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
       LogicalProject(EXPR$0=[>($0, 100)])
         LogicalAggregate(group=[{}], agg#0=[MAX($0)])
@@ -4574,12 +4574,12 @@ when matched then
     <Resource name="plan">
       <![CDATA[
 LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], updateColumnList=[[]], flattened=[true])
-  LogicalProject(EMPNO0=[CAST($9):INTEGER], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], $f5=[+($14, $5)], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[CAST($18):BIGINT], $f10=[2:TINYINT])
+  LogicalProject(EMPNO0=[CAST($9):INTEGER], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], $f5=[+($14, $5)], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[CAST($18):BIGINT], $f10=[2:TINYINT])
     LogicalJoin(condition=[=($14, $5)], joinType=[inner])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
         LogicalFilter(condition=[=($7, 30)])
           LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>
@@ -4599,7 +4599,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
                   LogicalJoin(condition=[=($9, $0)], joinType=[full])
                     LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
                     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-          LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+          LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
             LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
         LogicalAggregate(group=[{}], EXPR$0=[MAX($0)])
           LogicalProject(SAL=[$5])
@@ -4635,12 +4635,12 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
   LogicalProject($f0=[CASE(IS NOT NULL($19), null:INTEGER, IS NULL($19), CASE(IS NOT TRUE($22), ABS($0), null:INTEGER), null:INTEGER)], $f1=[CASE(IS NOT NULL($19), null:VARCHAR(20), IS NULL($19), CASE(IS NOT TRUE($22), $1, null:VARCHAR(20)), null:VARCHAR(20))], $f2=[null:VARCHAR(10)], $f3=[null:INTEGER], $f4=[null:TIMESTAMP(0)], $f5=[CASE(IS NOT NULL($19), null:INTEGER, IS NULL($19), CASE(IS NOT TRUE($22), $23, null:INTEGER), null:INTEGER)], $f6=[null:INTEGER], $f7=[null:INTEGER], $f8=[null:BOOLEAN], $f9=[null:BIGINT], $f10=[CASE(AND(IS NOT TRUE($22), IS NULL($19)), 1:TINYINT, null:TINYINT)])
     LogicalJoin(condition=[true], joinType=[left])
       LogicalJoin(condition=[=($20, $21)], joinType=[left])
-        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _BODO_ROW_ID=[$18], EXPR$10=[$19], $f20=[*($5, 2)])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17], _bodo_row_id=[$18], EXPR$10=[$19], $f20=[*($5, 2)])
           LogicalJoin(condition=[=($14, $5)], joinType=[left])
             LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
               LogicalFilter(condition=[=($7, 30)])
                 LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+            LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
               LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
         LogicalAggregate(group=[{0}], agg#0=[MIN($1)])
           LogicalProject(EXPR$0=[$1], $f1=[true])
@@ -4663,7 +4663,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
         LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
           LogicalFilter(condition=[=($7, 30)])
             LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
           LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
       LogicalProject(EXPR$0=[>($0, 100)])
         LogicalAggregate(group=[{}], agg#0=[MAX($0)])
@@ -4695,7 +4695,7 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
               LogicalJoin(condition=[=($9, $0)], joinType=[full])
                 LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
                 LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _BODO_ROW_ID=[$9], EXPR$10=[true])
+      LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], _bodo_row_id=[$9], EXPR$10=[true])
         LogicalTargetTableScan(table=[[CATALOG, SALES, EMPNULLABLES]])
 ]]>
     </Resource>

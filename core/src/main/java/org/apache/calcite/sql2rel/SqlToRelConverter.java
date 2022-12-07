@@ -2786,7 +2786,7 @@ public class SqlToRelConverter {
     //NOTE: we're defaulting this value to a random index, as we don't actually need
     // a physical index for this 'extension field'
     int newIdx = 999;
-    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_BODO_ROW_ID",
+    RelDataTypeField rowIdFieldType = new RelDataTypeFieldImpl("_bodo_row_id",
         newIdx, int_typ);
     List<RelDataTypeField> extensionFields = new ArrayList<>();
     extensionFields.add(rowIdFieldType);
@@ -4362,7 +4362,7 @@ public class SqlToRelConverter {
     List<String> destTableFieldNames = new ArrayList<>();
     destTableFieldNames.addAll(destTable.getRowType().getFieldNames());
     //Add the Row ID column
-    destTableFieldNames.add("_BODO_ROW_ID");
+    destTableFieldNames.add("_bodo_row_id");
 
     for (int destColIdx = 0; destColIdx < destTableFieldNames.size(); destColIdx++) {
       caseValues.add(new ArrayList<>());
@@ -4483,7 +4483,7 @@ public class SqlToRelConverter {
 
     List<String> destTableFieldNames = new ArrayList<>();
     destTableFieldNames.addAll(destTable.getRowType().getFieldNames());
-    destTableFieldNames.add("_BODO_ROW_ID");
+    destTableFieldNames.add("_bodo_row_id");
 
     for (int destColIdx = 0; destColIdx < destTableFieldNames.size(); destColIdx++) {
       caseValues.add(new ArrayList<>());
@@ -4515,7 +4515,7 @@ public class SqlToRelConverter {
           Integer curOffset = curInsertTargetColumnMap.get(curFieldName)
               + totalOffset;
           valToAdd = mergeSourceRelProjects.get(curOffset);
-        } else if (curFieldName.equals("_BODO_ROW_ID")) {
+        } else if (curFieldName.equals("_bodo_row_id")) {
           // Don't have a BODO_ROW_ID for insert rows, so
           // we just default to null
           valToAdd = this.relBuilder.getRexBuilder()
