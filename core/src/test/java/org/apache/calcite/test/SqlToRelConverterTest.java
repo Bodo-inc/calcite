@@ -3163,7 +3163,22 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
 // TODO: FIXME
-  //  @Test void testMergeUpdateAmbiguousSal() {
+  //  @Test void testMergeUpdateInsertStar() {
+//    // Tests a basic merge query using insert * and update *
+//    final String sql1 =
+//        "with table1 as (sel, ename from empnullables),\n"
+//        + "merge into table1 as target\n"
+//        + "using (select sel, ename from emp where deptno = 30) as source\n"
+//        + "on target.sal = source.sal\n"
+//        + "when matched then\n"
+//        + "  update set *\n"
+//        + "when not matched then\n"
+//        + "  insert *";
+//    sql(sql1).ok();
+//  }
+
+// TODO: FIXME
+  //  @Test void testMergeInsertAmbiguousSal() {
 //    // Tests a basic merge query with where the insert
 //    // refers to a table in both the target and source.
 //    // This should not be ambiguous because the tables
