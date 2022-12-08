@@ -4895,18 +4895,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         ? ((RelOptTable) table) : null;
     for (SqlNode node : targetColumnList) {
       SqlIdentifier id = (SqlIdentifier) node;
-      // Workaround to check CustomColumnResolvingTable
-      final Table t = table == null ? null : table.unwrap(Table.class);
-      if (!id.isSimple() && !(t instanceof CustomColumnResolvingTable)) {
-        // fullyQualify identifier to ensure it is part of the target table
-        // in case if its of the form table.id and not from a struct.
-        try {
-          SqlQualified qualified = scope.fullyQualify(id);
-          SqlIdentifier fqId = qualified.identifier;
-        } catch (CalciteContextException e) {
-          throw newValidationError(id, RESOURCE.invalidTargetColumn(id.toString()));
-        }
-      }
       RelDataTypeField targetField =
           SqlValidatorUtil.getTargetField(
               baseRowType, typeFactory, id, catalogReader, relOptTable);

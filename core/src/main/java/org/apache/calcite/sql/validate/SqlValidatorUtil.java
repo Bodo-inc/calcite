@@ -614,17 +614,7 @@ public class SqlValidatorUtil {
     final Table t = table == null ? null : table.unwrap(Table.class);
     if (!(t instanceof CustomColumnResolvingTable)) {
       final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
-      String fieldName;
-      if (id.isSimple()) {
-        fieldName = id.getSimple();
-      } else {
-        // If the id is not simple then it must be of the form TABLE.identifier.
-        // As a result we need to validate the table and confirm the identifier
-        // derives from it. This was previously checked at the validate step
-        // so this is always safe.
-        fieldName = id.getComponent(id.names.size() - 1).getSimple();
-      }
-      return nameMatcher.field(rowType, fieldName);
+      return nameMatcher.field(rowType, id.getSimple());
     }
 
     final List<Pair<RelDataTypeField, List<String>>> entries =
