@@ -36,7 +36,6 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
-import org.apache.calcite.schema.CustomColumnResolvingTable;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;

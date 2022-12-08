@@ -2810,48 +2810,6 @@ public class SqlToRelConverter {
     }
   }
 
-  private void convertTableIdentifierWithID(Blackboard bb, SqlTableIdentifierWithID id,
-      @Nullable SqlNodeList extendedColumns, @Nullable SqlNodeList tableHints) {
-    final SqlValidatorNamespace fromNamespace = getNamespace(id).resolve();
-    if (fromNamespace.getNode() != null) {
-      convertFrom(bb, fromNamespace.getNode());
-      return;
-    }
-    final String datasetName =
-        datasetStack.isEmpty() ? null : datasetStack.peek();
-    final boolean[] usedDataset = {false};
-    RelOptTable table =
-        SqlValidatorUtil.getRelOptTable(fromNamespace, catalogReader,
-            datasetName, usedDataset);
-    assert table != null : "getRelOptTable returned null for " + fromNamespace;
-    if (extendedColumns != null && extendedColumns.size() > 0) {
-      // TODO(NICK): FIXME to update fields?
-      final SqlValidatorTable validatorTable =
-          table.unwrapOrThrow(SqlValidatorTable.class);
-      final List<RelDataTypeField> extendedFields =
-          SqlValidatorUtil.getExtendedColumns(validator, validatorTable,
-              extendedColumns);
-      table = table.extend(extendedFields);
-    }
-    // Review Danny 2020-01-13: hacky to construct a new table scan
-    // in order to apply the hint strategies.
-    // TODO(NICK): FIXME to remove logical table scan.
-    final List<RelHint> hints = hintStrategies.apply(
-        SqlUtil.getRelHint(hintStrategies, tableHints),
-        LogicalTableScan.create(cluster, table, ImmutableList.of()));
-    final RelNode tableRel = toRel(table, hints);
-    bb.setRoot(tableRel, true);
-
-    if (RelOptUtil.isPureOrder(castNonNull(bb.root))
-        && removeSortInSubQuery(bb.top)) {
-      bb.setRoot(castNonNull(bb.root).getInput(0), true);
-    }
-
-    if (usedDataset[0]) {
-      bb.setDataset(datasetName);
-    }
-  }
-
   protected void convertCollectionTable(
       Blackboard bb,
       SqlCall call) {
