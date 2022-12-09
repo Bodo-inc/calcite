@@ -22,10 +22,7 @@ import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlSyntax;
-import org.apache.calcite.sql.type.OperandTypes;
-import org.apache.calcite.sql.type.SqlOperandTypeChecker;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.type.SqlTypeUtil;
+import org.apache.calcite.sql.type.*;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
@@ -76,7 +73,17 @@ public class SqlAbstractTimeFunction extends SqlFunction {
               opBinding.getOperator().getName(), 0,
               SqlTypeName.MAX_DATETIME_PRECISION));
     }
-    return opBinding.getTypeFactory().createSqlType(typeName, precision);
+    // TODO: this is a workaround that will allow exactly the SqlAbstractTimeFunctions,
+    // to properly return sql types with Timezone.
+    // but in general, we will have to update core/src/main/java/org/apache/calcite/sql/SqlOperator.java's
+    // inferReturnType, and/or all of the SqlReturnTypeInference classes/subclasses
+    //
+    if (typeName == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
+      //TODO: figure out how to pass a configurable time to this
+      return opBinding.getTypeFactory().createTZAwareSqlType(BodoTZInfo.UTC);
+    } else {
+      return opBinding.getTypeFactory().createSqlType(typeName, precision);
+    }
   }
 
   // All of the time functions are increasing. Not strictly increasing.
