@@ -732,6 +732,7 @@ public class SqlToRelConverter {
 
     convertWhere(
         bb,
+        select,
         select.getWhere());
 
     final List<SqlNode> orderExprList = new ArrayList<>();
@@ -1161,6 +1162,7 @@ public class SqlToRelConverter {
    */
   private void convertWhere(
       final Blackboard bb,
+      final SqlSelect select,
       final @Nullable SqlNode where) {
     if (where == null) {
       return;
@@ -1168,8 +1170,24 @@ public class SqlToRelConverter {
     SqlNode newWhere = pushDownNotForIn(bb.scope(), where);
     replaceSubQueries(bb, newWhere, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
     final RexNode convertedWhere = bb.convertExpression(newWhere);
-    final RexNode convertedWhere2 =
+    RexNode convertedWhere2 =
         RexUtil.removeNullabilityCast(typeFactory, convertedWhere);
+
+    List<RexNode> rexNodeSelectList  = select.getSelectList().stream().map(bb::convertExpression)
+        .collect(Collectors.toList());
+    // Check to see if the filter expression  has a referenced expression in select List and
+    // do some referencing accordingly
+    ProjectCSERexVisitor visitor = new ProjectCSERexVisitor(
+        rexBuilder,
+        rexNodeSelectList,
+        bb.root());
+
+    convertedWhere2 = convertedWhere2.accept(visitor);
+
+    if(visitor.pushProjects){
+      convertSelectList(bb, select,  new ArrayList<>());
+      select.setSelectList(SqlNodeList.EMPTY);
+    }
 
     // only allocate filter if the condition is not TRUE
     if (convertedWhere2.isAlwaysTrue()) {
@@ -5116,6 +5134,11 @@ public class SqlToRelConverter {
     if (select.getQualify() != null) {
       selectList.add(select.getQualify());
     }
+
+    if(selectList.isEmpty()){
+      return;
+    }
+
     selectList = validator().expandStar(selectList, select, false);
 
 
@@ -7218,6 +7241,42 @@ public class SqlToRelConverter {
 
   }
 
+  /**
+   * Tries to implement CSE by seeing if a rex node is already defined in
+   * the List of projects Rel and returning a refIndex instead of the raw node
+   */
+  private static final class ProjectCSERexVisitor extends RexShuttle {
+    private final RexBuilder rexBuilder;
+    private final List<RexNode> projects;
+    private final RelNode input;
 
+    private boolean pushProjects;
+
+    ProjectCSERexVisitor(RexBuilder rexBuilder, List<RexNode> projects, RelNode input) {
+      this.rexBuilder = rexBuilder;
+      this.projects = projects;
+      this.input = input;
+      this.pushProjects = false;
+    }
+
+    @Override public RexNode visitCall(RexCall call) {
+      List<RexNode> projections = projects;
+      for (int i = 0; i < projections.size(); i++) {
+        RexNode project = projections.get(i);
+        if (call.equals(project)) {
+          pushProjects = true;
+          return rexBuilder.makeInputRef(project.getType(), i);
+        }
+      }
+
+      return rexBuilder.makeCall(
+          call.getType(),
+          call.getOperator(),
+          call.operands
+              .stream()
+              .map(operand -> operand.accept(this))
+              .collect(Collectors.toList()));
+    }
+  }
 
 }
