@@ -5181,6 +5181,13 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     assertThat(parameters.get(1).getType().getSqlTypeName(), is(SqlTypeName.VARCHAR));
   }
 
+  @Test public void testAliasCommonExpressionPushdown() {
+    sql("SELECT rand() r FROM emp\n"
+        + "WHERE r  > 0.4")
+//        .conformance(SqlConformanceEnum.LENIENT)
+        .ok();
+  }
+
   /**
    * Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-4167">[CALCITE-4167]
