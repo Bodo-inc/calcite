@@ -1173,20 +1173,28 @@ public class SqlToRelConverter {
     RexNode convertedWhere2 =
         RexUtil.removeNullabilityCast(typeFactory, convertedWhere);
 
-    List<RexNode> rexNodeSelectList  = select.getSelectList().stream().map(bb::convertExpression)
-        .collect(Collectors.toList());
-    // Check to see if the filter expression  has a referenced expression in select List and
-    // do some referencing accordingly
-    ProjectCSERexVisitor visitor = new ProjectCSERexVisitor(
-        rexBuilder,
-        rexNodeSelectList,
-        bb.root());
 
-    convertedWhere2 = convertedWhere2.accept(visitor);
+    //TODO: fix in general?
+    //TODO: fix for aggregating selects, so we don't push aggregations
+    // (!validator().isAggregate(select))
+    final boolean doCSE = false;
+    if (doCSE) {
+      List<RexNode> rexNodeSelectList  = select.getSelectList().stream().map(bb::convertExpression)
+          .collect(Collectors.toList());
 
-    if (visitor.pushProjects) {
-      convertSelectList(bb, select,  new ArrayList<>());
-      select.setSelectList(SqlNodeList.EMPTY);
+      // Check to see if the filter expression has a referenced expression in select List and
+      // do some referencing accordingly
+      ProjectCSERexVisitor visitor = new ProjectCSERexVisitor(
+          rexBuilder,
+          rexNodeSelectList,
+          bb.root());
+
+      convertedWhere2 = convertedWhere2.accept(visitor);
+
+      if (visitor.pushProjects) {
+        convertSelectList(bb, select,  new ArrayList<>());
+        select.setSelectList(SqlNodeList.EMPTY);
+      }
     }
 
     // only allocate filter if the condition is not TRUE

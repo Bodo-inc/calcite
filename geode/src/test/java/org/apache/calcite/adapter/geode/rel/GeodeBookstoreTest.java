@@ -491,7 +491,7 @@ class GeodeBookstoreTest extends AbstractGeodeTest {
     calciteAssert()
         .query("SELECT primaryAddress['city'] AS city\n"
             + "FROM geode.BookCustomer\n"
-            + "WHERE primaryAddress['city'] = 'Topeka' OR primaryAddress['city'] = 'San Francisco'\n")
+            + "WHERE primaryAddress['city'] = 'San Francisco' OR primaryAddress['city'] = 'Topeka'\n")
         .returnsCount(3)
         .queryContains(
             GeodeAssertions.query(expectedQuery));
