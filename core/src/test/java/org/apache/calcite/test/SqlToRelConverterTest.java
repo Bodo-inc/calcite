@@ -5193,7 +5193,13 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test public void testAliasInSelectList2() {
-    sql("SELECT ename AS x, lower(x) FROM emp FROM emp\n")
+    sql("SELECT ename AS x, lower(x) FROM emp\n")
+        .ok();
+  }
+
+  @Test public void testAliasInSelectList3() {
+    //Should be empno from the table emp
+    sql("SELECT ename AS empno, empno FROM emp\n")
         .ok();
   }
 
@@ -5324,7 +5330,26 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
-  //TODO: check that these fail
+  @Test public void testXAsXEdgecase() {
+    //Tests that aliasing a column as a table name works fine
+    sql("SELECT empno as x, x as x FROM emp")
+        .ok();
+  }
+
+
+// TODO: check that these fail
+
+//  @Test public void testAliasOrdering() {
+//    // Tests that ordering matters for aliasing
+//    sql("SELECT x, empno as x FROM emp")
+//        .ok();
+//  }
+
+//  @Test public void testSelectListAliasSubqueryInSelectListFails() {
+//    //Tests that aliasing doesn't extend into any subqueries
+//    sql("Select empno as x, (SELECT MAX(x) from emp) FROM emp")
+//        .ok();
+//  }
 //  @Test public void testFailsAmbiguous() {
 //    //This should fail, as the alias for x is ambiguous
 //    sql("SELECT SELECT empno as x, dept as x, x FROM emp")

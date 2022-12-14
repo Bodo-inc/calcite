@@ -7230,25 +7230,38 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       this.select = select;
     }
 
+    private Pair<SqlNode, Integer> getOrigExprAndNumOccurrencesOfIdInSelectList(SqlIdentifier id) {
+      String name = id.getSimple();
+      SqlNode expr = null;
+      final SqlNameMatcher nameMatcher =
+          validator.catalogReader.nameMatcher();
+      int n = 0;
+      for (SqlNode s : select.getSelectList()) {
+        final String alias = SqlValidatorUtil.getAlias(s, -1);
+        if (alias != null && nameMatcher.matches(alias, name)) {
+          expr = s;
+          n++;
+        }
+      }
+      return new Pair<>(expr, n);
+    }
+
     @Override public SqlNode visit(SqlIdentifier id) {
       if (id.isSimple()) {
         try {
+          // If we can resolve this in the regular scope, we should,
+          // since we prioritize all id's that could reference columns in the "from/on" clauses
+          // before we look for aliases within the select list itself.
           SqlNode sqlNode = super.visit(id);
           return sqlNode;
         } catch (Exception e) {
+          Pair<SqlNode, Integer> exprAndNumOccurrences =
+              getOrigExprAndNumOccurrencesOfIdInSelectList(id);
+          int n = exprAndNumOccurrences.right;
+          SqlNode expr = exprAndNumOccurrences.left;
           String name = id.getSimple();
-          SqlNode expr = null;
-          final SqlNameMatcher nameMatcher =
-              validator.catalogReader.nameMatcher();
-          int n = 0;
-          for (SqlNode s : select.getSelectList()) {
-            final String alias = SqlValidatorUtil.getAlias(s, -1);
-            if (alias != null && nameMatcher.matches(alias, name)) {
-              expr = s;
-              n++;
-            }
-          }
           if (n == 0) {
+            //TODO: can't this just be raise/throw e?
             return super.visit(id);
           } else if (n > 1) {
             // More than one column has this alias.
@@ -7256,15 +7269,34 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 RESOURCE.columnAmbiguous(name));
           }
           expr = stripAs(expr);
-          if (expr instanceof SqlIdentifier) {
-            if (((SqlIdentifier) expr).names.equals(id.names)) {
-              // Not an alias , don't want to update parser position
-              return super.visit(id);
-            }
-            expr = getScope().fullyQualify((SqlIdentifier) expr).identifier;
-          }
-          validator.setOriginal(expr, id);
-          return expr;
+
+          SqlNode expandedExpr = expr.accept(this);
+
+//          if (expr instanceof SqlIdentifier) {
+//            if (((SqlIdentifier) expr).names.equals(id.names)) {
+//              // Not an alias , don't want to update parser position
+//              return super.visit(id);
+//            }
+//            // We should only call this after we're sure that this is the final
+//            // alias. IE, we need to peel away all intermediate aliases beforehand.
+//            // For where/on clauses, the current function is sufficient, since we can't define new
+//            // aliases within said clauses.
+//            // WRONG! we still need to traceback to the appropriate original definition
+//            // in the event we have something like:
+//            // SELECT A as B, B + 1 as C, C + 3 as D... where F > 10
+//
+//            // For aliasing within select clauses, we need to handle recursive aliasing before
+//            // we reach this point. IE A as B, B + 1 as C, C + 3 as D ... etc.
+//            // Therefore, we need to call this expander on each of the component elements of the
+//            // expr, unless it is already a simple identifier (EVEN IF IT IS A SIMPLE IDENTIFIER!)
+//
+//            // Actually, I don't think we should be calling this at all. I think we should always
+//            // be calling the expander, since the expander will fully qualify this by calling
+//            // the super class if it's a basic identifier.
+//            expr = getScope().fullyQualify((SqlIdentifier) expr).identifier;
+//          }
+          validator.setOriginal(expandedExpr, id);
+          return expandedExpr;
         }
       }
       return super.visit(id);
@@ -7379,12 +7411,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * identifiers. For common columns in USING, it will be converted to
    * COALESCE(A.col, B.col) AS col.
    */
-  static class SelectExpander extends Expander {
+  static class SelectExpander extends ExtendedAliasExpander {
     final SqlSelect select;
 
     SelectExpander(SqlValidatorImpl validator, SelectScope scope,
         SqlSelect select) {
-      super(validator, scope);
+      super(validator, scope, select);
       this.select = select;
     }
 
