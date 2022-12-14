@@ -1184,7 +1184,7 @@ public class SqlToRelConverter {
 
     convertedWhere2 = convertedWhere2.accept(visitor);
 
-    if(visitor.pushProjects){
+    if (visitor.pushProjects) {
       convertSelectList(bb, select,  new ArrayList<>());
       select.setSelectList(SqlNodeList.EMPTY);
     }
@@ -5135,7 +5135,7 @@ public class SqlToRelConverter {
       selectList.add(select.getQualify());
     }
 
-    if(selectList.isEmpty()){
+    if (selectList.isEmpty()) {
       return;
     }
 
@@ -7243,7 +7243,7 @@ public class SqlToRelConverter {
 
   /**
    * Tries to implement CSE by seeing if a rex node is already defined in
-   * the List of projects Rel and returning a refIndex instead of the raw node
+   * the List of projects Rel and returning a refIndex instead of the raw node.
    */
   private static final class ProjectCSERexVisitor extends RexShuttle {
     private final RexBuilder rexBuilder;

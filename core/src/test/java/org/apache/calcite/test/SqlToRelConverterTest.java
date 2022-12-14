@@ -5184,9 +5184,170 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   @Test public void testAliasCommonExpressionPushdown() {
     sql("SELECT rand() r FROM emp\n"
         + "WHERE r  > 0.4")
-//        .conformance(SqlConformanceEnum.LENIENT)
         .ok();
   }
+
+  @Test public void testAliasInSelectList() {
+    sql("SELECT 1 as X, X + 1 FROM emp\n")
+        .ok();
+  }
+
+  @Test public void testAliasInSelectList2() {
+    sql("SELECT ename AS x, lower(x) FROM emp FROM emp\n")
+        .ok();
+  }
+
+  @Test public void testAliasFrom() {
+    sql("SELECT a from (SELECT empno as a, ename as b FROM emp)\n")
+        .ok();
+  }
+
+
+  @Test public void testFromPriorityIdentifiersSelectList1() {
+    //Test that the from clause is given priority when resolving identifiers in the select list
+    // 'x' should resolve to ename, not 'Hello World'
+    sql("SELECT ename, empno, deptno, 'Hello World' AS x, lower(x) "
+        +
+        "FROM (SELECT ename, empno, deptno, ename AS x FROM emp)\n")
+        .ok();
+  }
+
+  @Test public void testFromPriorityIdentifiersSelectList2() {
+    //Test that the from clause is given priority when resolving identifiers in the select list
+    // 'x' should resolve to ename, not 'Hello World'
+    sql("SELECT empno, deptno, 'Hello World' AS ename, lower(ename) "
+        +
+        "FROM emp\n")
+        .ok();
+  }
+
+  @Test public void testFromPriorityIdentifiersWhereClause() {
+    //Test that the from clause is given priority when resolving identifiers in the select list
+    // and where clause
+    // 'n' should resolve to empno in all locations
+    sql("select deptno as n from (SELECT deptno, empno as n FROM KEATON_T1) as MY_TABLE\n"
+        +
+        "  WHERE n > 10")
+        .ok();
+  }
+
+  @Test public void testFromPriorityAliasSelectAndWhereClauses() {
+    // Tests that the from clause is given priority when resolving identifiers in the select list
+    // and where clause
+    // 'n' should resolve to empno in all locations
+    sql("select deptno as n, n from (SELECT deptno, empno as n FROM KEATON_T1) as MY_TABLE\n"
+        +
+        "  WHERE n > 10")
+        .ok();
+  }
+
+  @Test public void testAliasOnClause() {
+    // Test that aliases from the select list can push into the on clause
+    sql("select emp.deptno as x, dept.deptno as y  FROM dept JOIN emp ON x = y\n")
+        .ok();
+
+  }
+
+  @Test public void testAliasOnWhereClause() {
+    // Test that aliases from the select list can push into the on and where clauses
+    sql("select emp.deptno as x, dept.deptno as y FROM dept JOIN emp ON x = y\n"
+        +
+        "  WHERE x > 10")
+        .ok();
+
+  }
+
+  @Test public void testAliasOnWhereSelectClause() {
+    // Test that aliases from the select list can push into the on and where clauses
+    sql("select emp.deptno as x, dept.deptno as y, x + y FROM dept JOIN emp ON x = y\n"
+        +
+        "  WHERE x > 10")
+        .ok();
+
+  }
+
+  @Test public void testAliasOnWhereSelectClauseFromPriority() {
+    // Test that column names from the source table are given priority over aliases
+    // from the select list
+    sql("select emp.deptno as x, dept.deptno as y, 'hello world' as ename"
+        +
+        " FROM dept JOIN emp ON x = y and ename = 'BOB'\n"
+        +
+        "  WHERE x > 10 AND ename = 'John'")
+        .ok();
+  }
+
+  @Test public void testAliasChain() {
+    //Tests that alias chaining works
+    sql("SELECT empno as x, x as x2, x2 as x3, x3 as x4 FROM emp")
+        .ok();
+  }
+
+  @Test public void testAliasChain2() {
+    //Tests that alias chaining works
+    sql("SELECT empno as x, x + 10 as x2, x2 / 2 as x3, x3 * 3 as x4 FROM emp")
+        .ok();
+  }
+
+  @Test public void testAliasChainIntoWhereOnClauses() {
+    //Tests that alias chaining works even into the where and on clauses
+    sql("SELECT emp.empno as x, x + 10 as x2, x2 / 2 as x3, x3 * 3 as x4 "
+        +
+        "FROM dept JOIN emp ON x4 = dept.deptno "
+        +
+        "Where x4 > 10")
+        .ok();
+  }
+
+  @Test public void testTableColumnAlias() {
+    //Tests that aliasing a column as a table name works fine
+    sql("SELECT emp.empno as emp"
+        +
+        "FROM emp Where emp > 10")
+        .ok();
+  }
+
+  @Test public void testTableColumnAlias2() {
+    //Tests that aliasing a column as a table name works fine
+    sql("SELECT emp.empno as emp"
+        +
+        "FROM dept JOIN emp ON emp = dept.deptno ")
+        .ok();
+  }
+  @Test public void testTableColumnAlias3() {
+    //Tests that aliasing a column as a table name works fine
+    sql("SELECT emp.empno as emp"
+        +
+        "FROM dept JOIN emp ON emp = dept.deptno "
+        +
+        "Where emp > 10")
+        .ok();
+  }
+
+  //TODO: check that these fail
+//  @Test public void testFailsAmbiguous() {
+//    //This should fail, as the alias for x is ambiguous
+//    sql("SELECT SELECT empno as x, dept as x, x FROM emp")
+//        .fails();
+//  }
+//
+//  @Test public void testAliasIntoSubqueryFails() {
+//    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
+//    sql("SELECT empno AS x FROM (SELECT * FROM emp GROUP BY x")
+//        .fails();
+//  }
+//
+//  @Test public void testAliasIntoSubqueryFails2() {
+//    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
+//    sql("SELECT empno AS x FROM (SELECT * FROM emp where x=1")
+//        .fails();
+//  }
+
+
+
+
+
+
 
   /**
    * Test case for
