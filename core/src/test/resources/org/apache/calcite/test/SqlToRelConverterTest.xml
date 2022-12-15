@@ -233,6 +233,38 @@ LogicalProject(JOB_NAME=[CASE(SEARCH($1, Sarg['810000', '820000']:CHAR(6)), $1, 
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testAliasChain">
+    <Resource name="sql">
+      <![CDATA[SELECT empno as x, x as x2, x2 as x3, x3 as x4 FROM emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$0], X2=[$0], X3=[$0], X4=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasChain2">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$0], X2=[+($0, 10)], X3=[/(+($0, 10), 2)], X4=[*(/(+($0, 10), 2), 3)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasChainIntoWhereOnClauses">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$2], X2=[+($2, 10)], X3=[/(+($2, 10), 2)], X4=[*(/(+($2, 10), 2), 3)])
+  LogicalFilter(condition=[>(*(/(+($2, 10), 2), 3), 10)])
+    LogicalProject(DEPTNO=[$0], NAME=[$1], EMPNO=[$2], ENAME=[$3], JOB=[$4], MGR=[$5], HIREDATE=[$6], SAL=[$7], COMM=[$8], DEPTNO0=[$9], SLACKER=[$10])
+      LogicalJoin(condition=[=($11, $0)], joinType=[inner])
+        LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+        LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], $f9=[*(/(+($0, 10), 2), 3)])
+          LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testAliasCommonExpressionPushdown">
     <Resource name="sql">
       <![CDATA[SELECT rand() r FROM emp WHERE r > 0.4]]>
@@ -242,6 +274,14 @@ LogicalProject(JOB_NAME=[CASE(SEARCH($1, Sarg['810000', '820000']:CHAR(6)), $1, 
 LogicalFilter(condition=[>($0, 0.4:DECIMAL(2, 1))])
   LogicalProject(R=[RAND()])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasFrom">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(A=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
@@ -256,6 +296,30 @@ LogicalFilter(condition=[>($0, 1)])
     </Resource>
     <Resource name="sql">
       <![CDATA[select count(empno) as e from emp having e > 1]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasInSelectList">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[1], EXPR$1=[+(1, 1)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasInSelectList2">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$1], EXPR$1=[LOWER($1)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasInSelectList3">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$1], EMPNO0=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
     </Resource>
   </TestCase>
   <TestCase name="testAliasList">
@@ -290,6 +354,49 @@ LogicalProject(A=[$0], B=[$1], C=[$2], DEPTNO=[$3], NAME=[$4])
         LogicalProject(A=[$2], B=[$1], C=[$0])
           LogicalValues(tuples=[[{ 1, 2, 3 }]])
         LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasOnClause">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$9], Y=[$0])
+  LogicalJoin(condition=[=($9, $0)], joinType=[inner])
+    LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasOnWhereClause">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$9], Y=[$0])
+  LogicalFilter(condition=[>($9, 10)])
+    LogicalJoin(condition=[=($9, $0)], joinType=[inner])
+      LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasOnWhereSelectClause">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$9], Y=[$0], EXPR$2=[+($9, $0)])
+  LogicalFilter(condition=[>($9, 10)])
+    LogicalJoin(condition=[=($9, $0)], joinType=[inner])
+      LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasOnWhereSelectClauseFromPriority">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$9], Y=[$0], ENAME=['hello world'])
+  LogicalFilter(condition=[AND(>($9, 10), =($3, 'John'))])
+    LogicalJoin(condition=[AND(=($9, $0), =($3, 'BOB'))], joinType=[inner])
+      LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
@@ -478,6 +585,14 @@ LogicalProject(EXPR$0=[CHAR_LENGTH('foo')])
     </Resource>
     <Resource name="sql">
       <![CDATA[values (character_length('foo'))]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testCircularAlias">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$0], Y=[$0], EMPNO=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
     </Resource>
   </TestCase>
   <TestCase name="testCoalesceOnNullableField">
@@ -1852,6 +1967,42 @@ LogicalSort(fetch=[?0])
       <![CDATA[
 LogicalProject(EXPR$0=[ROW(ITEM($3, 1).EMPNO, ITEM($3, 1).ENAME, ROW(ITEM($3, 1).DETAIL.SKILLS))])
   LogicalTableScan(table=[[CATALOG, SALES, DEPT_NESTED]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testFromPriorityAliasSelectAndWhereClauses">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(N=[$0], N0=[$1])
+  LogicalFilter(condition=[>($1, 10)])
+    LogicalProject(DEPTNO=[$7], N=[$0])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testFromPriorityIdentifiersSelectList1">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ENAME=[$1], EMPNO=[$0], DEPTNO=[$7], X=['Hello World'], EXPR$4=[LOWER($1)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testFromPriorityIdentifiersSelectList2">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0], DEPTNO=[$7], ENAME=['Hello World'], EXPR$3=[LOWER($1)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testFromPriorityIdentifiersWhereClause">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(N=[$0])
+  LogicalFilter(condition=[>($1, 10)])
+    LogicalProject(DEPTNO=[$7], N=[$0])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
@@ -9120,6 +9271,14 @@ group by deptno]]>
 LogicalAggregate(group=[{0}], EXPR$1=[COLLECT($1) WITHIN GROUP ([2])], EXPR$2=[COUNT()])
   LogicalProject(DEPTNO=[$7], EMPNO=[$0], $f2=[SEARCH($0, Sarg[(-∞..1), (1..2), (2..+∞)])])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testXAsXEdgecase">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(X=[$0], X0=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>

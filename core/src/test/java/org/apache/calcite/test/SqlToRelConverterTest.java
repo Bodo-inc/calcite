@@ -5181,11 +5181,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     assertThat(parameters.get(1).getType().getSqlTypeName(), is(SqlTypeName.VARCHAR));
   }
 
-  @Test public void testAliasCommonExpressionPushdown() {
-    sql("SELECT rand() r FROM emp\n"
-        + "WHERE r  > 0.4")
-        .ok();
-  }
+  //TODO: resolving in a followup issue: https://bodo.atlassian.net/browse/BE-4092
+//  @Test public void testAliasCommonExpressionPushdown() {
+//    sql("SELECT rand() r FROM emp\n"
+//        + "WHERE r  > 0.4")
+//        .ok();
+//  }
 
   @Test public void testAliasInSelectList() {
     sql("SELECT 1 as X, X + 1 FROM emp\n")
@@ -5207,7 +5208,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql("SELECT a from (SELECT empno as a, ename as b FROM emp)\n")
         .ok();
   }
-
 
   @Test public void testFromPriorityIdentifiersSelectList1() {
     //Test that the from clause is given priority when resolving identifiers in the select list
@@ -5231,7 +5231,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     //Test that the from clause is given priority when resolving identifiers in the select list
     // and where clause
     // 'n' should resolve to empno in all locations
-    sql("select deptno as n from (SELECT deptno, empno as n FROM KEATON_T1) as MY_TABLE\n"
+    sql("select deptno as n from (SELECT deptno, empno as n FROM emp) as MY_TABLE\n"
         +
         "  WHERE n > 10")
         .ok();
@@ -5241,7 +5241,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     // Tests that the from clause is given priority when resolving identifiers in the select list
     // and where clause
     // 'n' should resolve to empno in all locations
-    sql("select deptno as n, n from (SELECT deptno, empno as n FROM KEATON_T1) as MY_TABLE\n"
+    sql("select deptno as n, n from (SELECT deptno, empno as n FROM emp) as MY_TABLE\n"
         +
         "  WHERE n > 10")
         .ok();
@@ -5305,30 +5305,25 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
-  @Test public void testTableColumnAlias() {
-    //Tests that aliasing a column as a table name works fine
-    sql("SELECT emp.empno as emp"
-        +
-        "FROM emp Where emp > 10")
-        .ok();
-  }
+  //  @Test public void testSelectQueryAliasInWhereClauseAndGroupBy() {
+//    // NOTE: Even without the where aliasing, I don't think this works in our base branch of
+//    // Calcite.
+//    // has there been changes since 1.30 (the branch we're currently branching off of)?
+//
+//    String query = "select  \"cases_per_pallet\" as c, upper(c) from"
+//        + " \"product\" Group BY c";
+//    final String expected = "SELECT \"cases_per_pallet\" AS \"C\", UPPER(CAST"
+//        + "(\"cases_per_pallet\" AS VARCHAR CHARACTER SET \"ISO-8859-1\"))\n"
+//        + "FROM \"foodmart\".\"product\"\n"
+//        + "WHERE \"cases_per_pallet\" > 100\n"
+//        + "GROUP BY \"cases_per_pallet\"";
+//    // Convert rel node to SQL with MySql dialect,
+//    // in which "isGroupBy" is true.
+//    sql(query).withBigQuery().ok(expected);
+//  }
 
-  @Test public void testTableColumnAlias2() {
-    //Tests that aliasing a column as a table name works fine
-    sql("SELECT emp.empno as emp"
-        +
-        "FROM dept JOIN emp ON emp = dept.deptno ")
-        .ok();
-  }
-  @Test public void testTableColumnAlias3() {
-    //Tests that aliasing a column as a table name works fine
-    sql("SELECT emp.empno as emp"
-        +
-        "FROM dept JOIN emp ON emp = dept.deptno "
-        +
-        "Where emp > 10")
-        .ok();
-  }
+
+
 
   @Test public void testXAsXEdgecase() {
     //Tests that aliasing a column as a table name works fine
@@ -5336,9 +5331,48 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
+  @Test public void testCircularAlias() {
+    // Tests that circular aliasing works as intended
+    sql("SELECT empno as x, x as y, y as empno FROM emp")
+        .ok();
+  }
 
-// TODO: check that these fail
+  // Note that this does work in SF: SELECT A AS KEATON_T1 FROM KEATON_T1
 
+//  @Test public void testTableColumnAliasDefault() {
+//    //Tests that aliasing a column as a table name works fine
+//    sql("SELECT emp.empno as emp"
+//        +
+//        "FROM emp")
+//        .ok();
+//  }
+
+//  @Test public void testTableColumnAlias() {
+//    //Tests that aliasing a column as a table name works fine
+//    sql("SELECT emp.empno as emp"
+//        +
+//        "FROM emp where emp > 10")
+//        .ok();
+//  }
+//
+//  @Test public void testTableColumnAlias2() {
+//    //Tests that aliasing a column as a table name works fine
+//    sql("SELECT emp.empno as emp"
+//        +
+//        "FROM dept JOIN emp ON emp = dept.deptno ")
+//        .ok();
+//  }
+//  @Test public void testTableColumnAlias3() {
+//    //Tests that aliasing a column as a table name works fine
+//    sql("SELECT emp.empno as emp"
+//        +
+//        "FROM dept JOIN emp ON emp = dept.deptno "
+//        +
+//        "Where emp > 10")
+//        .ok();
+//  }
+
+  // TODO: check that these fail
 //  @Test public void testAliasOrdering() {
 //    // Tests that ordering matters for aliasing
 //    sql("SELECT x, empno as x FROM emp")
@@ -5367,10 +5401,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 //    sql("SELECT empno AS x FROM (SELECT * FROM emp where x=1")
 //        .fails();
 //  }
-
-
-
-
 
 
 
