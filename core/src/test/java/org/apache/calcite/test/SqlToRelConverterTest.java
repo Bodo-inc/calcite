@@ -5305,24 +5305,146 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
-  //  @Test public void testSelectQueryAliasInWhereClauseAndGroupBy() {
-//    // NOTE: Even without the where aliasing, I don't think this works in our base branch of
-//    // Calcite.
-//    // has there been changes since 1.30 (the branch we're currently branching off of)?
-//
-//    String query = "select  \"cases_per_pallet\" as c, upper(c) from"
-//        + " \"product\" Group BY c";
-//    final String expected = "SELECT \"cases_per_pallet\" AS \"C\", UPPER(CAST"
-//        + "(\"cases_per_pallet\" AS VARCHAR CHARACTER SET \"ISO-8859-1\"))\n"
-//        + "FROM \"foodmart\".\"product\"\n"
-//        + "WHERE \"cases_per_pallet\" > 100\n"
-//        + "GROUP BY \"cases_per_pallet\"";
-//    // Convert rel node to SQL with MySql dialect,
-//    // in which "isGroupBy" is true.
-//    sql(query).withBigQuery().ok(expected);
-//  }
+  @Test public void testSelectQueryAliasInWhereClauseAndGroupBy() {
+    //Confirm that group by aliasing still works fine with the new changes
+    String query = "select max(empno), ename as ename_2, upper(ename_2) "
+        +
+        "from emp "
+        +
+        "where ename_2 = 'bob' "
+        +
+        "group BY ename_2";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
 
 
+  @Test public void testSelectQueryAliasInWhereClauseAndGroupByChained() {
+    //Confirm that group by aliasing works with chained aliases
+    String query = "select max(empno), ename as ename_2, ename_2 as ename_3, upper(ename_3) "
+        +
+        "FROM emp "
+        +
+        "WHERE ename_3 = 'bob' "
+        +
+        "GROUP BY ename_3";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+  @Test public void testSelectQueryAliasInWhereClauseAndGroupByAndHavingChained() {
+    //Confirm that group by aliasing works with chained aliases
+    String query = "select max(empno) as empno_max, empno_max as empno_max_2, "
+        +
+        "ename as ename_2, ename_2 as ename_3, upper(ename_3) "
+        +
+        "from emp "
+        +
+        "where ename_3 = 'bob' "
+        +
+        "group BY ename_3 "
+        +
+        "having empno_max_2 > 10 ";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+
+  @Test public void testSelectQueryAliasGroupByRand() {
+    //Confirm that group by aliasing with non-deterministic functions
+    String query = "select max(empno), rand() as r "
+        +
+        "from emp "
+        +
+        "where r > .5 "
+        +
+        "group BY r";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+  @Test public void testSelectQueryAliasGroupByRandWithChain() {
+    //Confirm that group by aliasing with non-deterministic functions and chainging
+    String query = "select max(empno), rand() as r, r + 1 as r_2 "
+        +
+        "from emp "
+        +
+        "where r_2 > .5 "
+        +
+        "group BY r_2";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+  @Test public void testSelectQueryAliasInWhereClauseAndGroupByAndHavingAndOrderByChained() {
+    //Confirm that group by aliasing works with chained aliases in several sub clauses
+    String query = "select max(empno) as empno_max, empno_max as empno_max_2, "
+        +
+        "ename as ename_2, ename_2 as ename_3, upper(ename_3) "
+        +
+        "from emp "
+        +
+        "where ename_3 = 'bob' "
+        +
+        "group BY ename_3 "
+        +
+        "having empno_max_2 > 10 "
+        +
+        "order by empno_max_2";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+  @Test public void
+  testSelectQueryAliasInWhereClauseAndGroupByAndHavingAndOrderByAndQualifyChained() {
+    //Confirm that group by aliasing works with chained aliases
+
+    String query = "select max(empno) as empno_max, empno_max as empno_max_2, "
+        +
+        "ROW_NUMBER() over (PARTITION BY deptno ORDER BY empno_max_2) as row_num, "
+        +
+        "row_num as row_num_2, row_num_2 as row_num_3, "
+        +
+        "ename as ename_2, ename_2 as ename_3, upper(ename_3) "
+        +
+        "from emp "
+        +
+        "where ename_3 = 'bob' "
+        +
+        "GROUP BY ename_3, deptno "
+        +
+        "having empno_max_2 > 10 "
+        +
+        "QUALIFY row_num_3 > 2 "
+        +
+        "order by empno_max_2 ";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
+
+  @Test public void
+  testSelectQueryAliasE2E() {
+    // The mother of all alias tests, tests that aliasing works for every clause,
+    // with and without chaining
+
+    String query = "select max(empno) as empno_max, empno_max as empno_max_2,\n"
+        +
+        "emp.deptno as deptno_alias,\n"
+        +
+        "ROW_NUMBER() over (PARTITION BY deptno_alias ORDER BY empno_max_2) as row_num,\n"
+        +
+        "row_num as row_num_2, row_num_2 as row_num_3,\n"
+        +
+        "ename as ename_2, ename_2 as ename_3, upper(ename_3)\n"
+        +
+        "from emp\n"
+        +
+        "join dept on deptno_alias = dept.deptno\n"
+        +
+        "where ename_3 = 'bob'\n"
+        +
+        "GROUP BY ename_3, deptno_alias\n"
+        +
+        "having empno_max_2 > 10\n"
+        +
+        "QUALIFY row_num_3 > 2\n"
+        +
+        "order by empno_max_2 ";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).ok();
+  }
 
 
   @Test public void testXAsXEdgecase() {
@@ -5338,6 +5460,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   // Note that this does work in SF: SELECT A AS KEATON_T1 FROM KEATON_T1
+  // I'm going to treat this as a followup, since we would have to resolve the
+  // simple case (testTableColumnAliasDefault) in the parser before even thinking
+  // about enabling it in general.
 
 //  @Test public void testTableColumnAliasDefault() {
 //    //Tests that aliasing a column as a table name works fine

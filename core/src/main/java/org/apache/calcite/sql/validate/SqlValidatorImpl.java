@@ -7223,6 +7223,38 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   /**
+   * Helper function called in ExtendedAliasExpander (used to expand identifiers in the Select list,
+   * Where, and On clauses) and ExtendedExpander (used by having/group by clauses).
+   *
+   * Finds expressions that alias to "name", in the select list.
+   *
+   * @param name The alias to search for in the select list
+   * @param nameMatcher The nameMatcher used to check if the aliases match.
+   * @param select The select to search.
+   * @param maxIdx The maximum idx into the select list to search.
+   * @return A nested pair containing the number of occurrences of the alias, one of the expressions
+   * to which the alias evaluates (if there are multiple), and the index into the select list that
+   * said expression occurs at. The information is arranged (numOccurrences, (expr, expr_idx))
+   */
+  protected static Pair<Integer, Pair<SqlNode, Integer>> findAliasesInSelect(
+      String name, SqlNameMatcher nameMatcher, SqlSelect select, Integer maxIdx) {
+    SqlNode expr = null;
+    int numOccurrencesOfAlias = 0;
+    int idxOfOccurrence = 0;
+
+    for (int i = 0; i < maxIdx; i++) {
+      SqlNode s = select.getSelectList().get(i);
+      final String alias = SqlValidatorUtil.getAlias(s, -1);
+      if (alias != null && nameMatcher.matches(alias, name)) {
+        expr = s;
+        idxOfOccurrence = i;
+        numOccurrencesOfAlias++;
+      }
+    }
+    return new Pair<>(numOccurrencesOfAlias, new Pair<>(expr, idxOfOccurrence));
+  }
+
+  /**
    * Shuttle which walks over an expression replacing usage of alias with underlying expression.
    */
   static class ExtendedAliasExpander extends Expander {
@@ -7230,26 +7262,37 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     // When recursively checking for aliases, we often encounter situations where we need to check
     // a subset of the select items for an alias. IE:
-    // SELECT A, B, C from ...
+    //    SELECT A, B, C from ...
     // If we're trying to find aliases for "B" we should only check every select statement that
-    // precedes B. IE, the following statment should fail:
-    // SELECT A, x, C as x from ...
-    // since the "x" alias does not precede the select item.
-    // Note that this also allows us to handle the following case (which is allowed in SF):
-    // SELECT A as x, x as x from ...
+    // precedes B. IE, the following statement should fail since the "x" alias
+    // does not precede the select item.:
+    //    SELECT A, x, C as x from ...
+    // but the following statement will work:
+    //    SELECT C as x, x, A from ...
+    //
+    // Note that we must also handle the following case (which is allowed in SF):
+    //    SELECT A as x, x as x from ...
 
-    // We will check every element in the select list up to but not including this index
+    // This argument instructs the expander to only check elements in the select list
+    // up to but not including this index.
     Integer maxIdx;
 
     ExtendedAliasExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
         SqlSelect select) {
+      // This an alias in the WHERE/ON clause, since we need to check all elements
+      // of the select list for aliases
       super(validator, scope);
       this.select = select;
       this.maxIdx = select.getSelectList().size();
     }
 
+
     ExtendedAliasExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
         SqlSelect select, Integer maxIdx) {
+      // This constructor is used when attempting to expand a select item, since we need to check
+      // a subset of the select list for alias information
+      // Note that it is also called recursivley, in order to handle expanding chains of aliases,
+      // IE; A as x, x as y, y as z ... etc.
       super(validator, scope);
       this.select = select;
       this.maxIdx = maxIdx;
@@ -7261,73 +7304,51 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     @Override public SqlNode visit(SqlIdentifier id) {
       if (id.isSimple()) {
         try {
-          // If we can resolve this in the regular scope, we should,
+          // If we can resolve this in the regular scope, we should
           // since we prioritize all id's that could reference columns in the "from/on" clauses
           // before we look for aliases within the select list itself.
           SqlNode sqlNode = super.visit(id);
           return sqlNode;
         } catch (Exception e) {
 
-          String name = id.getSimple();
-          SqlNode expr = null;
           final SqlNameMatcher nameMatcher =
               validator.catalogReader.nameMatcher();
-          int numOccurrencesOfAlias = 0;
-          int idxOfOccurence = 0;
+          String name = id.getSimple();
 
-          for (int i = 0; i < this.maxIdx; i++) {
-            SqlNode s = select.getSelectList().get(i);
-            final String alias = SqlValidatorUtil.getAlias(s, -1);
-            if (alias != null && nameMatcher.matches(alias, name)) {
-              expr = s;
-              idxOfOccurence = i;
-              numOccurrencesOfAlias++;
-            }
-          }
+          Pair<Integer, Pair<SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
+              name, nameMatcher,
+              this.select, this.maxIdx);
+
+          int numOccurrencesOfAlias = occurenceNumExprAndExprIdx.left;
+
 
           if (numOccurrencesOfAlias == 0) {
-            //TODO: can't this just be raise/throw e?
-            return super.visit(id);
+            //If we can't find any aliases in the select list, just throw
+            // the original error.
+            throw e;
           } else if (numOccurrencesOfAlias > 1) {
             // More than one column has this alias.
             throw validator.newValidationError(id,
                 RESOURCE.columnAmbiguous(name));
           }
 
+          SqlNode expr = occurenceNumExprAndExprIdx.right.left;
+          int idxOfOccurence = occurenceNumExprAndExprIdx.right.right;
+
           expr = stripAs(expr);
 
-          // set the maxIdx to the idx where we found the alias occurence
+          // set the maxIdx to the idx where we found the alias occurrence
           // and attempt to recursively expand the alias.
-          // I don't believe it is necessary to restore the original maxIdx, but
+          // This is needed to resolve recursive aliasing in the select list,
+          // IE: SELECT A as x, x as y, y as z ...
+
+          // NOTE: I don't believe it is necessary to restore the original maxIdx, but
           // it doesn't hurt, in case we re-use this infrastructure at some point in the future
           int origMaxIdx = this.maxIdx;
           this.maxIdx = idxOfOccurence;
           SqlNode expandedExpr = expr.accept(this);
           this.maxIdx = origMaxIdx;
 
-//          if (expr instanceof SqlIdentifier) {
-//            if (((SqlIdentifier) expr).names.equals(id.names)) {
-//              // Not an alias , don't want to update parser position
-//              return super.visit(id);
-//            }
-//            // We should only call this after we're sure that this is the final
-//            // alias. IE, we need to peel away all intermediate aliases beforehand.
-//            // For where/on clauses, the current function is sufficient, since we can't define new
-//            // aliases within said clauses.
-//            // WRONG! we still need to traceback to the appropriate original definition
-//            // in the event we have something like:
-//            // SELECT A as B, B + 1 as C, C + 3 as D... where F > 10
-//
-//            // For aliasing within select clauses, we need to handle recursive aliasing before
-//            // we reach this point. IE A as B, B + 1 as C, C + 3 as D ... etc.
-//            // Therefore, we need to call this expander on each of the component elements of the
-//            // expr, unless it is already a simple identifier (EVEN IF IT IS A SIMPLE IDENTIFIER!)
-//
-//            // Actually, I don't think we should be calling this at all. I think we should always
-//            // be calling the expander, since the expander will fully qualify this by calling
-//            // the super class if it's a basic identifier.
-//            expr = getScope().fullyQualify((SqlIdentifier) expr).identifier;
-//          }
           validator.setOriginal(expandedExpr, id);
           return expandedExpr;
         }
@@ -7495,18 +7516,28 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           && (havingExpr
               ? validator.config().conformance().isHavingAlias()
               : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
+
+        // Note: for Groupby/having, aliases in the select list take precedence over
+        // columns in the source table. This is the reverse of the precedence
+        // for where/on clauses.
+
+        // NOTE: this is not True for SF:
+        // SELECT A as B FROM KEATON_T1 GROUP BY B
+        // throws the following error:
+        // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
+        // (line 32)
+        // Therefore, this is wrong.
+
+        // Note: this also seems to do CSE? The CSE may be happening in a later step.
+
         String name = id.getSimple();
-        SqlNode expr = null;
         final SqlNameMatcher nameMatcher =
             validator.catalogReader.nameMatcher();
-        int n = 0;
-        for (SqlNode s : SqlNonNullableAccessors.getSelectList(select)) {
-          final String alias = SqlValidatorUtil.getAlias(s, -1);
-          if (alias != null && nameMatcher.matches(alias, name)) {
-            expr = s;
-            n++;
-          }
-        }
+        Pair<Integer, Pair<SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
+            name, nameMatcher,
+            this.select, this.select.getSelectList().size());
+
+        int n = occurenceNumExprAndExprIdx.left;
         if (n == 0) {
           return super.visit(id);
         } else if (n > 1) {
@@ -7517,7 +7548,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (havingExpr && validator.isAggregate(root)) {
           return super.visit(id);
         }
+        SqlNode expr = occurenceNumExprAndExprIdx.right.left;
+        int selectItemIdx = occurenceNumExprAndExprIdx.right.right;
         expr = stripAs(expr);
+
+        // Before doing anything else, we have to expand the select item, since
+        // it may be a nested identifier, IE:
+        // SELECT A as x, x + 1 as y ... group by y
+
+        // Get the raw select scope, so we can use it to expand any found items
+        SelectScope selectScope = validator.getRawSelectScope(this.select);
+        SelectExpander selectExpander = new SelectExpander(validator,
+            selectScope, this.select, selectItemIdx);
+
+        expr = expr.accept(selectExpander);
+
         if (expr instanceof SqlIdentifier) {
           SqlIdentifier sid = (SqlIdentifier) expr;
           final SqlIdentifier fqId = getScope().fullyQualify(sid).identifier;
@@ -7525,6 +7570,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
         return expr;
       }
+
       if (id.isSimple()) {
         final SelectScope scope = validator.getRawSelectScope(select);
         SqlNode node = expandCommonColumn(select, id, scope, validator);
@@ -7532,6 +7578,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           return node;
         }
       }
+
       return super.visit(id);
     }
 

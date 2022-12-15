@@ -1174,8 +1174,8 @@ public class SqlToRelConverter {
         RexUtil.removeNullabilityCast(typeFactory, convertedWhere);
 
 
-    //TODO: fix in general?
-    //TODO: fix for aggregating selects, so we don't push aggregations
+    //TODO: fix in general: https://bodo.atlassian.net/browse/BE-4092
+    //sub-TODO: fix for aggregating selects, so we don't push aggregations
     // (!validator().isAggregate(select))
     final boolean doCSE = false;
     if (doCSE) {
@@ -5143,6 +5143,7 @@ public class SqlToRelConverter {
       selectList.add(select.getQualify());
     }
 
+    //TODO: revisit this when working on CSE: https://bodo.atlassian.net/browse/BE-4092
     if (selectList.isEmpty()) {
       return;
     }
