@@ -730,10 +730,7 @@ public class SqlToRelConverter {
       }
     }
 
-    convertWhere(
-        bb,
-        select,
-        select.getWhere());
+
 
     final List<SqlNode> orderExprList = new ArrayList<>();
     final List<RelFieldCollation> collationList = new ArrayList<>();
@@ -753,6 +750,11 @@ public class SqlToRelConverter {
           select,
           orderExprList);
     } else {
+      convertWhere(
+          bb,
+          select,
+          select.getWhere(),
+          true);
       convertSelectList(
           bb,
           select,
@@ -1163,7 +1165,8 @@ public class SqlToRelConverter {
   private void convertWhere(
       final Blackboard bb,
       final SqlSelect select,
-      final @Nullable SqlNode where) {
+      final @Nullable SqlNode where,
+      final boolean doCSE) {
     if (where == null) {
       return;
     }
@@ -1177,7 +1180,7 @@ public class SqlToRelConverter {
     //TODO: fix in general: https://bodo.atlassian.net/browse/BE-4092
     //sub-TODO: fix for aggregating selects, so we don't push aggregations
     // (!validator().isAggregate(select))
-    final boolean doCSE = false;
+//    final boolean doCSE = false;
     if (doCSE) {
       List<RexNode> rexNodeSelectList  = select.getSelectList().stream().map(bb::convertExpression)
           .collect(Collectors.toList());
@@ -1192,7 +1195,27 @@ public class SqlToRelConverter {
       convertedWhere2 = convertedWhere2.accept(visitor);
 
       if (visitor.pushProjects) {
-        convertSelectList(bb, select,  new ArrayList<>());
+        //TODO: do I need to handle the orderExprList?
+        if (validator().isAggregate(select)) {
+          throw new RuntimeException("TODO!");
+//          convertAgg(
+//              bb,
+//              select,
+//              new ArrayList<>());
+        } else {
+          convertSelectList(
+              bb,
+              select,
+              new ArrayList<>());
+        }
+        // I think this should be *, not empty, correct?
+        // Since we're just pushing the project before the where
+        // ...No. I don't think this should be. Essentially, what we want to do to handle CSE
+        // with where:
+        //
+//        select.setSelectList(
+//            SqlNodeList.of(
+//            new SqlIdentifier("", select.getSelectList().getParserPosition())));
         select.setSelectList(SqlNodeList.EMPTY);
       }
     }
@@ -1204,8 +1227,15 @@ public class SqlToRelConverter {
 
     final RelFactories.FilterFactory filterFactory =
         RelFactories.DEFAULT_FILTER_FACTORY;
-    final RelNode filter =
-        filterFactory.createFilter(bb.root(), convertedWhere2, ImmutableSet.of());
+    final RelNode filter;
+    try {
+      filter =
+          filterFactory.createFilter(bb.root(), convertedWhere2, ImmutableSet.of());
+    } catch (Throwable e) {
+      System.out.println("TODO!");
+      throw e;
+    }
+
     final RelNode r;
     final CorrelationUse p = getCorrelationUse(bb, filter);
     if (p != null) {
@@ -3385,6 +3415,12 @@ public class SqlToRelConverter {
     SqlNodeList groupList = select.getGroup();
     SqlNodeList selectList = select.getSelectList();
 
+    convertWhere(
+        bb,
+        select,
+        select.getWhere(),
+        false);
+
     /** The behavior of QUALIFY is the same as if you were to add the window function condition
      * to the select statement, and then add wrapping query that filters by the result. See
      * https://docs.snowflake.com/en/sql-reference/constructs/qualify.html
@@ -3501,6 +3537,21 @@ public class SqlToRelConverter {
               .projectNamed(Pair.left(preExprs), Pair.right(preExprs), false)
               .build(),
           false);
+
+      // What exactly does this do?
+      // The comment is unclear. my assumption is that it updates
+      // the expression the expr based on the pre-exprs?
+      // IE Select ... GROUP BY expr0, expr1, expr2
+      // and the pushed pre-projects look like:
+      // x, y, expr2, expr0, expr1
+      // then it would be a map of 0 -> 2, 1 -> 4, 2 -> 3
+      // IE, mapping the group by expressions to their index in the select list
+
+      // Maybe not? the only place I see this used is in getCorrelationUse (and register, to
+      // a smaller extent), and it's a private atribute, with no getters/setters, initialized to
+      // empty
+      // TODO: verify this
+
       bb.mapRootRelToFieldProjection.put(bb.root(), r.groupExprProjection);
 
       // REVIEW jvs 31-Oct-2007:  doesn't the declaration of
@@ -3518,6 +3569,8 @@ public class SqlToRelConverter {
       bb.setRoot(
           createAggregate(bb, r.groupSet, r.groupSets.asList(),
               aggConverter.getAggCalls()), false);
+
+      // Why is this set again? I assume bb.set_root clears it?
       bb.mapRootRelToFieldProjection.put(bb.root(), r.groupExprProjection);
 
       // Replace sub-queries in having here and modify having to use

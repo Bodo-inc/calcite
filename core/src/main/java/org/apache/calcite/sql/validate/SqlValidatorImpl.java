@@ -3712,7 +3712,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case ON:
       requireNonNull(condition, "join.getCondition()");
 
-      SqlNode expandedCondition = condition;
+      SqlNode expandedCondition;
       if (scope.getNode() instanceof SqlSelect) {
         expandedCondition = expandWithAlias(condition, joinScope, (SqlSelect) scope.getNode());
       } else {
@@ -7527,8 +7527,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
         // (line 32)
         // Therefore, this is wrong.
+        // TODO: merge this with the other expander?
 
-        // Note: this also seems to do CSE? The CSE may be happening in a later step.
+        // NOTE: this also seems to properly do CSE? The CSE may be happening in a later step.
 
         String name = id.getSimple();
         final SqlNameMatcher nameMatcher =
