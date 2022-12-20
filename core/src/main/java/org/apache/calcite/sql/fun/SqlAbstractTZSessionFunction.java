@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.rel.type.RelDataType;
-
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlKind;
@@ -27,14 +25,7 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.type.BodoTZInfo;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
-import org.apache.calcite.sql.type.SqlOperandTypeInference;
-import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
-import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Base class for functions such as CURRENT_TIMESTAMP that return
@@ -51,16 +42,7 @@ public class SqlAbstractTZSessionFunction extends SqlFunction {
    * Creates a new SqlFunction for a call to a built-in function.
    *
    * @param name                 Name of built-in function
-   * @param kind                 kind of operator implemented by function
-   * @param returnTypeInference  strategy to use for return type inference
-   * @param operandTypeInference strategy to use for parameter type inference
-   * @param operandTypeChecker   strategy to use for parameter type checking
-   * @param category             categorization for function
    */
-  public SqlAbstractTZSessionFunction(String name, SqlKind kind, @Nullable SqlReturnTypeInference returnTypeInference, @Nullable SqlOperandTypeInference operandTypeInference, @Nullable SqlOperandTypeChecker operandTypeChecker, SqlFunctionCategory category) {
-    super(name, kind, returnTypeInference, operandTypeInference, operandTypeChecker, category);
-  }
-
   public SqlAbstractTZSessionFunction(String name) {
     super(name, SqlKind.OTHER_FUNCTION, null, null, OTC_CUSTOM, SqlFunctionCategory.TIMEDATE);
   }
@@ -71,7 +53,7 @@ public class SqlAbstractTZSessionFunction extends SqlFunction {
 
   @Override public RelDataType inferReturnType(
       SqlOperatorBinding opBinding) {
-    // TODO: Replace with a session parameter for the current Timezone.
+    // TODO: Replace with a session parameter for the current Timezone
     return opBinding.getTypeFactory().createTZAwareSqlType(BodoTZInfo.UTC);
   }
 
