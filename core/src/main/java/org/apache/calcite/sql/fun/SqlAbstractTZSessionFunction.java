@@ -25,7 +25,12 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.type.BodoTZInfo;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
+
+import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
+import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Base class for functions such as CURRENT_TIMESTAMP that return
@@ -53,6 +58,22 @@ public class SqlAbstractTZSessionFunction extends SqlFunction {
 
   @Override public RelDataType inferReturnType(
       SqlOperatorBinding opBinding) {
+    // TODO: Support using precision information in TZAwareSqlType
+    // We keep the error check here.
+    int precision = 0;
+    if (opBinding.getOperandCount() == 1) {
+      RelDataType type = opBinding.getOperandType(0);
+      if (SqlTypeUtil.isNumeric(type)) {
+        precision = getOperandLiteralValueOrThrow(opBinding, 0, Integer.class);
+      }
+    }
+    assert precision >= 0;
+    if (precision > SqlTypeName.MAX_DATETIME_PRECISION) {
+      throw opBinding.newError(
+          RESOURCE.argumentMustBeValidPrecision(
+              opBinding.getOperator().getName(), 0,
+              SqlTypeName.MAX_DATETIME_PRECISION));
+    }
     // TODO: Replace with a session parameter for the current Timezone
     return opBinding.getTypeFactory().createTZAwareSqlType(BodoTZInfo.UTC);
   }

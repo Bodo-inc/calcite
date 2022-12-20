@@ -5476,7 +5476,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlSnapshot snapshot = (SqlSnapshot) node;
       SqlNode period = snapshot.getPeriod();
       RelDataType dataType = deriveType(requireNonNull(scope, "scope"), period);
-      if (dataType.getSqlTypeName() != SqlTypeName.TIMESTAMP) {
+      if (dataType.getSqlTypeName() != SqlTypeName.TIMESTAMP
+          && dataType.getSqlTypeName() != SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
         throw newValidationError(period,
             Static.RESOURCE.illegalExpressionForTemporal(dataType.getSqlTypeName().getName()));
       }
