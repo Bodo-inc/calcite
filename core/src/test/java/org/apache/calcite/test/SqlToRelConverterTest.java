@@ -5211,6 +5211,16 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
+  @Test public void testAliasInSelectWithGB() {
+    // Test that we don't just randomly push the projects. In this case, pushing the projectList
+    // will remove ename, which will break the second where clause
+    //SELECT MAX(B) as A, A + 2, C GROUP BY C FROM TABLE1
+    sql("SELECT MAX(empno) as A, A+2, ename FROM emp group by ename")
+        .ok();
+  }
+
+
+
   @Test public void testFoo() {
     // Test that we don't just randomly push the projects. In this case, pushing the projectList
     // will remove ename, which will break the second where clause
