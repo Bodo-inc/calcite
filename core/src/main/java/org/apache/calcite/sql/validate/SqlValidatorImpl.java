@@ -4874,8 +4874,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   protected RelDataType createTargetRowType(
       SqlValidatorTable table,
       @Nullable SqlNodeList targetColumnList,
-      boolean append,
-      SqlValidatorScope scope) {
+      boolean append) {
     RelDataType baseRowType = table.getRowType();
     if (targetColumnList == null) {
       return baseRowType;
@@ -4929,8 +4928,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         createTargetRowType(
             table,
             insert.getTargetColumnList(),
-            false,
-            scope);
+            false
+            );
 
     if (source instanceof SqlSelect) {
       final SqlSelect sqlSelect = (SqlSelect) source;
@@ -5353,8 +5352,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         createTargetRowType(
             table,
             call.getTargetColumnList(),
-            true,
-            selectScope);
+            true
+        );
     validateSelect(select, targetRowType);
 
     final RelDataType sourceRowType = getValidatedNodeType(select);
