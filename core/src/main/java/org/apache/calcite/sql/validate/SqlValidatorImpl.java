@@ -5475,6 +5475,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlSnapshot snapshot = (SqlSnapshot) node;
       SqlNode period = snapshot.getPeriod();
       RelDataType dataType = deriveType(requireNonNull(scope, "scope"), period);
+      // NOTE: The original code was just checking SqlTypeName.TIMESTAMP, but since
+      // we changed CURRENT_TIMESTAMP to return a TZ-Aware Timestamp we had to
+      // update this to also allow SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE to
+      // pass the tests.
       if (dataType.getSqlTypeName() != SqlTypeName.TIMESTAMP
           && dataType.getSqlTypeName() != SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
         throw newValidationError(period,
