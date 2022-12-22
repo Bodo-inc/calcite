@@ -74,8 +74,8 @@ public class SqlAbstractTZSessionFunction extends SqlFunction {
               opBinding.getOperator().getName(), 0,
               SqlTypeName.MAX_DATETIME_PRECISION));
     }
-    // TODO: Replace with a session parameter for the current Timezone
-    return opBinding.getTypeFactory().createTZAwareSqlType(BodoTZInfo.UTC);
+    BodoTZInfo tzInfo = opBinding.getTypeFactory().getTypeSystem().getDefaultTZInfo();
+    return opBinding.getTypeFactory().createTZAwareSqlType(tzInfo);
   }
 
 
