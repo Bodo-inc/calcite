@@ -8988,6 +8988,42 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 //        .rewritesTo(expectedSql);
 //  }
 
+
+  // Note that this does work in SF: SELECT A AS KEATON_T1 FROM KEATON_T1
+  // I'm going to treat this as a followup, since we would have to resolve the
+  // simple case (testTableColumnAliasDefault) in the parser before even thinking
+  // about enabling it in general.
+
+
+  @Test public void testAliasOrdering() {
+    // Tests that ordering matters for aliasing
+    sql("SELECT ^x^, empno as x FROM emp")
+        .fails("Column 'X' not found in any table");
+  }
+
+  @Test public void testSelectListAliasSubqueryInSelectListFails() {
+    //Tests that aliasing doesn't extend into any subqueries
+    sql("Select empno as x, (SELECT MAX(^x^) from emp) FROM emp")
+        .fails("Column 'X' not found in any table");
+  }
+  @Test public void testFailsAmbiguous() {
+    //This should fail, as the alias for x is ambiguous
+    sql("SELECT empno as x, ename as x, ^x^ FROM emp")
+        .fails("Column 'X' is ambiguous");
+  }
+
+  @Test public void testAliasIntoSubqueryFails() {
+    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
+    sql("SELECT empno AS x FROM (SELECT * FROM emp GROUP BY ^x^)")
+        .fails("Column 'X' not found in any table");
+  }
+
+  @Test public void testAliasIntoSubqueryFails2() {
+    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
+    sql("SELECT empno AS x FROM (SELECT * FROM emp where ^x^=1)")
+        .fails("Column 'X' not found in any table");
+  }
+
   @Test void testCoalesceWithoutRewrite() {
     final String sql = "select coalesce(deptno, empno) from emp";
     final String expected1 = "SELECT COALESCE(`EMP`.`DEPTNO`, `EMP`.`EMPNO`)\n"

@@ -6434,6 +6434,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlValidatorScope scope, SqlSelect select) {
     final Expander expander = new ExtendedAliasExpander(this, scope, select);
     SqlNode newExpr = expr.accept(expander);
+    requireNonNull(newExpr);
     if (expr != newExpr) {
       setOriginal(newExpr, expr);
     }
@@ -7240,7 +7241,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * to which the alias evaluates (if there are multiple), and the index into the select list that
    * said expression occurs at. The information is arranged (numOccurrences, (expr, expr_idx))
    */
-  protected static Pair<Integer, Pair<SqlNode, Integer>> findAliasesInSelect(
+  protected static Pair<Integer, Pair<@Nullable SqlNode, Integer>> findAliasesInSelect(
       String name, SqlNameMatcher nameMatcher, SqlSelect select, Integer maxIdx) {
     SqlNode expr = null;
     int numOccurrencesOfAlias = 0;
@@ -7336,9 +7337,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 RESOURCE.columnAmbiguous(name));
           }
 
+
           SqlNode expr = occurenceNumExprAndExprIdx.right.left;
           int idxOfOccurence = occurenceNumExprAndExprIdx.right.right;
 
+          // Returned expr is only null if the number of occurrences of the alias is 0
+          requireNonNull(expr);
           expr = stripAs(expr);
 
           // set the maxIdx to the idx where we found the alias occurrence

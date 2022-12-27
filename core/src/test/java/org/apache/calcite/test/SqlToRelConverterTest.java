@@ -5491,7 +5491,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
 
   @Test public void testXAsXEdgecase() {
-    //Tests that aliasing a column as a table name works fine
+    //Tests that aliasing a column as the original identifier works fine
     sql("SELECT empno as x, x as x FROM emp")
         .ok();
   }
@@ -5501,74 +5501,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql("SELECT empno as x, x as y, y as empno FROM emp")
         .ok();
   }
-
-  // Note that this does work in SF: SELECT A AS KEATON_T1 FROM KEATON_T1
-  // I'm going to treat this as a followup, since we would have to resolve the
-  // simple case (testTableColumnAliasDefault) in the parser before even thinking
-  // about enabling it in general.
-
-//  @Test public void testTableColumnAliasDefault() {
-//    //Tests that aliasing a column as a table name works fine
-//    sql("SELECT emp.empno as emp"
-//        +
-//        "FROM emp")
-//        .ok();
-//  }
-
-//  @Test public void testTableColumnAlias() {
-//    //Tests that aliasing a column as a table name works fine
-//    sql("SELECT emp.empno as emp"
-//        +
-//        "FROM emp where emp > 10")
-//        .ok();
-//  }
-//
-//  @Test public void testTableColumnAlias2() {
-//    //Tests that aliasing a column as a table name works fine
-//    sql("SELECT emp.empno as emp"
-//        +
-//        "FROM dept JOIN emp ON emp = dept.deptno ")
-//        .ok();
-//  }
-//  @Test public void testTableColumnAlias3() {
-//    //Tests that aliasing a column as a table name works fine
-//    sql("SELECT emp.empno as emp"
-//        +
-//        "FROM dept JOIN emp ON emp = dept.deptno "
-//        +
-//        "Where emp > 10")
-//        .ok();
-//  }
-
-  // TODO: check that these fail
-//  @Test public void testAliasOrdering() {
-//    // Tests that ordering matters for aliasing
-//    sql("SELECT x, empno as x FROM emp")
-//        .ok();
-//  }
-
-//  @Test public void testSelectListAliasSubqueryInSelectListFails() {
-//    //Tests that aliasing doesn't extend into any subqueries
-//    sql("Select empno as x, (SELECT MAX(x) from emp) FROM emp")
-//        .ok();
-//  }
-//  @Test public void testFailsAmbiguous() {
-//    //This should fail, as the alias for x is ambiguous
-//    sql("SELECT SELECT empno as x, dept as x, x FROM emp")
-//        .fails();
-//  }
-//
-//  @Test public void testAliasIntoSubqueryFails() {
-//    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
-//    sql("SELECT empno AS x FROM (SELECT * FROM emp GROUP BY x")
-//        .fails();
-//  }
-//
-//  @Test public void testAliasIntoSubqueryFails2() {
-//    //This should fail, as aliases from the outer select list shouldn't push into the sub queries
-//    sql("SELECT empno AS x FROM (SELECT * FROM emp where x=1")
-//        .fails();
-//  }
 
 
 
