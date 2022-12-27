@@ -4835,6 +4835,43 @@ LogicalTableModify(table=[[CATALOG, SALES, EMPNULLABLES]], operation=[MERGE], up
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testAliasCommonExpressionCantPushProject">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(N=[*($0, 10)])
+  LogicalFilter(condition=[AND(>(*($0, 10), 5), =($1, 'bob'))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasCommonExpressionNoPushDownWhere">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(R=[RAND()])
+  LogicalFilter(condition=[>(RAND(), 0.4:DECIMAL(2, 1))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasCommonExpressionNoPushDownWhere">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(R=[RAND()])
+  LogicalFilter(condition=[>(RAND(), 0.4:DECIMAL(2, 1))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testAliasInSelectWithGB">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(A=[$1], EXPR$1=[+($1, 2)], ENAME=[$0])
+  LogicalAggregate(group=[{0}], A=[MAX($1)])
+    LogicalProject(ENAME=[$1], EMPNO=[$0])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testMergeUpdateAlias">
     <Resource name="sql">
       <![CDATA[merge_into empnullables as target

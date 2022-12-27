@@ -730,7 +730,9 @@ public class SqlToRelConverter {
       }
     }
 
-
+    convertWhere(
+        bb,
+        select.getWhere());
 
     final List<SqlNode> orderExprList = new ArrayList<>();
     final List<RelFieldCollation> collationList = new ArrayList<>();
@@ -750,11 +752,6 @@ public class SqlToRelConverter {
           select,
           orderExprList);
     } else {
-      convertWhere(
-          bb,
-          select,
-          select.getWhere(),
-          true);
       convertSelectList(
           bb,
           select,
@@ -1164,9 +1161,7 @@ public class SqlToRelConverter {
    */
   private void convertWhere(
       final Blackboard bb,
-      final SqlSelect select,
-      final @Nullable SqlNode where,
-      final boolean doCSE) {
+      final @Nullable SqlNode where) {
     if (where == null) {
       return;
     }
@@ -1177,48 +1172,7 @@ public class SqlToRelConverter {
         RexUtil.removeNullabilityCast(typeFactory, convertedWhere);
 
 
-    //TODO: fix in general: https://bodo.atlassian.net/browse/BE-4092
-    //sub-TODO: fix for aggregating selects, so we don't push aggregations
-    // (!validator().isAggregate(select))
-//    final boolean doCSE = false;
-    if (doCSE) {
-      List<RexNode> rexNodeSelectList  = select.getSelectList().stream().map(bb::convertExpression)
-          .collect(Collectors.toList());
-
-      // Check to see if the filter expression has a referenced expression in select List and
-      // do some referencing accordingly
-      ProjectCSERexVisitor visitor = new ProjectCSERexVisitor(
-          rexBuilder,
-          rexNodeSelectList,
-          bb.root());
-
-      convertedWhere2 = convertedWhere2.accept(visitor);
-
-      if (visitor.pushProjects) {
-        //TODO: do I need to handle the orderExprList?
-        if (validator().isAggregate(select)) {
-          throw new RuntimeException("TODO!");
-//          convertAgg(
-//              bb,
-//              select,
-//              new ArrayList<>());
-        } else {
-          convertSelectList(
-              bb,
-              select,
-              new ArrayList<>());
-        }
-        // I think this should be *, not empty, correct?
-        // Since we're just pushing the project before the where
-        // ...No. I don't think this should be. Essentially, what we want to do to handle CSE
-        // with where:
-        //
-//        select.setSelectList(
-//            SqlNodeList.of(
-//            new SqlIdentifier("", select.getSelectList().getParserPosition())));
-        select.setSelectList(SqlNodeList.EMPTY);
-      }
-    }
+    //TODO: Support CSE in the where clause, https://bodo.atlassian.net/browse/BE-4092
 
     // only allocate filter if the condition is not TRUE
     if (convertedWhere2.isAlwaysTrue()) {
@@ -3415,12 +3369,6 @@ public class SqlToRelConverter {
     SqlNodeList groupList = select.getGroup();
     SqlNodeList selectList = select.getSelectList();
 
-    convertWhere(
-        bb,
-        select,
-        select.getWhere(),
-        false);
-
     /** The behavior of QUALIFY is the same as if you were to add the window function condition
      * to the select statement, and then add wrapping query that filters by the result. See
      * https://docs.snowflake.com/en/sql-reference/constructs/qualify.html
@@ -3538,19 +3486,20 @@ public class SqlToRelConverter {
               .build(),
           false);
 
-      // What exactly does this do?
-      // The comment is unclear. my assumption is that it updates
-      // the expression the expr based on the pre-exprs?
+      // TODO: understanding how the groups expression pusher works will be necessary for
+      // handling CSE: https://bodo.atlassian.net/browse/BE-4092
+
+      // Current Notes:
+      // My assumption is that mapRootRelToFieldProjection in the blackboard updates
+      // the expression based on the pre-exprs when calling build?
       // IE Select ... GROUP BY expr0, expr1, expr2
       // and the pushed pre-projects look like:
       // x, y, expr2, expr0, expr1
       // then it would be a map of 0 -> 2, 1 -> 4, 2 -> 3
       // IE, mapping the group by expressions to their index in the select list
-
       // Maybe not? the only place I see this used is in getCorrelationUse (and register, to
       // a smaller extent), and it's a private atribute, with no getters/setters, initialized to
       // empty
-      // TODO: verify this
 
       bb.mapRootRelToFieldProjection.put(bb.root(), r.groupExprProjection);
 
@@ -5202,11 +5151,6 @@ public class SqlToRelConverter {
      */
     if (select.getQualify() != null) {
       selectList.add(select.getQualify());
-    }
-
-    //TODO: revisit this when working on CSE: https://bodo.atlassian.net/browse/BE-4092
-    if (selectList.isEmpty()) {
-      return;
     }
 
     selectList = validator().expandStar(selectList, select, false);
@@ -7309,44 +7253,6 @@ public class SqlToRelConverter {
     /** Sets {@link #getHintStrategyTable()}. */
     Config withHintStrategyTable(HintStrategyTable hintStrategyTable);
 
-  }
-
-  /**
-   * Tries to implement CSE by seeing if a rex node is already defined in
-   * the List of projects Rel and returning a refIndex instead of the raw node.
-   */
-  private static final class ProjectCSERexVisitor extends RexShuttle {
-    private final RexBuilder rexBuilder;
-    private final List<RexNode> projects;
-    private final RelNode input;
-
-    private boolean pushProjects;
-
-    ProjectCSERexVisitor(RexBuilder rexBuilder, List<RexNode> projects, RelNode input) {
-      this.rexBuilder = rexBuilder;
-      this.projects = projects;
-      this.input = input;
-      this.pushProjects = false;
-    }
-
-    @Override public RexNode visitCall(RexCall call) {
-      List<RexNode> projections = projects;
-      for (int i = 0; i < projections.size(); i++) {
-        RexNode project = projections.get(i);
-        if (call.equals(project)) {
-          pushProjects = true;
-          return rexBuilder.makeInputRef(project.getType(), i);
-        }
-      }
-
-      return rexBuilder.makeCall(
-          call.getType(),
-          call.getOperator(),
-          call.operands
-              .stream()
-              .map(operand -> operand.accept(this))
-              .collect(Collectors.toList()));
-    }
   }
 
 }

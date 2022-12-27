@@ -8962,7 +8962,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
   //
   // I'm also not certain why this is being tested, or why it would benefit us to not throw
   // an error in this situation. Honestly, I think we definitely SHOULD throw an error during
-  // validation if we have invalid table name.column. Since the fix is unclear, and the
+  // validation if we have something like "invalid_table_name.column".
+  // Since the fix is unclear, and the
   // benefit of fixing this seems non-existent, I'm just going to file a followup JIRA issue to
   // resolve this: https://bodo.atlassian.net/browse/BE-4078
 

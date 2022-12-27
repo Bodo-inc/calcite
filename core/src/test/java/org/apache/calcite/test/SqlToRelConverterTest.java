@@ -5195,22 +5195,27 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   //Here, rand needs to be pushed into both
   @Test public void testAliasCommonExpressionPushDownWhereGroupBy() {
-    sql("SELECT rand() + empno as group_val FROM emp GROUP BY group_val\n"
-        + "WHERE group_val > 0.4")
+    // Test that this DOES push down the rand() call from the select into the where clause
+    // This will more relevant when we properly handle CSE:
+    // https://bodo.atlassian.net/browse/BE-4092
+    sql("SELECT rand() + empno as group_val FROM emp WHERE group_val > 0.4 GROUP BY group_val\n")
         .ok();
   }
 
 
   @Test public void testAliasCommonExpressionNoPushDownWhere() {
-    // Test that this DOES NOT push down the rand() call from the select into the Where clause
+    // Test that this DOES NOT push down the rand() call from the select into the where clause
+    // This will more relevant when we properly handle CSE:
+    // https://bodo.atlassian.net/browse/BE-4092
     sql("SELECT rand() r FROM emp\n"
         + "WHERE rand()  > 0.4")
         .ok();
   }
 
-  @Test public void testAliasCommonExpressionCantJustPushProject() {
+  @Test public void testAliasCommonExpressionCantPushProject() {
     // Test that we don't just randomly push the projects. In this case, pushing the projectList
     // will remove ename, which will break the second where clause
+    // This will more relevant when we handle CSE: https://bodo.atlassian.net/browse/BE-4092
     sql("SELECT empno * 10 as n FROM emp\n"
         + "WHERE n > 5 and ename = 'bob'")
         .ok();
@@ -5225,40 +5230,16 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
 
-
-  @Test public void testFoo() {
-    // Test that we don't just randomly push the projects. In this case, pushing the projectList
-    // will remove ename, which will break the second where clause
-    sql("SELECT empno+12 FROM emp GROUP BY empno")
-        .ok();
-  }
-
-//  DISSALLOWED! IN SF too Select B from KEATON_T1 group by lower(B)
-  @Test public void testFoo2() {
-    // Test that we don't just randomly push the projects. In this case, pushing the projectList
-    // will remove ename, which will break the second where clause
-    sql("SELECT empno FROM emp GROUP BY empno+12")
-        .ok();
-  }
-
-  // Select upper(lower(B)) from KEATON_T1 group by lower(B) works in SF.
-  @Test public void testFoo3() {
-    // Test that we don't just randomly push the projects. In this case, pushing the projectList
-    // will remove ename, which will break the second where clause
-    sql("SELECT (empno+12) + 2 FROM emp GROUP BY empno+12")
-        .ok();
-  }
-
   //TODO: resolving in a followup issue: https://bodo.atlassian.net/browse/BE-4092
   // NOTE: don't need to:
   //    Select random() * 2 as r from KEATON_T1 t1 join KEATON_T1 t2 on t1.A = t2.A and r > 0
   // R in the output is not > 0, it's all over the place
   // OK, so I only need to handle the first case. This is actually supper easy
-//  @Test public void testAliasCommonExpressionPushDownOn() {
-//    sql("SELECT rand() r FROM emp\n"
-//        + "join dept on emp.deptno = dept.deptno and r  > 0.5")
-//        .ok();
-//  }
+  @Test public void testAliasCommonExpressionPushDownOn() {
+    sql("SELECT rand() r FROM emp\n"
+        + "join dept on emp.deptno = dept.deptno and r  > 0.5")
+        .ok();
+  }
 
   @Test public void testAliasInSelectList() {
     sql("SELECT 1 as X, X + 1 FROM emp\n")
