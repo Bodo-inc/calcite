@@ -5199,6 +5199,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     // This will more relevant when we properly handle CSE:
     // https://bodo.atlassian.net/browse/BE-4092
     sql("SELECT rand() + empno as group_val FROM emp WHERE group_val > 0.4 GROUP BY group_val\n")
+        .withConformance(SqlConformanceEnum.LENIENT)
         .ok();
   }
 
@@ -5229,17 +5230,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
-
-  //TODO: resolving in a followup issue: https://bodo.atlassian.net/browse/BE-4092
-  // NOTE: don't need to:
-  //    Select random() * 2 as r from KEATON_T1 t1 join KEATON_T1 t2 on t1.A = t2.A and r > 0
-  // R in the output is not > 0, it's all over the place
-  // OK, so I only need to handle the first case. This is actually supper easy
-  @Test public void testAliasCommonExpressionPushDownOn() {
-    sql("SELECT rand() r FROM emp\n"
-        + "join dept on emp.deptno = dept.deptno and r  > 0.5")
-        .ok();
-  }
 
   @Test public void testAliasInSelectList() {
     sql("SELECT 1 as X, X + 1 FROM emp\n")
