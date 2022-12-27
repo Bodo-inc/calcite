@@ -7263,7 +7263,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * Shuttle which walks over an expression replacing usage of alias with underlying expression.
    */
   static class ExtendedAliasExpander extends Expander {
-    SqlSelect select;
+    SqlSelect alias_source_select;
 
     // When recursively checking for aliases, we often encounter situations where we need to check
     // a subset of the select items for an alias. IE:
@@ -7287,7 +7287,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // This an alias in the WHERE/ON clause, since we need to check all elements
       // of the select list for aliases
       super(validator, scope);
-      this.select = select;
+      this.alias_source_select = select;
       this.maxIdx = select.getSelectList().size();
     }
 
@@ -7299,14 +7299,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // Note that it is also called recursivley, in order to handle expanding chains of aliases,
       // IE; A as x, x as y, y as z ... etc.
       super(validator, scope);
-      this.select = select;
+      this.alias_source_select = select;
       this.maxIdx = maxIdx;
       assert maxIdx <= select.getSelectList().size() && maxIdx >= 0;
     }
 
 
 
-    @Override public SqlNode visit(SqlIdentifier id) {
+    @Override public @Nullable SqlNode visit(SqlIdentifier id) {
       if (id.isSimple()) {
         try {
           // If we can resolve this in the regular scope, we should
@@ -7320,9 +7320,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
               validator.catalogReader.nameMatcher();
           String name = id.getSimple();
 
-          Pair<Integer, Pair<SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
+          Pair<Integer, Pair<@Nullable SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
               name, nameMatcher,
-              this.select, this.maxIdx);
+              this.alias_source_select, this.maxIdx);
 
           int numOccurrencesOfAlias = occurenceNumExprAndExprIdx.left;
 
@@ -7355,6 +7355,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           int origMaxIdx = this.maxIdx;
           this.maxIdx = idxOfOccurence;
           SqlNode expandedExpr = expr.accept(this);
+
+          requireNonNull(expandedExpr);
           this.maxIdx = origMaxIdx;
 
           validator.setOriginal(expandedExpr, id);
@@ -7542,7 +7544,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         String name = id.getSimple();
         final SqlNameMatcher nameMatcher =
             validator.catalogReader.nameMatcher();
-        Pair<Integer, Pair<SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
+        Pair<Integer, Pair<@Nullable  SqlNode, Integer>> occurenceNumExprAndExprIdx = findAliasesInSelect(
             name, nameMatcher,
             this.select, this.select.getSelectList().size());
 
@@ -7558,6 +7560,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           return super.visit(id);
         }
         SqlNode expr = occurenceNumExprAndExprIdx.right.left;
+        requireNonNull(expr);
         int selectItemIdx = occurenceNumExprAndExprIdx.right.right;
         expr = stripAs(expr);
 
@@ -7567,6 +7570,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         // Get the raw select scope, so we can use it to expand any found items
         SelectScope selectScope = validator.getRawSelectScope(this.select);
+        requireNonNull(selectScope);
         SelectExpander selectExpander = new SelectExpander(validator,
             selectScope, this.select, selectItemIdx);
 
