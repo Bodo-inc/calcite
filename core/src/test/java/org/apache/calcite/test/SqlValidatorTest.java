@@ -8964,29 +8964,50 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
   // an error in this situation. Honestly, I think we definitely SHOULD throw an error during
   // validation if we have something like "invalid_table_name.column".
   // Since the fix is unclear, and the
-  // benefit of fixing this seems non-existent, I'm just going to file a followup JIRA issue to
+  // benefit of fixing this seems non-existent, I'm just going to set this to expect an error,
+  // and file a followup JIRA issue to
   // resolve this: https://bodo.atlassian.net/browse/BE-4078
 
-//  @Test void testRewriteExpansionOfColumnReferenceBeforeResolution() {
-//    final String sql = "select unexpanded.deptno from dept \n"
-//        + " where unexpanded.name = 'Moonracer' \n"
-//        + " group by unexpanded.deptno\n"
-//        + " having sum(unexpanded.deptno) > 0\n"
-//        + " order by unexpanded.deptno";
+  @Test void testRewriteExpansionOfColumnReferenceBeforeResolution() {
+    final String sql = "select unexpanded.deptno from dept \n"
+        + " where ^unexpanded^.name = 'Moonracer' \n"
+        + " group by unexpanded.deptno\n"
+        + " having sum(unexpanded.deptno) > 0\n"
+        + " order by unexpanded.deptno";
 //    final String expectedSql = "SELECT `DEPT`.`DEPTNO`\n"
 //        + "FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`\n"
 //        + "WHERE `DEPT`.`NAME` = 'Moonracer'\n"
 //        + "GROUP BY `DEPT`.`DEPTNO`\n"
 //        + "HAVING SUM(`DEPT`.`DEPTNO`) > 0\n"
 //        + "ORDER BY `DEPT`.`DEPTNO`";
-//    SqlValidatorTestCase.FIXTURE
-//        .withFactory(t -> t.withValidator(UnexpandedToDeptValidator::new))
-//        .withSql(sql)
-//        .withValidatorIdentifierExpansion(true)
-//        .withValidatorColumnReferenceExpansion(true)
-//        .withConformance(SqlConformanceEnum.LENIENT)
+    SqlValidatorTestCase.FIXTURE
+        .withFactory(t -> t.withValidator(UnexpandedToDeptValidator::new))
+        .withSql(sql)
+        .withValidatorIdentifierExpansion(true)
+        .withValidatorColumnReferenceExpansion(true)
+        .withConformance(SqlConformanceEnum.LENIENT)
+        .fails("Table 'UNEXPANDED' not found");
 //        .rewritesTo(expectedSql);
-//  }
+  }
+
+  @Test public void testSelectQueryAliasInGroupBy() {
+    // In SF, aliases from the source table are given preference in groupby/having cluases
+    // IE:
+    //
+    // SELECT A as B FROM KEATON_T1 GROUP BY B
+    // Should throw an error:
+    // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
+    //
+    // For us, we treat the column as ambiguous,
+    // and throw a validation error.
+    String query = "select empno as ename from emp group BY ^ename^";
+    sql(query).withConformance(SqlConformanceEnum.LENIENT).fails(
+        "Column 'ENAME' is ambiguous\\. "
+            +
+            "It could refer to the alias in the select clause, "
+            +
+            "or the column of the same name in the source table");
+  }
 
 
   // Note that this does work in SF: SELECT A AS KEATON_T1 FROM KEATON_T1
@@ -9009,6 +9030,12 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
   @Test public void testFailsAmbiguous() {
     //This should fail, as the alias for x is ambiguous
     sql("SELECT empno as x, ename as x, ^x^ FROM emp")
+        .fails("Column 'X' is ambiguous");
+  }
+
+  @Test public void testFailsAmbiguous2() {
+    //This should fail, as the alias for x is ambiguous (tested in SF)
+    sql("SELECT empno as x, x, ^x^ FROM emp")
         .fails("Column 'X' is ambiguous");
   }
 

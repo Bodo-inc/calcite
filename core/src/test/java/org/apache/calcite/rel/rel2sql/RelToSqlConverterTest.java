@@ -2721,13 +2721,13 @@ class RelToSqlConverterTest {
     sql(query).ok(expected);
   }
 
-  @Test public void testSelectQueryAliasInWhereClause() {
-    String query = "select  \"cases_per_pallet\" as c from \"product\" where c > 100 ";
-    final String expected = "SELECT \"cases_per_pallet\" AS \"C\"\n"
-        + "FROM \"foodmart\".\"product\"\n"
-        + "WHERE \"cases_per_pallet\" > 100";
-    sql(query).ok(expected);
-  }
+//  @Test public void testSelectQueryAliasInWhereClause() {
+//    String query = "select  \"cases_per_pallet\" as c from \"product\" where c > 100 ";
+//    final String expected = "SELECT \"cases_per_pallet\" AS \"C\"\n"
+//        + "FROM \"foodmart\".\"product\"\n"
+//        + "WHERE \"cases_per_pallet\" > 100";
+//    sql(query).ok(expected);
+//  }
 
 
   @Test public void testSelectQueryAliasInSelectList() {

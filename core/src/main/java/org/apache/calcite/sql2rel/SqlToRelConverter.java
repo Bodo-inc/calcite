@@ -1168,7 +1168,7 @@ public class SqlToRelConverter {
     SqlNode newWhere = pushDownNotForIn(bb.scope(), where);
     replaceSubQueries(bb, newWhere, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
     final RexNode convertedWhere = bb.convertExpression(newWhere);
-    RexNode convertedWhere2 =
+    final RexNode convertedWhere2 =
         RexUtil.removeNullabilityCast(typeFactory, convertedWhere);
 
 
@@ -1181,14 +1181,8 @@ public class SqlToRelConverter {
 
     final RelFactories.FilterFactory filterFactory =
         RelFactories.DEFAULT_FILTER_FACTORY;
-    final RelNode filter;
-    try {
-      filter =
-          filterFactory.createFilter(bb.root(), convertedWhere2, ImmutableSet.of());
-    } catch (Throwable e) {
-      System.out.println("TODO!");
-      throw e;
-    }
+    final RelNode filter =
+        filterFactory.createFilter(bb.root(), convertedWhere2, ImmutableSet.of());
 
     final RelNode r;
     final CorrelationUse p = getCorrelationUse(bb, filter);

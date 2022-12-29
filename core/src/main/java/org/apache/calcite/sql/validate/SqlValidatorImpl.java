@@ -6430,6 +6430,18 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     return newExpr;
   }
 
+  /**
+   * Expands the given expression, expanding any identifiers that correspond to aliases
+   * in the select list. This is used to allow for propagating aliases from the select list
+   * to later expressions in the select list, or into the join/where clause. IE:
+   * SELECT (A + B * C - D) as x, x+1 FROM table1 WHERE x > 1  JOIN table2 ON x = table2.foo
+   *
+   * @param expr The expression to be expanded.
+   * @param scope The scope of the current expression,
+   *              generally equivalent to the scope of the select.
+   * @param select The select query from which to locate aliases.
+   * @return
+   */
   public SqlNode expandWithAlias(SqlNode expr,
       SqlValidatorScope scope, SqlSelect select) {
     final Expander expander = new ExtendedAliasExpander(this, scope, select);
@@ -7233,24 +7245,38 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    *
    * Finds expressions that alias to "name", in the select list.
    *
+   *
    * @param name The alias to search for in the select list
    * @param nameMatcher The nameMatcher used to check if the aliases match.
    * @param select The select to search.
    * @param maxIdx The maximum idx into the select list to search.
-   * @return A nested pair containing the number of occurrences of the alias, one of the expressions
-   * to which the alias evaluates (if there are multiple), and the index into the select list that
-   * said expression occurs at. The information is arranged (numOccurrences, (expr, expr_idx))
+   * @return A nested pair containing the number of occurrences of the alias, the last expression
+   * in the select list to which the alias evaluates (if there are multiple)
+   * (null if no such expressions exist), and the index
+   * into the select list that said expression occurs at (if there are multiple)
+   * (-1 if no such expression exists).
+   *
+   * It is left to the caller function to properly handle the case that there are
+   * no aliases, or in the case that there are multiple aliases
+   *
+   * The information is arranged (numOccurrences, (expr, expr_idx))
    */
   protected static Pair<Integer, Pair<@Nullable SqlNode, Integer>> findAliasesInSelect(
       String name, SqlNameMatcher nameMatcher, SqlSelect select, Integer maxIdx) {
     SqlNode expr = null;
     int numOccurrencesOfAlias = 0;
-    int idxOfOccurrence = 0;
+    int idxOfOccurrence = -1;
 
     for (int i = 0; i < maxIdx; i++) {
       SqlNode s = select.getSelectList().get(i);
       final String alias = SqlValidatorUtil.getAlias(s, -1);
+
       if (alias != null && nameMatcher.matches(alias, name)) {
+        //Note: In the event that there are multiple matches,
+        // we return the final matching expr, so we may clobber
+        // idxOfOccurrence and expr. For example:
+        // Select expr1 as x, expr2 as x from ...
+        // should return <2, <expr2, 1>>
         expr = s;
         idxOfOccurrence = i;
         numOccurrencesOfAlias++;
@@ -7280,7 +7306,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     // This argument instructs the expander to only check elements in the select list
     // up to but not including this index.
-    Integer maxIdx;
+    Integer maxNumCols;
 
     ExtendedAliasExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
         SqlSelect select) {
@@ -7288,25 +7314,29 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // of the select list for aliases
       super(validator, scope);
       this.aliasSourceSelect = select;
-      this.maxIdx = select.getSelectList().size();
+      this.maxNumCols = select.getSelectList().size();
     }
 
 
     ExtendedAliasExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
-        SqlSelect select, Integer maxIdx) {
+        SqlSelect select, Integer maxNumCols) {
       // This constructor is used when attempting to expand a select item, since we need to check
       // a subset of the select list for alias information
-      // Note that it is also called recursivley, in order to handle expanding chains of aliases,
+      // Note that it is also called recursively, in order to handle expanding chains of aliases,
       // IE; A as x, x as y, y as z ... etc.
       super(validator, scope);
       this.aliasSourceSelect = select;
-      this.maxIdx = maxIdx;
-      assert maxIdx <= select.getSelectList().size() && maxIdx >= 0;
+      this.maxNumCols = maxNumCols;
+      assert maxNumCols <= select.getSelectList().size() && maxNumCols >= 0;
     }
 
 
 
     @Override public @Nullable SqlNode visit(SqlIdentifier id) {
+      // All aliases from originating from "as" clauses in the select list
+      // must be simple identifiers. Therefore, this visitor only trys to expand
+      // simple identifiers, and defer to the superclass to handle the rest
+      // of the needed expansion.
       if (id.isSimple()) {
         try {
           // If we can resolve this in the regular scope, we should
@@ -7323,7 +7353,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           Pair<Integer, Pair<@Nullable SqlNode, Integer>> occurenceNumExprAndExprIdx =
               findAliasesInSelect(
               name, nameMatcher,
-              this.aliasSourceSelect, this.maxIdx);
+              this.aliasSourceSelect, this.maxNumCols);
 
           int numOccurrencesOfAlias = occurenceNumExprAndExprIdx.left;
 
@@ -7353,12 +7383,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
           // NOTE: I don't believe it is necessary to restore the original maxIdx, but
           // it doesn't hurt, in case we re-use this infrastructure at some point in the future
-          int origMaxIdx = this.maxIdx;
-          this.maxIdx = idxOfOccurence;
+          int origMaxIdx = this.maxNumCols;
+          this.maxNumCols = idxOfOccurence;
           SqlNode expandedExpr = expr.accept(this);
 
           requireNonNull(expandedExpr, "expandedExpr");
-          this.maxIdx = origMaxIdx;
+          this.maxNumCols = origMaxIdx;
 
           validator.setOriginal(expandedExpr, id);
           return expandedExpr;
@@ -7528,19 +7558,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
               ? validator.config().conformance().isHavingAlias()
               : !groupByExpr || validator.config().conformance().isGroupByAlias())) {
 
-        // Note: for Groupby/having, aliases in the select list take precedence over
-        // columns in the source table. This is the reverse of the precedence
-        // for where/on clauses.
-
-        // NOTE: this is not True for SF:
-        // SELECT A as B FROM KEATON_T1 GROUP BY B
-        // throws the following error:
-        // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
-        // (line 32)
-        // Therefore, this is wrong.
-        // TODO: merge this with the other expander?
-
-        // NOTE: this also seems to properly do CSE? The CSE may be happening in a later step.
 
         String name = id.getSimple();
         final SqlNameMatcher nameMatcher =
@@ -7561,8 +7578,39 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (havingExpr && validator.isAggregate(root)) {
           return super.visit(id);
         }
+
+
+
         SqlNode expr = occurenceNumExprAndExprIdx.right.left;
         requireNonNull(expr, "expr");
+//        if (isInstance) {
+//          return super.visit(id);
+//        }
+
+        // Note currently in Calcite, for Groupby/having, aliases in the select list
+        // take precedence over
+        // columns in the source table. This is the reverse of the precedence
+        // for where/on clauses, and is not consistent with SF's behavior:
+        // SELECT A as B FROM KEATON_T1 GROUP BY B
+        // throws the following error:
+        // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
+        //
+        // Currently, in the case that we can resolve the identifier as either an alias, or a column
+        // in the source table, we throw an error stating that the column is
+        // ambiguous
+        boolean superClassSucceeded = false;
+        try {
+          //Attempt to resolve the identifier without aliases from the select list...
+          super.visit(id);
+          superClassSucceeded = true;
+        } catch (CalciteContextException e) {
+          //If we can't resolve it without aliases, then there's no ambiguity, so we can continue.
+        }
+        if (superClassSucceeded) {
+          //If we can, then there's ambiguity, so we throw an error.
+          throw validator.newValidationError(id, RESOURCE.columnAliasPreferenceAmbiguous(name));
+        }
+
         int selectItemIdx = occurenceNumExprAndExprIdx.right.right;
         expr = stripAs(expr);
 

@@ -231,6 +231,11 @@ public interface CalciteResource {
   @BaseMessage("Column ''{0}'' is ambiguous")
   ExInst<SqlValidatorException> columnAmbiguous(String a0);
 
+  @BaseMessage("Column ''{0}'' is ambiguous. "
+      + "It could refer to the alias in the select clause, "
+      + "or the column of the same name in the source table")
+  ExInst<SqlValidatorException> columnAliasPreferenceAmbiguous(String a0);
+
   @BaseMessage("Param ''{0}'' not found in function ''{1}''; did you mean ''{2}''?")
   ExInst<SqlValidatorException> paramNotFoundInFunctionDidYouMean(String a0,
       String a1, String a2);

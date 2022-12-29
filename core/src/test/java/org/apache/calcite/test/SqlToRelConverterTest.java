@@ -5187,40 +5187,40 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   //TODO: resolving in a followup issue: https://bodo.atlassian.net/browse/BE-4092
-  @Test public void testAliasCommonExpressionPushDownWhere() {
-    sql("SELECT rand() r FROM emp\n"
-        + "WHERE r  > 0.4")
-        .ok();
-  }
-
-  //Here, rand needs to be pushed into both
-  @Test public void testAliasCommonExpressionPushDownWhereGroupBy() {
-    // Test that this DOES push down the rand() call from the select into the where clause
-    // This will more relevant when we properly handle CSE:
-    // https://bodo.atlassian.net/browse/BE-4092
-    sql("SELECT rand() + empno as group_val FROM emp WHERE group_val > 0.4 GROUP BY group_val\n")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .ok();
-  }
-
-
-  @Test public void testAliasCommonExpressionNoPushDownWhere() {
-    // Test that this DOES NOT push down the rand() call from the select into the where clause
-    // This will more relevant when we properly handle CSE:
-    // https://bodo.atlassian.net/browse/BE-4092
-    sql("SELECT rand() r FROM emp\n"
-        + "WHERE rand()  > 0.4")
-        .ok();
-  }
-
-  @Test public void testAliasCommonExpressionCantPushProject() {
-    // Test that we don't just randomly push the projects. In this case, pushing the projectList
-    // will remove ename, which will break the second where clause
-    // This will more relevant when we handle CSE: https://bodo.atlassian.net/browse/BE-4092
-    sql("SELECT empno * 10 as n FROM emp\n"
-        + "WHERE n > 5 and ename = 'bob'")
-        .ok();
-  }
+//  @Test public void testAliasCommonExpressionPushDownWhere() {
+//    sql("SELECT rand() r FROM emp\n"
+//        + "WHERE r  > 0.4")
+//        .ok();
+//  }
+//
+//  //Here, rand needs to be pushed into both
+//  @Test public void testAliasCommonExpressionPushDownWhereGroupBy() {
+//    // Test that this DOES push down the rand() call from the select into the where clause
+//    // This will more relevant when we properly handle CSE:
+//    // https://bodo.atlassian.net/browse/BE-4092
+//    sql("SELECT rand() + empno as group_val FROM emp WHERE group_val > 0.4 GROUP BY group_val\n")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .ok();
+//  }
+//
+//
+//  @Test public void testAliasCommonExpressionNoPushDownWhere() {
+//    // Test that this DOES NOT push down the rand() call from the select into the where clause
+//    // This will more relevant when we properly handle CSE:
+//    // https://bodo.atlassian.net/browse/BE-4092
+//    sql("SELECT rand() r FROM emp\n"
+//        + "WHERE rand()  > 0.4")
+//        .ok();
+//  }
+//
+//  @Test public void testAliasCommonExpressionCantPushProject() {
+//    // Test that we don't just randomly push the projects. In this case, pushing the projectList
+//    // will remove ename, which will break the second where clause
+//    // This will more relevant when we handle CSE: https://bodo.atlassian.net/browse/BE-4092
+//    sql("SELECT empno * 10 as n FROM emp\n"
+//        + "WHERE n > 5 and ename = 'bob'")
+//        .ok();
+//  }
 
   @Test public void testAliasInSelectWithGB() {
     // Test that we don't just randomly push the projects. In this case, pushing the projectList
@@ -5247,10 +5247,25 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .ok();
   }
 
+  @Test public void testRepeatedSelect() {
+    //Tests that a repeated select of the same column is allowed
+    sql("SELECT ename, ename, ename, empno as ename FROM emp\n")
+        .ok();
+  }
+
+  @Test public void testRepeatedSelectGroupBy() {
+    //Tests that a repeated select of the same column is allowed
+    sql("SELECT ename, ename, ename FROM emp group by ename\n")
+        .withConformance(SqlConformanceEnum.LENIENT)
+        .ok();
+  }
+
+
   @Test public void testAliasFrom() {
     sql("SELECT a from (SELECT empno as a, ename as b FROM emp)\n")
         .ok();
   }
+
 
   @Test public void testFromPriorityIdentifiersSelectList1() {
     //Test that the from clause is given priority when resolving identifiers in the select list
