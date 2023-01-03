@@ -4598,12 +4598,15 @@ public class SqlToRelConverter {
     // The final input to the logicalTableModify we create will have the same number of columns
     // as the destination table, plus two additional columns. The additional columns will be
     // appended
-    // as the last final two columns. The second to last column is the tinyint enum which controls
+    // as the last final two columns. The last column is the tinyint enum which controls
     // which
     // operation
     // will be performed for the given row:
     // INSERT, DELETE or UPDATE.
-    // The last column will the bodo row id column, which will keep track of the original row id
+    // The second to last column will the bodo row id column,
+    // which will keep track of the original row id
+    // the order of these two additional columns is an invariant, and it's used by the
+    // BODOSQL code base
 
     // The other values in the input table will be the columns to write back to the destination
     // table if we have an update or insert.
@@ -4828,7 +4831,9 @@ public class SqlToRelConverter {
       finalProjects.add(curColExpr);
     }
 
-
+    // Add Bodo Row ID to final projects
+    int row_id_index = mergeSourceRel.getRowType().getFieldNames().indexOf("_bodo_row_id");
+    finalProjects.add(relBuilder.getRexBuilder().makeInputRef(mergeSourceRel, row_id_index));
 
     // Finally, append the row that checks what operation we're performing
     // This will be NULL if the row is a no op. This row will be used when constructing
@@ -4850,9 +4855,6 @@ public class SqlToRelConverter {
         Arrays.asList(isUpdateRow, updateEnumLiteral, isDeleteRow, deleteEnumLiteral,
             isInsertRow, insertEnumLiteral, nullTinyIntLiteral)));
 
-    // Add Bodo Row ID to final projects
-    int row_id_index = mergeSourceRel.getRowType().getFieldNames().indexOf("_bodo_row_id");
-    finalProjects.add(relBuilder.getRexBuilder().makeInputRef(mergeSourceRel, row_id_index));
 
     relBuilder.project(finalProjects);
 
