@@ -4773,14 +4773,8 @@ public class SqlToRelConverter {
     for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount(); colIdx++) {
 
       RexNode colNullLiteral;
-      if (colIdx < targetTable.getRowType().getFieldCount()) {
-        colNullLiteral = relBuilder.getRexBuilder()
-            .makeNullLiteral(targetTable.getRowType().getFieldList().get(colIdx).getType());
-      } else {
-        //ROW_ID case
-        colNullLiteral = relBuilder.getRexBuilder()
-            .makeNullLiteral(typeFactory.createSqlType(SqlTypeName.BIGINT));
-      }
+      colNullLiteral = relBuilder.getRexBuilder()
+          .makeNullLiteral(targetTable.getRowType().getFieldList().get(colIdx).getType());
 
       // Default the update and insert expressions to be NULL literals.
       // They will be initialized to the appropriate values if we have a matched/insert expression

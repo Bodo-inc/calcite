@@ -3149,23 +3149,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql2).ok();
   }
 
-  @Test public void testFoo() {
-    sql("MERGE INTO empnullables AS t USING empnullables AS s "
-        + "ON t.empno = s.empno "
-        + "WHEN MATCHED THEN "
-        + "UPDATE SET sal = s.sal")
-        .ok();
-  }
-
-  @Test public void testFoo2() {
-    sql("MERGE INTO empnullables AS t USING empnullables AS s "
-        + "ON t.empno = s.empno "
-        + "WHEN NOT MATCHED THEN "
-        + "  insert (empno, sal, ename)\n"
-        + "  values (s.empno, s.sal, s.ename)"
-        )
-        .ok();
-  }
 
   // TODO: FIXME
 //  @Test void testMergeUpdateAlias() {
