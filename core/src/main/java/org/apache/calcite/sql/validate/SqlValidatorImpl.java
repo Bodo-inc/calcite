@@ -6433,7 +6433,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   /**
    * Expands the given expression, expanding any identifiers that correspond to aliases
    * in the select list. This is used to allow for propagating aliases from the select list
-   * to later expressions in the select list, or into the join/where clause. IE:
+   * to later expressions in the select list, or into the select clauses. IE:
    * SELECT (A + B * C - D) as x, x+1 FROM table1 WHERE x > 1  JOIN table2 ON x = table2.foo
    *
    * @param expr The expression to be expanded.
