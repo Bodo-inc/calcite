@@ -129,7 +129,7 @@ public class SqlAdvisorValidator extends SqlValidatorImpl {
   }
 
   @Override public SqlNode expandWithAlias(SqlNode expr,
-      SqlValidatorScope scope, SqlSelect sqlSelect) {
+      SqlValidatorScope scope, SqlSelect sqlSelect, ExtendedExpanderExprType exprType) {
     // Disable expansion. It doesn't help us come up with better hints.
     return expr;
   }

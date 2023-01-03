@@ -6881,13 +6881,14 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + " group by d,mgr")
         .withConformance(lenient).ok();
     // When alias is equal to one or more columns in the query then giving
-    // priority to alias. But Postgres may throw ambiguous column error or give
-    // priority to column name.
-    sql("select count(*) from (\n"
-        + "  select ename AS deptno FROM emp GROUP BY deptno) t")
-        .withConformance(lenient).ok();
+    // priority to column in the target table, as that is what Calcite does. However,
+    // different SQL dialects may throw ambiguous column error or give
+    // priority to column alias. (https://bodo.atlassian.net/browse/BE-4144)
     sql("select count(*) from "
-        + "(select ename AS deptno FROM emp, dept GROUP BY deptno) t")
+        + "(select ^ename^ AS deptno FROM emp, dept GROUP BY dept.deptno) t")
+        .withConformance(lenient).fails("Expression 'ENAME' is not being grouped");
+    sql("select count(*) from "
+        + "(select ename AS deptno FROM emp, dept GROUP BY ename) t")
         .withConformance(lenient).ok();
     sql("select empno + deptno AS \"z\" FROM emp GROUP BY \"Z\"")
         .withConformance(lenient).withCaseSensitive(false).ok();
@@ -6985,11 +6986,12 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .withConformance(strict).fails("Expression 'E.EMPNO' is not being grouped")
         .withConformance(lenient).ok();
     // When alias is equal to one or more columns in the query then giving
-    // priority to alias, but PostgreSQL throws ambiguous column error or gives
-    // priority to column name.
+    // priority to column in the target table, as that is what Calcite does. However,
+    // different SQL dialects may throw ambiguous column error or give
+    // priority to column alias. (https://bodo.atlassian.net/browse/BE-4144)
     sql("select count(empno) as deptno from emp having ^deptno^ > 10")
         .withConformance(strict).fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(lenient).ok();
+        .withConformance(lenient).fails("Expression 'DEPTNO' is not being grouped");
     // Alias in aggregate is not allowed.
     sql("select empno as e from emp having max(^e^) > 10")
         .withConformance(strict).fails("Column 'E' not found in any table")
@@ -8432,9 +8434,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT DISTINCT deptno, 33 FROM emp\n"
         + "GROUP BY deptno HAVING deptno > 55").ok();
     sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped");
-    // same query under a different conformance finds a different error first
-    sql("SELECT DISTINCT ^deptno^, 33 FROM emp HAVING deptno > 55")
+        .fails("Expression 'DEPTNO' is not being grouped")
         .withConformance(SqlConformanceEnum.LENIENT)
         .fails("Expression 'DEPTNO' is not being grouped");
     sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
@@ -8990,7 +8990,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 //        .rewritesTo(expectedSql);
   }
 
-  @Test public void testSelectQueryAliasInGroupBy() {
+  @Test public void testGroupByAliasNotEqualToColumnName() {
     // In SF, aliases from the source table are given preference in groupby/having cluases
     // IE:
     //
@@ -8998,15 +8998,18 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // Should throw an error:
     // 'KEATON_T1.A' in select clause is neither an aggregate nor in the group by clause.
     //
-    // For us, we treat the column as ambiguous,
-    // and throw a validation error.
-    String query = "select empno as ename from emp group BY ^ename^";
+    // Currently, we match snowflakes behavior. However, we should do a followup
+    // to allow the user to specify one or the other. (https://bodo.atlassian.net/browse/BE-4144)
+
+    String query = "select ^empno^ as ename from emp group BY ename";
     sql(query).withConformance(SqlConformanceEnum.LENIENT).fails(
-        "Column 'ENAME' is ambiguous\\. "
-            +
-            "It could refer to the alias in the select clause, "
-            +
-            "or the column of the same name in the source table");
+        "Expression 'EMPNO' is not being grouped");
+  }
+
+  @Test void testGroupByAliasNotEqualToColumnName2() {
+    sql("select empno, ^ename^ as deptno from emp group by empno, deptno")
+        .withConformance(SqlConformanceEnum.LENIENT).fails(
+            "Expression 'ENAME' is not being grouped");
   }
 
 
@@ -12480,11 +12483,11 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     }
 
     @Override public SqlNode expandGroupByOrHavingOrQualifyExpr(SqlNode expr,
-        SqlValidatorScope scope, SqlSelect select, boolean havingExpression,
-        boolean groupByExpression) {
+        SqlValidatorScope scope, SqlSelect select,
+        ExtendedExpanderExprType extendedExpanderExprType) {
       SqlNode rewrittenNode = rewriteNode(expr);
       return super.expandGroupByOrHavingOrQualifyExpr(rewrittenNode, scope, select,
-          havingExpression, groupByExpression);
+          extendedExpanderExprType);
     }
 
     private SqlNode rewriteNode(SqlNode sqlNode) {

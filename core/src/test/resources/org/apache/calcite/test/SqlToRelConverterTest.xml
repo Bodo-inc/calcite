@@ -6843,6 +6843,24 @@ LogicalAggregate(group=[{0}], CNT=[COUNT()])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testRepeatedSelect">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ENAME=[$1], ENAME0=[$1], ENAME1=[$1], ENAME2=[$0])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testRepeatedSelectGroupBy">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(ENAME=[$0], ENAME0=[$0], ENAME1=[$0])
+  LogicalAggregate(group=[{0}])
+    LogicalProject(ENAME=[$1])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testRollup">
     <Resource name="sql">
       <![CDATA[select 1
@@ -9577,5 +9595,4 @@ LogicalProject(X=[$0], X0=[$0])
       <![CDATA[SELECT empno as x, x as x FROM emp]]>
     </Resource>
   </TestCase>
-
 </Root>

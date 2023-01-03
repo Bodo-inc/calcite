@@ -341,10 +341,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .withConformance(SqlConformanceEnum.LENIENT).ok();
   }
 
-  @Test void testGroupByAliasEqualToColumnName() {
-    sql("select empno, ename as deptno from emp group by empno, deptno")
-        .withConformance(SqlConformanceEnum.LENIENT).ok();
-  }
 
   @Test void testGroupByOrdinal() {
     sql("select empno from emp group by 1")
