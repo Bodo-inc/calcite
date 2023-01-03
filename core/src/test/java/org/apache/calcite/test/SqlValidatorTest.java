@@ -8974,12 +8974,6 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + " group by unexpanded.deptno\n"
         + " having sum(unexpanded.deptno) > 0\n"
         + " order by unexpanded.deptno";
-//    final String expectedSql = "SELECT `DEPT`.`DEPTNO`\n"
-//        + "FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`\n"
-//        + "WHERE `DEPT`.`NAME` = 'Moonracer'\n"
-//        + "GROUP BY `DEPT`.`DEPTNO`\n"
-//        + "HAVING SUM(`DEPT`.`DEPTNO`) > 0\n"
-//        + "ORDER BY `DEPT`.`DEPTNO`";
     SqlValidatorTestCase.FIXTURE
         .withFactory(t -> t.withValidator(UnexpandedToDeptValidator::new))
         .withSql(sql)
@@ -8987,7 +8981,6 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .withValidatorColumnReferenceExpansion(true)
         .withConformance(SqlConformanceEnum.LENIENT)
         .fails("Table 'UNEXPANDED' not found");
-//        .rewritesTo(expectedSql);
   }
 
   @Test public void testGroupByAliasNotEqualToColumnName() {
