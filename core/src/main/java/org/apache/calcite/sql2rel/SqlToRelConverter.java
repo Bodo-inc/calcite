@@ -4619,7 +4619,7 @@ public class SqlToRelConverter {
     // or UPDATE_ENUM) else INSERT_ENUM)
 
     //NOTE: there may be some rows that are no ops. These rows will be filled with NULL
-    // by the case statments constructed below.
+    // by the case statements constructed below.
     //NOTE2: Each of the conditions in the source select have already been filled with TRUE
     // if they are unconditional. This was handled in rewrite_merge
     SqlSelect sourceSelect = call.getSourceSelect();
@@ -4763,8 +4763,11 @@ public class SqlToRelConverter {
 
     // NOTE: there is a lot of repeated case logic. We should make sure that the
     // appropriate Rex Nodes are actually being cached/reused when possible
-    // +1 to allow us to handle ROW_ID column
-    for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount() + 1; colIdx++) {
+    // NOTE2: We do not include the +1 to allow us to handle ROW_ID column,
+    // that's handled separately below. This is because we always want to select the ROW_ID column
+    // directly as an input ref, even in the case that it's always nullable.
+    // TODO: remove the ROW_ID column from the matched/not matched case nodes, since it's unused.
+    for (int colIdx = 0; colIdx < targetTable.getRowType().getFieldCount(); colIdx++) {
 
       RexNode colNullLiteral;
       if (colIdx < targetTable.getRowType().getFieldCount()) {
