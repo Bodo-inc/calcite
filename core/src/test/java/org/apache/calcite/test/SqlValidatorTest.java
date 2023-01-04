@@ -2877,8 +2877,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
   /**
    * Test generating an interval literal in Snowflake syntax where
-   * a literal has multiple comma separated values. This should parse
-   * but raise an exception
+   * a literal and its unit are inside the quoted string.
    */
   void subTestIntervalStringLiterals() {
     expr("INTERVAL '1 Year'")
