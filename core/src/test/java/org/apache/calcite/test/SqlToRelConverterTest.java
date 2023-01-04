@@ -953,7 +953,27 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testSelectInfixCastStringDate() {
-    withPostgresLib(sql("select '2023-01-04 10:59:03.399029'::DATE from emp")).ok();
+    withPostgresLib(sql("select '2020-02-14 10:59:03.399029'::DATE from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastStringFloat() {
+    withPostgresLib(sql("select '2020.21232'::FLOAT from emp")).ok();
+    withPostgresLib(sql("select '2020.21232'::float from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastFloatString() {
+    withPostgresLib(sql("select 123.411::varchar from emp")).ok();
+    withPostgresLib(sql("select 123.411::varchar from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastIntFloat() {
+    withPostgresLib(sql("select 12321::FLOAT from emp")).ok();
+    withPostgresLib(sql("select 12321::float from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastFloatInt() {
+    withPostgresLib(sql("select 123.21::tinyint from emp")).ok();
+    withPostgresLib(sql("select 123.21::tinyint from emp")).ok();
   }
 
 

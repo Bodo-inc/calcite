@@ -7109,6 +7109,9 @@ LogicalProject(EXPR$0=[CAST($0):VARCHAR NOT NULL])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
+    <Resource name="sql">
+      <![CDATA[select empno::varchar from emp]]>
+    </Resource>
   </TestCase>
   <TestCase name="testSelectInfixCastColumnSameType">
     <Resource name="plan">
@@ -7141,6 +7144,36 @@ LogicalProject(EXPR$0=['2000-01-01':VARCHAR])
     </Resource>
     <Resource name="sql">
       <![CDATA[select (DATE '2000-01-01')::varchar from emp]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectInfixCastFloatInt">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[123.21:TINYINT])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectInfixCastFloatString">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=['123.411':VARCHAR])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select 123.411::varchar from emp]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectInfixCastIntFloat">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[12321:FLOAT])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select 12321::float from emp]]>
     </Resource>
   </TestCase>
   <TestCase name="testSelectInfixCastScalarIntString">
@@ -7179,12 +7212,23 @@ LogicalProject(EXPR$0=[123], EXPR$1=[CAST('abc'):INTEGER NOT NULL])
   <TestCase name="testSelectInfixCastStringDate">
     <Resource name="plan">
       <![CDATA[
-LogicalProject(EXPR$0=[CAST('2023-01-04 10:59:03.399029'):DATE NOT NULL])
+LogicalProject(EXPR$0=[CAST('2020-02-14 10:59:03.399029'):DATE NOT NULL])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
     <Resource name="sql">
-      <![CDATA[select '2023-01-04 10:59:03.399029'::DATE from emp]]>
+      <![CDATA[select '2020-02-14 10:59:03.399029'::DATE from emp]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectInfixCastStringFloat">
+    <Resource name="sql">
+      <![CDATA[select '2020.21232'::float from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[2.020212E3:FLOAT])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
     </Resource>
   </TestCase>
   <TestCase name="testSelectInfixCastStringTimestamp">
