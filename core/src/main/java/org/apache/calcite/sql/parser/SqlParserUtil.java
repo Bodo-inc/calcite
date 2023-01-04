@@ -232,40 +232,83 @@ public final class SqlParserUtil {
     for (String intervalInfo: splitStrings) {
       String trimmedStr = intervalInfo.trim();
       String[] intervalParts = trimmedStr.split("\\s+");
-      if (intervalParts.length == 1) {
-        intervalStrings.add(intervalParts[0]);
-        // If we only have 1 part the default Interval is seconds.
-        intervalQualifiers.add(new SqlIntervalQualifier(TimeUnit.SECOND, null, pos));
-      } else if (intervalParts.length == 2) {
-        intervalStrings.add(intervalParts[0]);
+      if (intervalParts.length == 1 || intervalParts.length == 2) {
+        final String intervalAmountStr;
+        final String timeUnitStr;
+        if (intervalParts.length == 1) {
+          // If we have only 1 part then it may not be space separated (rare but possible).
+          // If we so we look for the first non-numeric character and split on that.
+          int endIdx = -1;
+          final String baseStr = intervalParts[0];
+          for (int i = 0; i < baseStr.length(); i++) {
+            if (!Character.isDigit(baseStr.charAt(i))) {
+              endIdx = i;
+              break;
+            }
+          }
+          if (endIdx == -1) {
+            // If we only have 1 part the default Interval is seconds.
+            intervalAmountStr = baseStr;
+            timeUnitStr = "second";
+          } else {
+            intervalAmountStr = baseStr.substring(0, endIdx);
+            timeUnitStr = baseStr.substring(endIdx).toLowerCase(Locale.ROOT);
+          }
+        } else {
+          intervalAmountStr = intervalParts[0];
+          timeUnitStr = intervalParts[1].toLowerCase(Locale.ROOT);
+        }
+        intervalStrings.add(intervalAmountStr);
         // Parse the second string into the valid time units.
         // Here we support the time units supported by the other interval syntax only.
-        // TODO: Support all interval values support by Snowflake in both interval paths.
-        String timeUnitString = intervalParts[1].toLowerCase(Locale.ROOT);
+        // TODO: Support all interval values supported by Snowflake in both interval paths.
         final TimeUnit unit;
-        switch (timeUnitString) {
+        switch (timeUnitStr) {
         case "year":
         case "years":
+        case "y":
+        case "yy":
+        case "yyy":
+        case "yyyy":
+        case "yr":
+        case "yrs":
           unit = TimeUnit.YEAR;
           break;
         case "month":
         case "months":
+        case "mm":
+        case "mon":
+        case "mons":
           unit = TimeUnit.MONTH;
           break;
         case "day":
         case "days":
+        case "d":
+        case "dd":
+        case "dayofmonth":
           unit = TimeUnit.DAY;
           break;
         case "hour":
         case "hours":
+        case "h":
+        case "hh":
+        case "hr":
+        case "hrs":
           unit = TimeUnit.HOUR;
           break;
         case "minute":
         case "minutes":
+        case "m":
+        case "mi":
+        case "min":
+        case "mins":
           unit = TimeUnit.MINUTE;
           break;
         case "second":
         case "seconds":
+        case "s":
+        case "sec":
+        case "secs":
           unit = TimeUnit.SECOND;
           break;
         default:

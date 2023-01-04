@@ -7498,7 +7498,7 @@ public class SqlParserTest {
     // Invalid units
     expr("INTERVAL '2' ^MILLENNIUM^")
         .fails(ANY);
-    expr("INTERVAL '1-2' ^MILLENNIUM^ TO CENTURY")
+    expr("^INTERVAL '1-2'^ MILLENNIUM TO CENTURY")
         .fails(ANY);
     expr("INTERVAL '10' ^CENTURY^")
         .fails(ANY);
