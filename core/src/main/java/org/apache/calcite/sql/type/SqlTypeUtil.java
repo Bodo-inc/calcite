@@ -822,6 +822,10 @@ public abstract class SqlTypeUtil {
       return true;
     }
 
+    if (toType.equals(SqlTypeName.TIMESTAMP) && fromType.equals(SqlTypeName.VARCHAR)) {
+      return true;
+    }
+
     final SqlTypeName fromTypeName = fromType.getSqlTypeName();
     final SqlTypeName toTypeName = toType.getSqlTypeName();
     if (toTypeName == SqlTypeName.UNKNOWN) {
