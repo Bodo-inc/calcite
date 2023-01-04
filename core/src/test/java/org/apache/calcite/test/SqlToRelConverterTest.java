@@ -2720,23 +2720,15 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test void testIntervalInfixCast() {
     // temporarily disabled per DTbug 1212
-    // Bodo note: this is currently not fixed for us
+    // Bodo note: this is not fixed for our current version,
+    // and we will need to add the result to the XML file
+    // once its fixed
     if (!Bug.DT785_FIXED) {
       return;
     }
     final String sql =
         "values(interval '1' hour::interval hour to second)";
-    sql(sql).withFactory(t ->
-        // Create a customized test with RelCollation trait in the test
-        // cluster.
-        t.withOperatorTable(optab ->
-            SqlOperatorTables.chain(optab,
-                // Bodo change: adding POSTGRESQL so we can test ::
-                // In Bodo Code, we just directly add the :: to one of our operator tables,
-                // but this is faster for simple testing
-                SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(
-                    SqlLibrary.POSTGRESQL))
-        )).ok();
+    withPostgresLib(sql(sql)).ok();
   }
 
   @Test void testStream() {

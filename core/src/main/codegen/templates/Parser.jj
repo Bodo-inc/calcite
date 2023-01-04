@@ -3833,7 +3833,7 @@ List<Object> Expression2(ExprContext exprContext) :
                     }
                 ]
             |
-                LOOKAHEAD(3) InfixCast(list, exprContext, s)
+                InfixCast(list, exprContext, s)
             |
             <#list (parser.extraBinaryExpressions!default.parser.extraBinaryExpressions) as extra >
                 ${extra}(list, exprContext, s)
@@ -5589,7 +5589,7 @@ SqlDataTypeSpec DataType() :
         s = Span.of(typeName.getParserPos());
     }
     (
-        typeName = CollectionsTypeName(typeName)
+        LOOKAHEAD(3) typeName = CollectionsTypeName(typeName)
     )*
     {
         return new SqlDataTypeSpec(typeName, s.add(typeName.getParserPos()).pos());

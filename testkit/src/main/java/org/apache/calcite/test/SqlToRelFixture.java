@@ -18,8 +18,6 @@ package org.apache.calcite.test;
 
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
-import org.apache.calcite.sql.fun.SqlLibrary;
-import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.test.SqlTestFactory;
 import org.apache.calcite.sql.test.SqlTester;
 import org.apache.calcite.sql.test.SqlValidatorTester;
@@ -58,10 +56,7 @@ public class SqlToRelFixture {
                 if (config.conformance().allowGeometry()) {
                   opTab =
                       SqlOperatorTables.chain(opTab,
-                          SqlOperatorTables.spatialInstance(),
-                          //Bodo change: adding POSTGRESQL so we can test ::
-                          SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(
-                              SqlLibrary.POSTGRESQL));
+                          SqlOperatorTables.spatialInstance());
                 }
                 return SqlValidatorUtil.newValidator(opTab, catalogReader,
                     typeFactory, config.withIdentifierExpansion(true));
