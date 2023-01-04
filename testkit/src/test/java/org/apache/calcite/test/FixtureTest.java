@@ -54,8 +54,9 @@ public class FixtureTest {
         .fails("(?s)Encountered \"as\".*");
 
     // Postgres cast is invalid with core parser
-    f.sql("select 1 ^:^: integer as x")
-        .fails("(?s).*Encountered \":\" at .*");
+    // BODO CHANGE: now it is a part of core parser
+//    f.sql("select 1 ^:^: integer as x")
+//        .fails("(?s).*Encountered \":\" at .*");
 
     // Backtick fails
     f.sql("select ^`^foo` from `bar``")

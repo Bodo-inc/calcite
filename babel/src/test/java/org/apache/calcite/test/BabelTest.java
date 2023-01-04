@@ -126,8 +126,9 @@ class BabelTest {
             + "FROM `T`");
 
     // Postgres cast is invalid with core parser
-    p.sql("select 1 ^:^: integer as x")
-        .fails("(?s).*Encountered \":\" at .*");
+    // BODO CHANGE infix cast is now a part of the core parser
+//    p.sql("select 1 ^:^: integer as x")
+//        .fails("(?s).*Encountered \":\" at .*");
   }
 
 //  @Test void testNullSafeEqual() {

@@ -3833,6 +3833,8 @@ List<Object> Expression2(ExprContext exprContext) :
                     }
                 ]
             |
+                LOOKAHEAD(3) InfixCast(list, exprContext, s)
+            |
             <#list (parser.extraBinaryExpressions!default.parser.extraBinaryExpressions) as extra >
                 ${extra}(list, exprContext, s)
             |
@@ -6008,6 +6010,24 @@ SqlNode CursorExpression(ExprContext exprContext) :
     }
     e = Expression(ExprContext.ACCEPT_QUERY) {
         return SqlStdOperatorTable.CURSOR.createCall(s.end(e), e);
+    }
+}
+
+
+/** Parses the infix "::" cast operator used in PostgreSQL. */
+void InfixCast(List<Object> list, ExprContext exprContext, Span s) :
+{
+    final SqlDataTypeSpec dt;
+}
+{
+    <INFIX_CAST> {
+        checkNonQueryExpression(exprContext);
+    }
+    dt = DataType() {
+        list.add(
+            new SqlParserUtil.ToTreeListItem(SqlLibraryOperators.INFIX_CAST,
+                s.pos()));
+        list.add(dt);
     }
 }
 
@@ -8433,6 +8453,7 @@ void NonReservedKeyWord2of3() :
 |   < VERTICAL_BAR: "|" >
 |   < CARET: "^" >
 |   < DOLLAR: "$" >
+|   < INFIX_CAST: "::" >
 <#list (parser.binaryOperatorsTokens!default.parser.binaryOperatorsTokens) as operator>
 |   ${operator}
 </#list>
