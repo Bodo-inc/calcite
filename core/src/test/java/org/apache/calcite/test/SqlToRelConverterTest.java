@@ -41,7 +41,9 @@ import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.fun.SqlLibrary;
+import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlDelegatingConformance;
@@ -908,6 +910,52 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   @Test void testSelectNullWithCast() {
     sql("select cast(null as timestamp) dummy from emp").ok();
   }
+
+  @Test void testSelectNullWithInfixCast() {
+    withPostgresLib(sql("select null::varchar dummy from emp")).ok();
+  }
+
+  @Test void testSelectNullWithInfixCast2() {
+    withPostgresLib(sql("select null::integer dummy from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastScalarSameType() {
+    withPostgresLib(sql("select 123::integer from emp")).ok();
+  }
+  @Test void testSelectInfixCastColumnSameType() {
+    withPostgresLib(sql("select empno::integer from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastScalarIntString() {
+    withPostgresLib(sql("select 123::varchar from emp")).ok();
+  }
+  @Test void testSelectInfixCastColumnIntString() {
+    withPostgresLib(sql("select empno::varchar from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastScalarStringInt() {
+    withPostgresLib(sql("select '123'::integer, 'abc'::integer from emp")).ok();
+  }
+  @Test void testSelectInfixCastColumnStringInt() {
+    withPostgresLib(sql("select ename::integer from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastTimestampString() {
+    withPostgresLib(sql("select (TIMESTAMP '1997-01-31 09:26:50.124')::varchar from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastDateString() {
+    withPostgresLib(sql("select (DATE '2000-01-01')::varchar from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastStringTimestamp() {
+    withPostgresLib(sql("select '2023-01-04 10:59:03.399029'::TIMESTAMP from emp")).ok();
+  }
+
+  @Test void testSelectInfixCastStringDate() {
+    withPostgresLib(sql("select '2023-01-04 10:59:03.399029'::DATE from emp")).ok();
+  }
+
 
   @Test void testSelectDistinct() {
     sql("select distinct sal + 5 from emp").ok();
@@ -2668,6 +2716,27 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql =
         "values(cast(interval '1' hour as interval hour to second))";
     sql(sql).ok();
+  }
+
+  @Test void testIntervalInfixCast() {
+    // temporarily disabled per DTbug 1212
+    // Bodo note: this is currently not fixed for us
+    if (!Bug.DT785_FIXED) {
+      return;
+    }
+    final String sql =
+        "values(interval '1' hour::interval hour to second)";
+    sql(sql).withFactory(t ->
+        // Create a customized test with RelCollation trait in the test
+        // cluster.
+        t.withOperatorTable(optab ->
+            SqlOperatorTables.chain(optab,
+                // Bodo change: adding POSTGRESQL so we can test ::
+                // In Bodo Code, we just directly add the :: to one of our operator tables,
+                // but this is faster for simple testing
+                SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(
+                    SqlLibrary.POSTGRESQL))
+        )).ok();
   }
 
   @Test void testStream() {
@@ -5652,5 +5721,25 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
                 config.withIdentifierExpansion(false)))
         .withTrim(false)
         .ok();
+  }
+
+  /**
+   * Helper function that adds the postgresql library to the known operator table list.
+   * Used by Bodo for testing the "::" operator (since it's faster than defining a custom
+   * operator table containg only "::")
+   * @return new SqlToRelFixture with the postgresql operator table added
+   */
+  private SqlToRelFixture withPostgresLib(SqlToRelFixture f) {
+    return f.withFactory(t ->
+            // Create a customized test with RelCollation trait in the test
+            // cluster.
+            t.withOperatorTable(optab ->
+                SqlOperatorTables.chain(optab,
+                    // Bodo change: adding POSTGRESQL so we can test ::
+                    // In Bodo Code, we just directly add the :: to one of our operator tables,
+                    // but this is faster for simple testing
+                    SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(
+                        SqlLibrary.POSTGRESQL))
+            ));
   }
 }
