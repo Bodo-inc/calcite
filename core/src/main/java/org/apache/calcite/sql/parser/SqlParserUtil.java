@@ -237,6 +237,7 @@ public final class SqlParserUtil {
         final String timeUnitStr;
         if (intervalParts.length == 1) {
           // If we have only 1 part then it may not be space separated (rare but possible).
+          // For example: Interval '30d'.
           // If we so we look for the first non-numeric character and split on that.
           int endIdx = -1;
           final String baseStr = intervalParts[0];
