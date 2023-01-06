@@ -213,7 +213,7 @@ public abstract class SqlLibraryOperators {
   @LibraryOperator(libraries = {ORACLE})
   public static final SqlFunction LEAST =
       new SqlFunction("LEAST", SqlKind.LEAST,
-          ReturnTypes.LEAST_RESTRICTIVE.andThen(SqlTypeTransforms.TO_NULLABLE),
+          ReturnTypes.ARG0,
           null, OperandTypes.SAME_VARIADIC, SqlFunctionCategory.SYSTEM);
 
   /**

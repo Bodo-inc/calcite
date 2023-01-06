@@ -6111,6 +6111,8 @@ public class SqlOperatorTest {
     f.checkScalar("least(12, CAST(NULL AS INTEGER), 3)", isNullValue(),
         "INTEGER");
     f.checkScalar("least(false, true)", false, "BOOLEAN NOT NULL");
+    f.checkScalar("least(CURRENT_TIMESTAMP, '2022-12-18')", isNullValue(),
+        "TIMESTAMP('UTC') NOT NULL");
 
     final SqlOperatorFixture f12 = f.forOracle(SqlConformanceEnum.ORACLE_12);
     f12.checkString("least('on', 'earth')", "earth", "VARCHAR(5) NOT NULL");

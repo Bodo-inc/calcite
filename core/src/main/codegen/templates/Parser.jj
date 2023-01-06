@@ -4987,6 +4987,15 @@ TimeUnit Month() :
     <MONTHS> { return warn(TimeUnit.MONTH); }
 }
 
+TimeUnit Week() :
+{
+}
+{
+    <WEEK> { return TimeUnit.WEEK; }
+|
+    <WEEKS> { return warn(TimeUnit.WEEK); }
+}
+
 TimeUnit Day() :
 {
 }
@@ -5039,6 +5048,8 @@ SqlIntervalQualifier IntervalQualifier() :
         ]
     |
         start = Month() { s = span(); } startPrec = PrecisionOpt()
+    |
+        start = Week() { s = span(); } startPrec = PrecisionOpt()
     |
         start = Day() { s = span(); } startPrec = PrecisionOpt()
         [
@@ -5095,6 +5106,7 @@ SqlIntervalQualifier IntervalQualifierStart() :
         (
             start = Year()
         |   start = Month()
+        |   start = Week()
         |   start = Day()
         |   start = Hour()
         |   start = Minute()
@@ -8230,6 +8242,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < VERSIONING: "VERSIONING" >
 |   < VIEW: "VIEW" >
 |   < WEEK: "WEEK" >
+|   < WEEKS: "WEEKS" >
 |   < WHEN: "WHEN" >
 |   < WHENEVER: "WHENEVER" >
 |   < WHERE: "WHERE" >
