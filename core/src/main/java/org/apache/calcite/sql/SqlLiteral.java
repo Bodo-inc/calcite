@@ -208,6 +208,7 @@ public class SqlLiteral extends SqlNode {
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
+    case INTERVAL_WEEK:
     case INTERVAL_DAY:
     case INTERVAL_DAY_HOUR:
     case INTERVAL_DAY_MINUTE:
@@ -363,6 +364,7 @@ public class SqlLiteral extends SqlNode {
         return clazz.cast(valMonth.getIntervalQualifier());
       }
       break;
+    case INTERVAL_WEEK:
     case INTERVAL_DAY:
     case INTERVAL_DAY_HOUR:
     case INTERVAL_DAY_MINUTE:
@@ -376,8 +378,13 @@ public class SqlLiteral extends SqlNode {
       final SqlIntervalLiteral.IntervalValue valTime =
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
-        return clazz.cast(valTime.getSign()
-            * SqlParserUtil.intervalToMillis(valTime));
+        if (typeName.getName().equals("INTERVAL_WEEK")) {
+          return clazz.cast(valTime.getSign()
+              * SqlParserUtil.weekIntervalToMillis(valTime));
+        } else {
+          return clazz.cast(valTime.getSign()
+              * SqlParserUtil.intervalToMillis(valTime));
+        }
       } else if (clazz == BigDecimal.class) {
         return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class)));
       } else if (clazz == TimeUnitRange.class) {
@@ -797,6 +804,7 @@ public class SqlLiteral extends SqlNode {
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
+    case INTERVAL_WEEK:
     case INTERVAL_DAY:
     case INTERVAL_DAY_HOUR:
     case INTERVAL_DAY_MINUTE:

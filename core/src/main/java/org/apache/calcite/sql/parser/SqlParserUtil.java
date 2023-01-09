@@ -353,6 +353,30 @@ public final class SqlParserUtil {
         interval.getIntervalQualifier());
   }
 
+  public static long weekIntervalToMillis(
+      SqlIntervalLiteral.IntervalValue interval) {
+    return weekIntervalToMillis(
+        interval.getIntervalLiteral(),
+        interval.getIntervalQualifier());
+  }
+
+  public static long weekIntervalToMillis(
+      String literal,
+      SqlIntervalQualifier intervalQualifier) {
+
+    int[] ret;
+    try {
+      ret = intervalQualifier.evaluateIntervalLiteral(literal,
+          intervalQualifier.getParserPosition(), RelDataTypeSystem.DEFAULT);
+      assert ret != null;
+    } catch (CalciteContextException e) {
+      throw new RuntimeException("TODO WEEK INTERVAL MESSAGE HERE "
+          + literal, e);
+    }
+    long millisecondsInWeek = 604800000;
+    return ret[0] * ret[2] * millisecondsInWeek;
+  }
+
   public static long intervalToMillis(
       String literal,
       SqlIntervalQualifier intervalQualifier) {

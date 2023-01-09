@@ -151,8 +151,9 @@ public class SqlIntervalQualifier extends SqlNode {
     case ISODOW:
     case DOY:
     case DAY:
-    case WEEK:
       return SqlTypeName.INTERVAL_DAY;
+    case WEEK:
+      return SqlTypeName.INTERVAL_WEEK;
     case DAY_TO_HOUR:
       return SqlTypeName.INTERVAL_DAY_HOUR;
     case DAY_TO_MINUTE:
