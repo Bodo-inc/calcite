@@ -5653,4 +5653,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .withTrim(false)
         .ok();
   }
+
+  @Test void testDateAddSub() {
+    String sql = "Select DATE '2022-1-1' + 5, DATE '2023-1-15' - 2";
+    sql(sql).ok();
+  }
 }
