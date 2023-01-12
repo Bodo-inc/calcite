@@ -240,7 +240,7 @@ public abstract class OperandTypes {
       family(SqlTypeFamily.DATE, SqlTypeFamily.INTEGER);
 
   public static final SqlSingleOperandTypeChecker INTEGER_DATE =
-      family(SqlTypeFamily.DATE, SqlTypeFamily.INTEGER);
+      family(SqlTypeFamily.INTEGER, SqlTypeFamily.DATE);
 
   public static final SqlSingleOperandTypeChecker EXACT_NUMERIC_EXACT_NUMERIC =
       family(SqlTypeFamily.EXACT_NUMERIC, SqlTypeFamily.EXACT_NUMERIC);
