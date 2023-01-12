@@ -56,7 +56,6 @@ import org.slf4j.Logger;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -284,6 +283,7 @@ public final class SqlParserUtil {
           unit = TimeUnit.MONTH;
           break;
         case "week":
+        case "weeks":
         case "w":
         case "wk":
         case "weekofyear":
@@ -377,9 +377,10 @@ public final class SqlParserUtil {
           + literal, e);
     }
 
-    if intervalQualifier.timeUnitRange.toString().equals("WEEK"):
-        long millisecondsInWeek = 604800000;
-        return ret[0] * ret[2] * millisecondsInWeek;
+    if (intervalQualifier.timeUnitRange.toString().equals("WEEK")) {
+      long millisecondsInWeek = 604800000;
+      return ret[0] * ret[2] * millisecondsInWeek;
+    }
 
     long l = 0;
     long[] conv = new long[5];

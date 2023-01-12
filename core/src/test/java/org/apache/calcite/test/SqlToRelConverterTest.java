@@ -963,7 +963,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testSelectCurrentTimestampIntervalWeek() {
-    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '5' WEEKS from emp";
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp";
     sql(sql).ok();
   }
 
