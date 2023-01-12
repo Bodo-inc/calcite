@@ -378,13 +378,8 @@ public class SqlLiteral extends SqlNode {
       final SqlIntervalLiteral.IntervalValue valTime =
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
-        if (typeName.getName().equals("INTERVAL_WEEK")) {
-          return clazz.cast(valTime.getSign()
-              * SqlParserUtil.weekIntervalToMillis(valTime));
-        } else {
           return clazz.cast(valTime.getSign()
               * SqlParserUtil.intervalToMillis(valTime));
-        }
       } else if (clazz == BigDecimal.class) {
         return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class)));
       } else if (clazz == TimeUnitRange.class) {

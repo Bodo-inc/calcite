@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -282,6 +283,14 @@ public final class SqlParserUtil {
         case "mons":
           unit = TimeUnit.MONTH;
           break;
+        case "week":
+        case "w":
+        case "wk":
+        case "weekofyear":
+        case "woy":
+        case "wy":
+          unit = TimeUnit.WEEK;
+          break;
         case "day":
         case "days":
         case "d":
@@ -353,30 +362,6 @@ public final class SqlParserUtil {
         interval.getIntervalQualifier());
   }
 
-  public static long weekIntervalToMillis(
-      SqlIntervalLiteral.IntervalValue interval) {
-    return weekIntervalToMillis(
-        interval.getIntervalLiteral(),
-        interval.getIntervalQualifier());
-  }
-
-  public static long weekIntervalToMillis(
-      String literal,
-      SqlIntervalQualifier intervalQualifier) {
-
-    int[] ret;
-    try {
-      ret = intervalQualifier.evaluateIntervalLiteral(literal,
-          intervalQualifier.getParserPosition(), RelDataTypeSystem.DEFAULT);
-      assert ret != null;
-    } catch (CalciteContextException e) {
-      throw new RuntimeException("TODO WEEK INTERVAL MESSAGE HERE "
-          + literal, e);
-    }
-    long millisecondsInWeek = 604800000;
-    return ret[0] * ret[2] * millisecondsInWeek;
-  }
-
   public static long intervalToMillis(
       String literal,
       SqlIntervalQualifier intervalQualifier) {
@@ -391,6 +376,11 @@ public final class SqlParserUtil {
       throw new RuntimeException("while parsing day-to-second interval "
           + literal, e);
     }
+
+    if intervalQualifier.timeUnitRange.toString().equals("WEEK"):
+        long millisecondsInWeek = 604800000;
+        return ret[0] * ret[2] * millisecondsInWeek;
+
     long l = 0;
     long[] conv = new long[5];
     conv[4] = 1; // millisecond
