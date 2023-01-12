@@ -78,7 +78,7 @@ public enum SqlTypeName {
   INTERVAL_MONTH(PrecScale.NO_NO, false, Types.OTHER,
       SqlTypeFamily.INTERVAL_YEAR_MONTH),
   INTERVAL_WEEK(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
-      false, Types.OTHER, SqlTypeFamily.INTERVAL_WEEK_DAY),
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_WEEK),
   INTERVAL_DAY(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_DAY_HOUR(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
@@ -199,8 +199,7 @@ public enum SqlTypeName {
           SqlTypeName.INTERVAL_MONTH);
 
   public static final Set<SqlTypeName> WEEK_INTERVAL_TYPES =
-      Sets.immutableEnumSet(SqlTypeName.INTERVAL_WEEK,
-          SqlTypeName.INTERVAL_DAY);
+      Sets.immutableEnumSet(SqlTypeName.INTERVAL_WEEK);
 
   public static final Set<SqlTypeName> DAY_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_DAY,
