@@ -214,7 +214,7 @@ public abstract class SqlLibraryOperators {
   public static final SqlFunction LEAST =
       new SqlFunction("LEAST", SqlKind.LEAST,
           ReturnTypes.ARG0,
-          null, OperandTypes.VARIADIC, SqlFunctionCategory.SYSTEM);
+          null, OperandTypes.SAME_VARIADIC, SqlFunctionCategory.SYSTEM);
 
   /**
    * The <code>TRANSLATE(<i>string_expr</i>, <i>search_chars</i>,
