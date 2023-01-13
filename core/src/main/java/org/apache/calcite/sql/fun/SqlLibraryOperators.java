@@ -213,8 +213,8 @@ public abstract class SqlLibraryOperators {
   @LibraryOperator(libraries = {ORACLE})
   public static final SqlFunction LEAST =
       new SqlFunction("LEAST", SqlKind.LEAST,
-          ReturnTypes.LEAST_RESTRICTIVE.andThen(SqlTypeTransforms.TO_NULLABLE),
-          null, OperandTypes.SAME_VARIADIC, SqlFunctionCategory.SYSTEM);
+          ReturnTypes.ARG0,
+          null, OperandTypes.VARIADIC, SqlFunctionCategory.SYSTEM);
 
   /**
    * The <code>TRANSLATE(<i>string_expr</i>, <i>search_chars</i>,
