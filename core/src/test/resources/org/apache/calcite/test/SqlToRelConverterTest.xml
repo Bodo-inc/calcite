@@ -7031,7 +7031,7 @@ LogicalProject(CURRENT_TIMESTAMP=[CURRENT_TIMESTAMP])
     </Resource>
   </TestCase><TestCase name="testSelectCurrentTimestampIntervalWeek">
   <Resource name="sql">
-    <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5' WEEKS from emp]]>
+    <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
   </Resource>
   <Resource name="plan">
     <![CDATA[
@@ -7040,6 +7040,17 @@ LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 3024000000:INTERVAL WEEK)])
 ]]>
   </Resource>
 </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalWeekSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' WEEKS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 4838400000:INTERVAL WEEK)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testSelectDistinct">
     <Resource name="sql">
       <![CDATA[select distinct sal + 5 from emp]]>
