@@ -33,7 +33,7 @@ public class SqlTzAwareTypeNameSpec extends SqlTypeNameSpec {
 
   public final BodoTZInfo origTz;
 
-  
+
   /**
    * Creates a {@code SqlTzAwareTypeNameSpec} from an existing TZAwareSqlType.
    *
