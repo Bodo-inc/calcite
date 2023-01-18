@@ -41,7 +41,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * Tests the "Babel" SQL parser, that understands all dialects of SQL.
+ * Tests the Bodo SQL parser. This parser is currently an offshoot of the babel parser,
+ * that allows us to
+ *
  * Currently, this only contains tests equivalent to Babel, but this can and should
  * be extended in the future.
  */
@@ -49,7 +51,7 @@ class BodoParserTest extends SqlParserTest {
 
   @Override public SqlParserFixture fixture() {
     return super.fixture()
-        .withTester(new BabelTesterImpl())
+        .withTester(new BodoTesterImpl())
         .withConfig(c -> c.withParserFactory(SqlBodoParserImpl.FACTORY));
   }
 
@@ -133,14 +135,14 @@ class BodoParserTest extends SqlParserTest {
     sql(sql.toString()).ok(expected.toString());
   }
 
-  /** In Babel, AS is not reserved. */
+  /** In Babel/Bodo, AS is not reserved. */
   @Test void testAs() {
     final String expected = "SELECT `AS`\n"
         + "FROM `T`";
     sql("select as from t").ok(expected);
   }
 
-  /** In Babel, DESC is not reserved. */
+  /** In Babel/Bodo, DESC is not reserved. */
   @Test void testDesc() {
     final String sql = "select desc\n"
         + "from t\n"
@@ -324,7 +326,7 @@ class BodoParserTest extends SqlParserTest {
    * <p>If a test case is written in this file -- that is, not inherited -- it
    * is still checked by {@link SqlParserTest}'s checker.
    */
-  public static class BabelTesterImpl extends TesterImpl {
+  public static class BodoTesterImpl extends TesterImpl {
     @Override protected void checkEx(String expectedMsgPattern,
         StringAndPos sap, @Nullable Throwable thrown) {
       if (thrown != null && thrownByBabelTest(thrown)) {
