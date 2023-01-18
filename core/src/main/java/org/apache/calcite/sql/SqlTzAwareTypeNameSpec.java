@@ -23,6 +23,8 @@ import org.apache.calcite.sql.type.TZAwareSqlType;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.util.Litmus;
 
+import java.util.Objects;
+
 /**
  * A sql type name specification of a timezone aware sql type.
  *
@@ -31,15 +33,28 @@ public class SqlTzAwareTypeNameSpec extends SqlTypeNameSpec {
 
   public final BodoTZInfo origTz;
 
+  
   /**
-   * Creates a {@code SqlTypeNameSpec}.
+   * Creates a {@code SqlTzAwareTypeNameSpec} from an existing TZAwareSqlType.
    *
-   * @param name Name of the type
-   * @param pos  Parser position, must not be null
+   * @param type The TZAwareSqlType
    */
   public SqlTzAwareTypeNameSpec(final TZAwareSqlType type) {
-    super(type.getSqlIdentifier(), SqlParserPos.ZERO);
+    super(Objects.requireNonNull(type.getSqlIdentifier()), SqlParserPos.ZERO);
     this.origTz = type.getTZInfo();
+  }
+
+
+  /**
+   * Creates a {@code SqlTzAwareTypeNameSpec}.
+   *
+   * @param name Name of the type, must not be null
+   * @param info TzInfo of the type, must not be null
+   * @param pos  Parser position, must not be null
+   */
+  SqlTzAwareTypeNameSpec(SqlIdentifier name, BodoTZInfo info, SqlParserPos pos) {
+    super(name, pos);
+    this.origTz = info;
   }
 
   @Override public RelDataType deriveType(final SqlValidator validator) {
