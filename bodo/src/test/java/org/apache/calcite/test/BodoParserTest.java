@@ -42,7 +42,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests the Bodo SQL parser. This parser is currently an offshoot of the babel parser,
- * that allows us to
+ * that allows us to extend the parser to suit our own purposes.
  *
  * Currently, this only contains tests equivalent to Babel, but this can and should
  * be extended in the future.
