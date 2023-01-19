@@ -47,7 +47,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Currently, this only contains tests equivalent to Babel, but this can and should
  * be extended in the future.
  */
-class BodoParserTest extends SqlParserTest {
+public class BodoParserTest extends SqlParserTest {
 
   @Override public SqlParserFixture fixture() {
     return super.fixture()
