@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.bodo;
 /**
  * gradlew javadoc throws an error if there aren't any classes in this package, so I'm just making
- * this dummy so that the build doesn't error
+ * this dummy so that the build doesn't error.
  */
 public class DummyJavaClass {
 }

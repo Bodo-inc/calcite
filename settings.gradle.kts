@@ -145,4 +145,3 @@ property("localAutostyle")?.ifBlank { "../autostyle" }?.let {
     println("Importing project '$it'")
     includeBuild("../autostyle")
 }
-
