@@ -84,6 +84,7 @@ import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWindowTableFunction;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -3177,6 +3178,37 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           false);
       break;
 
+    case CREATE_TABLE:
+      //TODO: I'll likely need some sort of call to
+      // validateFeature()
+      // to confirm that the sql dialect we're validating for supports CREATE_TABLE.
+      // For now, leaving this blank
+      SqlCreateTable createTable = (SqlCreateTable) node;
+      System.out.println("TODO");
+      List<SqlNode> operandList = createTable.getOperandList();
+      //should have three values, name, columnList, query
+      assert operandList.size() == 3;
+      //scope of the select should be the scope of the overall schema
+      //TODO: do I need a namespace for create table? I don't think I do, but merge
+      //has one. It might be an invariant that every node has a namespace?
+      registerQuery(
+          parentScope,
+          null,
+          operandList.get(2),
+          enclosingNode,
+          null,
+          false
+          );
+      break;
+
+      //      SqlValidatorScope parentScope,
+      //      @Nullable SqlValidatorScope usingScope,
+      //      SqlNode node,
+      //      SqlNode enclosingNode,
+      //      @Nullable String alias,
+      //      boolean forceNullable
+      //      boolean checkUpdate
+
     case MERGE:
       validateFeature(RESOURCE.sQLFeature_F312(), node.getParserPosition());
       SqlMerge mergeCall = (SqlMerge) node;
@@ -5383,6 +5415,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     validateAccess(call.getTargetTable(), table, SqlAccessEnum.UPDATE);
   }
 
+  @Override public void validateCreateTable(SqlCreateTable call) {
+    System.out.println("TODO!");
+  }
+
   @Override public void validateMerge(SqlMerge call) {
 
     SqlSelect sqlSelect = SqlNonNullableAccessors.getSourceSelect(call);
@@ -6848,6 +6884,229 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     @Override public @Nullable SqlNode getNode() {
       return node;
+    }
+  }
+
+
+  /**
+   * Namespace for a CREATE TABLE statement. Defers most typing queries to the underlying
+   * Query that constructs the table.
+   *
+   * Note: this does not extend DmlNamespace because DmlNamespace
+   * requires there to be an exisiting target table, which is not true
+   * for create table statements. Therefore we extend the default
+   */
+  private static class CreateTableNamespace implements SqlValidatorNamespace {
+    private final SqlCreateTable node;
+    private final SqlValidatorNamespace childQueryNamespace;
+
+
+    CreateTableNamespace(SqlCreateTable node, SqlValidatorNamespace childQueryNamespace) {
+      this.node = node;
+      this.childQueryNamespace = childQueryNamespace;
+    }
+
+
+    /**
+     * Returns the validator.
+     *
+     * @return validator
+     */
+    @Override
+    public SqlValidator getValidator() {
+      return childQueryNamespace.getValidator();
+    }
+
+    /**
+     * Returns the underlying table, or null if there is none.
+     */
+    @Override
+    public @Nullable SqlValidatorTable getTable() {
+      return null;
+    }
+
+    /**
+     * Returns the row type of this namespace, which comprises a list of names
+     * and types of the output columns. If the scope's type has not yet been
+     * derived, derives it.
+     *
+     * @return Row type of this namespace, never null, always a struct
+     */
+    @Override
+    public RelDataType getRowType() {
+      return childQueryNamespace.getRowType();
+    }
+
+    /**
+     * Returns the type of this namespace.
+     *
+     * @return Row type converted to struct
+     */
+    @Override
+    public RelDataType getType() {
+      return childQueryNamespace.getType();
+    }
+
+    /**
+     * Sets the type of this namespace.
+     *
+     * <p>Allows the type for the namespace to be explicitly set, but usually is
+     * called during {@link #validate(RelDataType)}.</p>
+     *
+     * <p>Implicitly also sets the row type. If the type is not a struct, then
+     * the row type is the type wrapped as a struct with a single column,
+     * otherwise the type and row type are the same.</p>
+     *
+     * @param type
+     */
+    @Override
+    public void setType(final RelDataType type) {
+      //I think this should be a no-op? The type of the create statement should entirely
+      //depend on the underlying query.
+    }
+
+    /**
+     * Returns the row type of this namespace, sans any system columns.
+     *
+     * @return Row type sans system columns
+     */
+    @Override
+    public RelDataType getRowTypeSansSystemColumns() {
+      return childQueryNamespace.getRowTypeSansSystemColumns();
+    }
+
+    /**
+     * Validates this namespace.
+     *
+     * <p>If the scope has already been validated, does nothing.</p>
+     *
+     * <p>Please call {@link SqlValidatorImpl#validateNamespace} rather than
+     * calling this method directly.</p>
+     *
+     * @param targetRowType Desired row type, must not be null, may be the data
+     *                      type 'unknown'.
+     */
+    @Override
+    public void validate(final RelDataType targetRowType) {
+      childQueryNamespace.validate(targetRowType);
+    }
+
+    @Override public @Nullable SqlNode getNode() {
+      return node;
+    }
+
+    /**
+     * Returns the parse tree node that at is at the root of this namespace and
+     * includes all decorations. If there are no decorations, returns the same
+     * as {@link #getNode()}.
+     */
+    @Override
+    public @Nullable SqlNode getEnclosingNode() {
+      return node;
+    }
+
+    /**
+     * Looks up a child namespace of a given name.
+     *
+     * <p>For example, in the query <code>select e.name from emps as e</code>,
+     * <code>e</code> is an {@link IdentifierNamespace} which has a child <code>
+     * name</code> which is a {@link FieldNamespace}.
+     *
+     * @param name Name of namespace
+     * @return Namespace
+     */
+    @Override
+    public @Nullable SqlValidatorNamespace lookupChild(final String name) {
+      return this.childQueryNamespace.lookupChild(name);
+    }
+
+    /**
+     * Returns whether this namespace has a field of a given name.
+     *
+     * @param name Field name
+     * @return Whether field exists
+     */
+    @Override
+    public boolean fieldExists(final String name) {
+      return this.childQueryNamespace.fieldExists(name);
+    }
+
+    /**
+     * Returns a list of expressions which are monotonic in this namespace. For
+     * example, if the namespace represents a relation ordered by a column
+     * called "TIMESTAMP", then the list would contain a
+     * {@link SqlIdentifier} called "TIMESTAMP".
+     */
+    @Override
+    public List<Pair<SqlNode, SqlMonotonicity>> getMonotonicExprs() {
+      return this.childQueryNamespace.getMonotonicExprs();
+    }
+
+    /**
+     * Returns whether and how a given column is sorted.
+     *
+     * @param columnName
+     */
+    @Override
+    public SqlMonotonicity getMonotonicity(final String columnName) {
+      return this.childQueryNamespace.getMonotonicity();
+    }
+
+    @Override
+    public void makeNullable() {
+      this.childQueryNamespace.makeNullable();
+    }
+
+    /**
+     * Returns this namespace, or a wrapped namespace, cast to a particular
+     * class.
+     *
+     * @param clazz Desired type
+     * @return This namespace cast to desired type
+     * @throws ClassCastException if no such interface is available
+     */
+    @Override
+    public <T> T unwrap(final Class<T> clazz) {
+      return null;
+    }
+
+    /**
+     * Returns whether this namespace implements a given interface, or wraps a
+     * class which does.
+     *
+     * @param clazz Interface
+     * @return Whether namespace implements given interface
+     */
+    @Override
+    public boolean isWrapperFor(final Class<?> clazz) {
+      return false;
+    }
+
+    /**
+     * If this namespace resolves to another namespace, returns that namespace,
+     * following links to the end of the chain.
+     *
+     * <p>A {@code WITH}) clause defines table names that resolve to queries
+     * (the body of the with-item). An {@link IdentifierNamespace} typically
+     * resolves to a {@link TableNamespace}.</p>
+     *
+     * <p>You must not call this method before {@link #validate(RelDataType)} has
+     * completed.</p>
+     */
+    @Override
+    public SqlValidatorNamespace resolve() {
+      return childQueryNamespace;
+    }
+
+    /**
+     * Returns whether this namespace is capable of giving results of the desired
+     * modality. {@code true} means streaming, {@code false} means relational.
+     *
+     * @param modality Modality
+     */
+    @Override
+    public boolean supportsModality(final SqlModality modality) {
+      return childQueryNamespace.supportsModality();
     }
   }
 
