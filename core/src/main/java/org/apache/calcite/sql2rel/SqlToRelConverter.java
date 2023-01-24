@@ -154,6 +154,7 @@ import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.AggregatingSelectScope;
 import org.apache.calcite.sql.validate.CollectNamespace;
 import org.apache.calcite.sql.validate.DelegatingScope;
+import org.apache.calcite.sql.validate.JoinScope;
 import org.apache.calcite.sql.validate.ListScope;
 import org.apache.calcite.sql.validate.MatchRecognizeScope;
 import org.apache.calcite.sql.validate.ParameterScope;
@@ -3186,6 +3187,14 @@ public class SqlToRelConverter {
     final RelNode leftRel = requireNonNull(leftBlackboard.root, "leftBlackboard.root");
     convertFrom(rightBlackboard, right);
     final RelNode tempRightRel = requireNonNull(rightBlackboard.root, "rightBlackboard.root");
+    // Append tracking any extra nodes in either side of a join
+    for (int offset: leftBlackboard.offsetNodes) {
+      fromBlackboard.offsetNodes.add(offset);
+    }
+    for (int offset: rightBlackboard.offsetNodes) {
+      // TODO: FIXME
+      fromBlackboard.offsetNodes.add(offset);
+    }
 
     final JoinConditionType conditionType = join.getConditionType();
     final RexNode condition;
@@ -3283,9 +3292,13 @@ public class SqlToRelConverter {
 
     bb.setRoot(ImmutableList.of(leftRel, rightRel));
     replaceSubQueries(bb, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
-    final RelNode newRightRel = bb.root == null || bb.registered.size() == 0
+    boolean newRight = bb.root == null || bb.registered.size() == 0;
+    final RelNode newRightRel = newRight
         ? rightRel
         : bb.reRegister(rightRel);
+    if (newRight) {
+      bb.offsetNodes.add(((JoinScope) bb.scope).children.size());
+    }
     bb.setRoot(ImmutableList.of(leftRel, newRightRel));
     RexNode conditionExp =  bb.convertExpression(condition);
     return Pair.of(conditionExp, newRightRel);
@@ -5360,6 +5373,8 @@ public class SqlToRelConverter {
 
     final List<RelNode> cursors = new ArrayList<>();
 
+    List<Integer> offsetNodes = new ArrayList<>();
+
     /**
      * List of <code>IN</code> and <code>EXISTS</code> nodes inside this
      * <code>SELECT</code> statement (but not inside sub-queries).
@@ -5652,7 +5667,14 @@ public class SqlToRelConverter {
       if ((inputs != null) && !isParent) {
         final LookupContext rels =
             new LookupContext(this, inputs, systemFieldList.size());
-        final RexNode node = lookup(resolve.path.steps().get(0).i, rels);
+        int initial_index = resolve.path.steps().get(0).i;
+        int actual_index = initial_index;
+        for (int offset: offsetNodes) {
+          if (initial_index <= offset) {
+            actual_index++;
+          }
+        }
+        final RexNode node = lookup(actual_index, rels);
         assert node != null;
         return Pair.of(node, (e, fieldName) -> {
           final RelDataTypeField field =
