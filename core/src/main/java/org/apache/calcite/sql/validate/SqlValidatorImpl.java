@@ -1256,6 +1256,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case ORDER_BY:
     case TABLESAMPLE:
       return getNamespace(((SqlCall) node).operand(0));
+    case CREATE_TABLE:
+      return getNamespace(((SqlCall) node).operand(2));
     default:
       return namespaces.get(node);
     }
@@ -3193,7 +3195,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       //has one. It might be an invariant that every node has a namespace?
       registerQuery(
           parentScope,
-          null,
+          usingScope, //Should be null?
           operandList.get(2),
           enclosingNode,
           null,
@@ -7049,10 +7051,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public SqlMonotonicity getMonotonicity(final String columnName) {
-      return this.childQueryNamespace.getMonotonicity();
+      return this.childQueryNamespace.getMonotonicity(columnName);
     }
 
     @Override
+    @Deprecated
     public void makeNullable() {
       this.childQueryNamespace.makeNullable();
     }
@@ -7106,7 +7109,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public boolean supportsModality(final SqlModality modality) {
-      return childQueryNamespace.supportsModality();
+      return childQueryNamespace.supportsModality(modality);
     }
   }
 
