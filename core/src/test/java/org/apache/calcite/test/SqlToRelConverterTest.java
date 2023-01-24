@@ -6103,4 +6103,116 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         "on pv.product_id = po.product_id";
     withPostgresLib(sql(sql)).ok();
   }
+
+  @Test void testJoinConditionSubQuery4() {
+    // Tests with some re-ordering of the sub-queries to confirm the fix is sufficiently general
+
+    String sql = "with dummy_table as (select 1 as A),\n"
+        +
+        "\n"
+        +
+        "product_options as (\n"
+        +
+        "         select 1 as brand_id\n"
+        +
+        "              , 2 as product_id\n"
+        +
+        "         from dummy_table\n"
+        +
+        "     ),\n"
+        +
+        "\n"
+        +
+        "products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds\n"
+        +
+        "        from dummy_table\n"
+        +
+        "),\n"
+        +
+        "\n"
+        +
+        "etl_datascience_products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds,\n"
+        +
+        "            2 as secondary_product_id\n"
+        +
+        "        from dummy_table\n"
+        +
+        "),\n"
+        +
+        "\n"
+        +
+        "production_product_videos_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as id,\n"
+        +
+        "            null::timestamp as updated_at,\n"
+        +
+        "            null::varchar as token,\n"
+        +
+        "            null::varchar as state,\n"
+        +
+        "            2 as brand_id,\n"
+        +
+        "            null::timestamp as first_published_at,\n"
+        +
+        "            3 as product_id,\n"
+        +
+        "            4 as video_id,\n"
+        +
+        "            null::timestamp as created_at,\n"
+        +
+        "            false as is_deleted\n"
+        +
+        "        from dummy_table\n"
+        +
+        ")\n"
+        +
+        "\n"
+        +
+        "\n"
+        +
+        "select\n"
+        +
+        "             po.product_id\n"
+        +
+        "             from etl_datascience_products_daily_summary_spoof pds "
+        +
+        " right join product_options po\n"
+        +
+        "on po.product_id = pds.product_id\n"
+        +
+        "                 and pds.ds::date = (select max(ds) from ("
+        +
+        "         select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
+        +
+        "         emp.deptno = etl_spoof.product_id))\n"
+        +
+        "                 and pds.secondary_product_id = (select max(secondary_product_id) from "
+        +
+        "etl_datascience_products_daily_summary_spoof)\n"
+        +
+        "                      left join production_product_videos_spoof pv\n"
+        +
+        "on pv.product_id = po.product_id and pv.updated_at::date <= (select max(ds) from ("
+        +
+        "         select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
+        +
+        "         emp.deptno = etl_spoof.product_id))";
+
+    withPostgresLib(sql(sql)).ok();
+  }
 }
