@@ -3297,9 +3297,17 @@ public class SqlToRelConverter {
         ? rightRel
         : bb.reRegister(rightRel);
     if (newRight) {
+      final LookupContext rels = new LookupContext(
+          bb, ImmutableList.of(leftRel, newRightRel), bb.systemFieldList.size());
+
+
       JoinScope curJoinScope = (JoinScope) requireNonNull(bb.scope);
-      bb.offsetNodes.add(curJoinScope.children.size());
+      if (rels.relOffsetList.size() != curJoinScope.children.size()) {
+        bb.offsetNodes.add(curJoinScope.children.size());
+      }
     }
+
+
     bb.setRoot(ImmutableList.of(leftRel, newRightRel));
     RexNode conditionExp =  bb.convertExpression(condition);
     return Pair.of(conditionExp, newRightRel);
@@ -5668,6 +5676,12 @@ public class SqlToRelConverter {
       if ((inputs != null) && !isParent) {
         final LookupContext rels =
             new LookupContext(this, inputs, systemFieldList.size());
+
+        if (ancestorScope instanceof JoinScope
+            &&
+            ((JoinScope) ancestorScope).children.size() != rels.relOffsetList.size()) {
+          System.out.println("TODO: hit the noted issue with the lookup");
+        }
         int initial_index = resolve.path.steps().get(0).i;
         int actual_index = initial_index;
         for (int offset: offsetNodes) {
@@ -6808,6 +6822,7 @@ public class SqlToRelConverter {
      * @param systemFieldCount Number of system fields
      */
     LookupContext(Blackboard bb, List<RelNode> rels, int systemFieldCount) {
+//      tmp_output =
       bb.flatten(rels, systemFieldCount, new int[]{0}, relOffsetList);
     }
 
