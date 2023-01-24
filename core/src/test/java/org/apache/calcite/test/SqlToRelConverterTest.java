@@ -6088,7 +6088,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "             from etl_datascience_products_daily_summary_spoof pds "
         +
-        " right join product_options po"
+        " right join product_options po\n"
         +
         "on po.product_id = pds.product_id\n"
         +
@@ -6098,9 +6098,9 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "         emp.deptno = etl_spoof.product_id))\n"
         +
-        "                      left join production_product_videos_spoof pv on pv.product_id = po"
+        "                      left join production_product_videos_spoof pv\n"
         +
-        ".product_id";
+        "on pv.product_id = po.product_id";
     withPostgresLib(sql(sql)).ok();
   }
 }

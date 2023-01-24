@@ -3296,14 +3296,20 @@ public class SqlToRelConverter {
     final RelNode newRightRel = newRight
         ? rightRel
         : bb.reRegister(rightRel);
+
+
+    final LookupContext rels = new LookupContext(
+        bb, ImmutableList.of(leftRel, newRightRel), bb.systemFieldList.size());
+    JoinScope curJoinScope = (JoinScope) requireNonNull(bb.scope);
+
     if (newRight) {
-      final LookupContext rels = new LookupContext(
-          bb, ImmutableList.of(leftRel, newRightRel), bb.systemFieldList.size());
-
-
-      JoinScope curJoinScope = (JoinScope) requireNonNull(bb.scope);
       if (rels.relOffsetList.size() != curJoinScope.children.size()) {
         bb.offsetNodes.add(curJoinScope.children.size());
+      }
+    } else {
+      if (rels.relOffsetList.size() != curJoinScope.children.size()) {
+//        bb.offsetNodes.add(curJoinScope.children.size());
+        System.out.println("TODO: This should never happen?");
       }
     }
 
