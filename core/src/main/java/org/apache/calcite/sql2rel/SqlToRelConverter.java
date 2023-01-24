@@ -3297,7 +3297,8 @@ public class SqlToRelConverter {
         ? rightRel
         : bb.reRegister(rightRel);
     if (newRight) {
-      bb.offsetNodes.add(((JoinScope) bb.scope).children.size());
+      JoinScope curJoinScope = (JoinScope) requireNonNull(bb.scope);
+      bb.offsetNodes.add(curJoinScope.children.size());
     }
     bb.setRoot(ImmutableList.of(leftRel, newRightRel));
     RexNode conditionExp =  bb.convertExpression(condition);

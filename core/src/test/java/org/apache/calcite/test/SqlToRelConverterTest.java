@@ -5790,6 +5790,17 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+
+  @Test void testEmpTableOrder() {
+    String sql = "Select * from EMP\n";
+    sql(sql).ok();
+  }
+
+  @Test void testDEPTTableOrder() {
+    String sql = "Select * from DEPT\n";
+    sql(sql).ok();
+  }
+
   @Test void testJoinConditionSubQuery() {
     String sql ="with dummy_table as (select 1 as A),\n"
   +
