@@ -6210,7 +6210,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 
 // This test is currently skipped due to an issue with in/not in:
 // https://bodo.atlassian.net/browse/BE-4307
-// In general, there may be issues with non-aggregate sub-querries, or any other construct that
+// In general, there may be issues with non-aggregate sub-queries, or any other construct that
 // relies on the subQueryList in SqlToRelConverter, which will be fixed in the followup issue
 // specified above
 

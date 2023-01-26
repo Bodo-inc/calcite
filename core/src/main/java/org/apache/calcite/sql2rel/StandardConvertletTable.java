@@ -941,11 +941,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
             eqList.add(rexBuilder.makeCall(op, x, y)));
         return RexUtil.composeConjunction(rexBuilder, eqList);
       }
-      System.out.println("ANOTHER BREAKPOINT?!?!");
     }
-//    if (SqlKind.EQUALS == op){
-////      && RexUtil.flatten(exprs, op).get(0).toString() == "TODO"
-//    }
     return rexBuilder.makeCall(type, op, RexUtil.flatten(exprs, op));
   }
 

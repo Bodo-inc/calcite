@@ -3189,9 +3189,7 @@ public class SqlToRelConverter {
     final RelNode tempRightRel = requireNonNull(rightBlackboard.root, "rightBlackboard.root");
 
 
-    // Append tracking any extra nodes in either side of a join
-    // This must occur AFTER we convert the ON condition, since that is where we add subquerries
-    // into the right rel
+    // Append tracking of any added subquery nodes in either side of a join
     for (int offset: leftBlackboard.offsetNodes) {
       fromBlackboard.offsetNodes.add(offset);
     }
@@ -3233,6 +3231,8 @@ public class SqlToRelConverter {
       }
     }
 
+    // Finally, append the offsets to the parent blackboard to handle the recursive
+    // case
     for (int offset: fromBlackboard.offsetNodes) {
       bb.offsetNodes.add(offset);
     }
@@ -3297,17 +3297,11 @@ public class SqlToRelConverter {
       SqlJoin join,
       RelNode leftRel,
       RelNode rightRel) {
+
     SqlNode condition = requireNonNull(join.getCondition(),
         () -> "getCondition for join " + join);
 
     bb.setRoot(ImmutableList.of(leftRel, rightRel));
-
-    final LookupContext old_rels = new LookupContext(
-        bb, ImmutableList.of(leftRel, rightRel), bb.systemFieldList.size());
-    JoinScope curJoinScope = (JoinScope) requireNonNull(bb.scope);
-
-    final LookupContext old_left_rels = new LookupContext(
-        bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
 
     final LookupContext old_right_rels = new LookupContext(
         bb, ImmutableList.of(rightRel), bb.systemFieldList.size());
@@ -3318,42 +3312,25 @@ public class SqlToRelConverter {
         ? rightRel
         : bb.reRegister(rightRel);
 
-
-    final LookupContext rels = new LookupContext(
-        bb, ImmutableList.of(leftRel, newRightRel), bb.systemFieldList.size());
-
+    /**
+     * Logic needed to update the offset list, which tracks at what offsets inserted sub queries
+     * can be found in the flattened rel list. (see the variable for more information)
+     */
     final LookupContext left_rels = new LookupContext(
         bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
 
     final LookupContext right_rels = new LookupContext(
         bb, ImmutableList.of(newRightRel), bb.systemFieldList.size());
 
-    SqlValidatorNamespace cond_ns = getNamespaceOrNull(join.getCondition());
-    SqlValidatorNamespace left_ns = getNamespaceOrNull(join.getLeft());
-    SqlValidatorNamespace right_ns = getNamespaceOrNull(join.getRight());
-
-    if (left_rels.relOffsetList.size() != old_left_rels.relOffsetList.size()) {
-      System.out.println("Ok, based on my understanding, this actually should never happen.");
-    }
-    if (right_rels.relOffsetList.size() != old_right_rels.relOffsetList.size()) {
-      System.out.println("This can happen, and will happen regularly. "
-          +
-          "When this happens, newRight should be false (it's a poorly named variable)");
-    }
-
+    // This variable is confusingly named, we've added sub-queries to the right rel
+    // if newRight is false
     if (!newRight) {
       for (int i = 0;
            i < right_rels.relOffsetList.size() - old_right_rels.relOffsetList.size(); i++) {
         bb.offsetNodes.add(
-            old_left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
-      }
-    } else {
-      if (rels.relOffsetList.size() != curJoinScope.children.size()) {
-//        bb.offsetNodes.add(curJoinScope.children.size());
-        System.out.println("I believe that this should now never happen? Like, for realsies?");
+            left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
       }
     }
-
 
     bb.setRoot(ImmutableList.of(leftRel, newRightRel));
     RexNode conditionExp = bb.convertExpression(condition);
@@ -5005,12 +4982,7 @@ public class SqlToRelConverter {
     RexNode e = e0.left;
     for (String name : qualified.suffix()) {
       if (e == e0.left && e0.right != null) {
-        try {
-          e = e0.right.apply(e, name);
-        } catch (Throwable e1) {
-          System.out.println("PUT YOUR BREAKPOINT HERE");
-          throw e1;
-        }
+        e = e0.right.apply(e, name);
       } else {
         final boolean caseSensitive = true; // name already fully-qualified
         if (identifier.isStar() && bb.scope instanceof MatchRecognizeScope) {
@@ -5434,6 +5406,21 @@ public class SqlToRelConverter {
 
     final List<RelNode> cursors = new ArrayList<>();
 
+    /**
+     * This variable is used specifically for handling sub-queries in the "on" condition of joins.
+     *
+     * Normally, the list of children in the scope of a join and the flattened list of rels
+     * for a given join node have the same indices. We use this information to properly resolve
+     * identifiers into input Refs with the correct offsets.
+     *
+     * However, when converting the on conditions of a join, Calcite must
+     * get the information from the sub-queries via joining them with the appropriate tables.
+     * This results in additional rels being inserted
+     * into the flattened list, which breaks the above assumption.
+     *
+     * In order to resolve this, we keep track of the indices into which we insert sub queries,
+     * which allows us to properly handle this when creating input refs.
+     */
     List<Integer> offsetNodes = new ArrayList<>();
 
     /**
@@ -5729,21 +5716,12 @@ public class SqlToRelConverter {
         final LookupContext rels =
             new LookupContext(this, inputs, systemFieldList.size());
 
-        if (ancestorScope instanceof JoinScope
-            &&
-            ((JoinScope) ancestorScope).children.size() != rels.relOffsetList.size()) {
-          System.out.println("TODO: hit the noted issue with the lookup");
-        }
-        if (qualified.identifier.names.get(1).equals("PRODUCT_ID")
-            && qualified.identifier.names.get(0).equals("ETL_SPOOF")) {
-          System.out.println("BREAKPOINT HERE");
-        }
 
         int initial_index = resolve.path.steps().get(0).i;
         int actual_index = initial_index;
         for (int offset: offsetNodes) {
-          //Need to use actual_index here, to account for multiple subqueries being inlined in the
-          // Same on clause
+          // Need to use actual_index here, to account for multiple sub-queries
+          // being inlined in the same on clause
           if (actual_index >= offset) {
             actual_index++;
           }
@@ -6286,7 +6264,7 @@ public class SqlToRelConverter {
   private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
     assert operator.kind == SqlKind.ALL;
     if (operator.comparisonKind == SqlKind.LIKE || operator.comparisonKind == SqlKind.NULL_EQUALS) {
-      throw new AssertionError("TODO! Needed for full subquerry support, See BS-552");
+      throw new AssertionError("TODO! Needed for full subquery support, See BS-552");
     }
     return SqlStdOperatorTable.some(operator.comparisonKind.negateNullSafe());
   }
@@ -6881,7 +6859,6 @@ public class SqlToRelConverter {
      * @param systemFieldCount Number of system fields
      */
     LookupContext(Blackboard bb, List<RelNode> rels, int systemFieldCount) {
-//      tmp_output =
       bb.flatten(rels, systemFieldCount, new int[]{0}, relOffsetList);
     }
 
