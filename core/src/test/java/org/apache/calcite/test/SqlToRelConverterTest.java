@@ -6211,8 +6211,11 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "         select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
         +
-        "         emp.deptno = etl_spoof.product_id))";
-
+        "         emp.deptno = etl_spoof.product_id))\n"
+        +
+        "         join emp on emp.deptno = po.product_id\n"
+        +
+        "         join dept on emp.deptno = dept.deptno\n";
     withPostgresLib(sql(sql)).ok();
   }
 }
