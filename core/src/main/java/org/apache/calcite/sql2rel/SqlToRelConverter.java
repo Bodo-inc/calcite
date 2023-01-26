@@ -154,7 +154,6 @@ import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.AggregatingSelectScope;
 import org.apache.calcite.sql.validate.CollectNamespace;
 import org.apache.calcite.sql.validate.DelegatingScope;
-import org.apache.calcite.sql.validate.JoinScope;
 import org.apache.calcite.sql.validate.ListScope;
 import org.apache.calcite.sql.validate.MatchRecognizeScope;
 import org.apache.calcite.sql.validate.ParameterScope;
@@ -3189,13 +3188,16 @@ public class SqlToRelConverter {
     final RelNode tempRightRel = requireNonNull(rightBlackboard.root, "rightBlackboard.root");
 
 
-    // Append tracking of any added subquery nodes in either side of a join
+    // Append tracking of any added sub query nodes in either side of a join
     for (int offset: leftBlackboard.offsetNodes) {
       fromBlackboard.offsetNodes.add(offset);
     }
+
+    final LookupContext left_rels = new LookupContext(
+        bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
+
     for (int offset: rightBlackboard.offsetNodes) {
-      // TODO: FIXME
-      fromBlackboard.offsetNodes.add(offset);
+      fromBlackboard.offsetNodes.add(offset + left_rels.relOffsetList.size());
     }
 
 
@@ -3313,7 +3315,8 @@ public class SqlToRelConverter {
         : bb.reRegister(rightRel);
 
     /**
-     * Logic needed to update the offset list, which tracks at what offsets inserted sub queries
+     * Logic needed to update the offset list, which tracks at what offsets in the
+     * relnode list we insert sub queries
      * can be found in the flattened rel list. (see the variable for more information)
      */
     final LookupContext left_rels = new LookupContext(
