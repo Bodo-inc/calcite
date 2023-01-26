@@ -3336,13 +3336,16 @@ public class SqlToRelConverter {
       System.out.println("Ok, based on my understanding, this actually should never happen.");
     }
     if (right_rels.relOffsetList.size() != old_right_rels.relOffsetList.size()) {
-      System.out.println("This can happen, and will happen regularly. When this happens, newRight should be false (it's a poorly named variable)");
+      System.out.println("This can happen, and will happen regularly. "
+          +
+          "When this happens, newRight should be false (it's a poorly named variable)");
     }
 
     if (!newRight) {
-      for (int i = 0; i < right_rels.relOffsetList.size() - old_right_rels.relOffsetList.size(); i++) {
-//        bb.offsetNodes.add(i);
-        bb.offsetNodes.add(old_left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
+      for (int i = 0;
+           i < right_rels.relOffsetList.size() - old_right_rels.relOffsetList.size(); i++) {
+        bb.offsetNodes.add(
+            old_left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
       }
     } else {
       if (rels.relOffsetList.size() != curJoinScope.children.size()) {
@@ -5732,7 +5735,7 @@ public class SqlToRelConverter {
           System.out.println("TODO: hit the noted issue with the lookup");
         }
         if (qualified.identifier.names.get(1).equals("PRODUCT_ID")
-            && qualified.identifier.names.get(0).equals("PV")) {
+            && qualified.identifier.names.get(0).equals("ETL_SPOOF")) {
           System.out.println("BREAKPOINT HERE");
         }
 
