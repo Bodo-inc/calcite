@@ -3193,11 +3193,11 @@ public class SqlToRelConverter {
       fromBlackboard.offsetNodes.add(offset);
     }
 
-    final LookupContext left_rels = new LookupContext(
-        bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
+    final int num_left_rels = new LookupContext(
+        bb, ImmutableList.of(leftRel), bb.systemFieldList.size()).relOffsetList.size();
 
     for (int offset: rightBlackboard.offsetNodes) {
-      fromBlackboard.offsetNodes.add(offset + left_rels.relOffsetList.size());
+      fromBlackboard.offsetNodes.add(offset + num_left_rels);
     }
 
 
