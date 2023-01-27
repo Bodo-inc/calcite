@@ -138,6 +138,7 @@ import org.apache.calcite.sql.SqlValuesOperator;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlInOperator;
 import org.apache.calcite.sql.fun.SqlQuantifyOperator;
@@ -3997,6 +3998,10 @@ public class SqlToRelConverter {
       return convertWith((SqlWith) query, top);
     case VALUES:
       return RelRoot.of(convertValues((SqlCall) query, targetRowType), kind);
+    case CREATE_TABLE:
+      //Create table has to be the topmost relnode
+      assert top;
+      return RelRoot.of(convertCreateTable((SqlCreateTable) query), kind);
     default:
       throw new AssertionError("not a query: " + query);
     }
@@ -4396,6 +4401,12 @@ public class SqlToRelConverter {
 
     return LogicalTableModify.create(targetTable, catalogReader, sourceRel,
         LogicalTableModify.Operation.DELETE, null, null, false);
+  }
+
+  private RelNode convertCreateTable(SqlCreateTable call) {
+
+    return LogicalTableModify.create(LogicalTableModify)
+    return null;
   }
 
   private RelNode convertUpdate(SqlUpdate call) {
