@@ -422,9 +422,18 @@ public interface RelDataTypeSystem {
   /**
    * Get the default SQLTypeName used for the type of SQL Literals.
    * This should be either CHAR, VARCHAR, or an equivalent string type.
-   * @return
+   * @return The SQLTypeName used for literals
    */
   default SqlTypeName getCharLiteralTypeName() {
     return SqlTypeName.CHAR;
+  }
+
+  /**
+   * Should Char Literals use the exact length specified
+   * in the type or -1.
+   * @return Should the length be used.
+   */
+  default boolean useCharLiteralLength() {
+    return true;
   }
 }
