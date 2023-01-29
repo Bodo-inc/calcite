@@ -419,4 +419,12 @@ public interface RelDataTypeSystem {
     return BodoTZInfo.UTC;
   }
 
+  /**
+   * Get the default SQLTypeName used for the type of SQL Literals.
+   * This should be either CHAR, VARCHAR, or an equivalent string type.
+   * @return
+   */
+  default SqlTypeName getCharLiteralTypeName() {
+    return SqlTypeName.CHAR;
+  }
 }

@@ -989,9 +989,10 @@ public abstract class SqlUtil {
     if (null == collation) {
       collation = SqlCollation.COERCIBLE;
     }
+    SqlTypeName typeName = typeFactory.getTypeSystem().getCharLiteralTypeName();
     RelDataType type =
         typeFactory.createSqlType(
-            SqlTypeName.CHAR,
+            typeName,
             str.getValue().length());
     type =
         typeFactory.createTypeWithCharsetAndCollation(
