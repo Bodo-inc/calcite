@@ -137,6 +137,9 @@ public class SqlValidatorUtil {
             tableNamespace, requireNonNull(catalogReader, "catalogReader"),
             datasetName, usedDataset, extendedFields);
       }
+    } else if (namespace.isWrapperFor(SqlValidatorImpl.DdlNamespace.class)) {
+
+      System.out.println("TODO");
     }
     return null;
   }

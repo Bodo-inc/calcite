@@ -4405,7 +4405,9 @@ public class SqlToRelConverter {
 
   private RelNode convertCreateTable(SqlCreateTable call) {
 
-    return LogicalTableModify.create(LogicalTableModify)
+//    LogicalTableModify
+//    return LogicalTableModify.create(LogicalTableModify)
+    RelOptTable targetTable = getTargetTable(call);
     return null;
   }
 

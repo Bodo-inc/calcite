@@ -38,52 +38,7 @@ import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
-import org.apache.calcite.sql.JoinConditionType;
-import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlAccessEnum;
-import org.apache.calcite.sql.SqlAccessType;
-import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCallBinding;
-import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlDelete;
-import org.apache.calcite.sql.SqlDynamicParam;
-import org.apache.calcite.sql.SqlExplain;
-import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlFunctionCategory;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlInsert;
-import org.apache.calcite.sql.SqlIntervalLiteral;
-import org.apache.calcite.sql.SqlIntervalQualifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlMatchRecognize;
-import org.apache.calcite.sql.SqlMerge;
-import org.apache.calcite.sql.SqlNamedParam;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlPivot;
-import org.apache.calcite.sql.SqlSampleSpec;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlSelectKeyword;
-import org.apache.calcite.sql.SqlSnapshot;
-import org.apache.calcite.sql.SqlSyntax;
-import org.apache.calcite.sql.SqlTableFunction;
-import org.apache.calcite.sql.SqlTableIdentifierWithID;
-import org.apache.calcite.sql.SqlUnpivot;
-import org.apache.calcite.sql.SqlUnresolvedFunction;
-import org.apache.calcite.sql.SqlUpdate;
-import org.apache.calcite.sql.SqlUtil;
-import org.apache.calcite.sql.SqlValuesOperator;
-import org.apache.calcite.sql.SqlWindow;
-import org.apache.calcite.sql.SqlWindowTableFunction;
-import org.apache.calcite.sql.SqlWith;
-import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -1256,8 +1211,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case ORDER_BY:
     case TABLESAMPLE:
       return getNamespace(((SqlCall) node).operand(0));
-    case CREATE_TABLE:
-      return getNamespace(((SqlCall) node).operand(2));
+//    case CREATE_TABLE:
+//      return getNamespace(((SqlCall) node).operand(2));
     default:
       return namespaces.get(node);
     }
@@ -3194,13 +3149,18 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       //TODO: do I need a namespace for create table? I don't think I do, but merge
       //has one. It might be an invariant that every node has a namespace?
       registerQuery(
-          parentScope,
+          parentScope, //Should this be createTableNs?
           usingScope, //Should be null?
           operandList.get(2),
           enclosingNode,
           null,
           false
           );
+
+      SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
+      DdlNamespace createTableNs = new DdlNamespace((SqlCreate) node, childNs, parentScope);
+      registerNamespace(usingScope, null, createTableNs, forceNullable);
+
       break;
 
       //      SqlValidatorScope parentScope,
@@ -6891,21 +6851,26 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
 
   /**
-   * Namespace for a CREATE TABLE statement. Defers most typing queries to the underlying
+   * Namespace for DDL statements (Data Definition Language, such as create [Or replace] Table).
+   * Defers most typing queries to the underlying
    * Query that constructs the table.
    *
    * Note: this does not extend DmlNamespace because DmlNamespace
-   * requires there to be an exisiting target table, which is not true
-   * for create table statements. Therefore we extend the default
+   * requires there to be an existing target table, which is not necessarily true for DDL
+   * statements.
    */
-  private static class CreateTableNamespace implements SqlValidatorNamespace {
-    private final SqlCreateTable node;
+  public static class DdlNamespace implements SqlValidatorNamespace {
+    private final SqlCreate node;
     private final SqlValidatorNamespace childQueryNamespace;
+    private final SqlValidatorNamespace parentScope;
 
 
-    CreateTableNamespace(SqlCreateTable node, SqlValidatorNamespace childQueryNamespace) {
+    DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace, SqlValidatorNamespace parentScope) {
+      requireNonNull(childQueryNamespace);
+      requireNonNull(node);
       this.node = node;
       this.childQueryNamespace = childQueryNamespace;
+      this.parentScope = parentScope;
     }
 
 
@@ -7082,7 +7047,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public boolean isWrapperFor(final Class<?> clazz) {
-      return false;
+      return clazz.isInstance(this);
     }
 
     /**
@@ -7098,7 +7063,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public SqlValidatorNamespace resolve() {
-      return childQueryNamespace;
+
+      //TODO: Keaton: this should probably resolve to a tableNamespace?
+      return this;
     }
 
     /**
