@@ -289,7 +289,7 @@ public class SqlLiteral extends SqlNode {
    * @throws AssertionError if the value type is not supported
    */
   public <T extends Object> T getValueAs(Class<T> clazz) {
-    return getValueAs(clazz, RelDataTypeSystem.DEFAULT)
+    return getValueAs(clazz, RelDataTypeSystem.DEFAULT);
   }
   public <T extends Object> T getValueAs(Class<T> clazz, RelDataTypeSystem typeSystem) {
     Object value = this.value;
