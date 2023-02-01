@@ -6214,38 +6214,84 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 // relies on the subQueryList in SqlToRelConverter, which will be fixed in the followup issue
 // specified above
 
-//  @Test void testJoinConditionSubQuery5() {
-//    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
-//
-//    String sql = "with dummy_table as (select 1 as A),\n"
-//        +
-//        "\n"
-//        +
-//        "product_options as (\n"
-//        +
-//        "         select 1 as brand_id\n"
-//        +
-//        "              , 2 as product_id\n"
-//        +
-//        "         from dummy_table\n"
-//        +
-//        "     ),\n"
-//        +
-//        "\n"
-//        +
-//        "products_daily_summary_spoof as (\n"
-//        +
-//        "        select\n"
-//        +
-//        "            1 as product_id,\n"
-//        +
-//        "            null::date as ds\n"
-//        +
-//        "        from dummy_table\n"
-//        +
-//        "),\n"
-//        +
-//        "\n"
+  @Test void testJoinConditionSubQuery5() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+    String sql = "with "
+        +
+        "etl_datascience_products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds,\n"
+        +
+        "            2 as secondary_product_id\n"
+        +
+        "        from emp\n"
+        +
+        ")\n"
+        +
+        "select * from dept join emp on "
+        +
+        "         emp.ename in (Select deptno::varchar from emp where empno > 5)\n";
+
+//    Select deptno::varchar from emp where empno > 5
+    withPostgresLib(sql(sql)).ok();
+  }
+
+  @Test void testJoinConditionSubQuery5part2() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+    String sql = "with "
+        +
+        "etl_datascience_products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds,\n"
+        +
+        "            2 as secondary_product_id\n"
+        +
+        "        from emp\n"
+        +
+        ")\n"
+        +
+        "select * from dept join emp on "
+        +
+        "         emp.ename in (Select MAX(deptno::varchar) from emp where empno > 5)\n";
+
+    withPostgresLib(sql(sql)).ok();
+  }
+
+  @Test void testJoinConditionSubQuery5part2part2() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+    String sql = "select emp.ename in (Select MAX(deptno::varchar) "
+        + "from emp where empno > 5) from dept cross join emp\n";
+
+    withPostgresLib(sql(sql)).ok();
+  }
+
+  @Test void testJoinConditionSubQuery5part3() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+    //TODO: currently, in situations where we have an in statement that requires values from both
+    // the left and right rel, we push it on top of the join as a filter.
+
+    // For this specific filter, since we could split this condition into two separate IN conditions
+    // on two separate tables, we could push this past the join. However, this is beyond the scope
+    // of this PR: (see followup issue TODO)
+
+    String tmp_sql = "SELECT (emp.ename, dept.deptno) in (Select MAX(deptno::varchar), "
+        + "MIN(empno) from emp where empno > 5) from emp join dept on true";
+    withPostgresLib(sql(tmp_sql)).ok();
+
+
+//    String sql = "with "
 //        +
 //        "etl_datascience_products_daily_summary_spoof as (\n"
 //        +
@@ -6257,77 +6303,169 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
 //        +
 //        "            2 as secondary_product_id\n"
 //        +
-//        "        from dummy_table\n"
-//        +
-//        "),\n"
-//        +
-//        "\n"
-//        +
-//        "production_product_videos_spoof as (\n"
-//        +
-//        "        select\n"
-//        +
-//        "            1 as id,\n"
-//        +
-//        "            null::timestamp as updated_at,\n"
-//        +
-//        "            null::varchar as token,\n"
-//        +
-//        "            null::varchar as state,\n"
-//        +
-//        "            2 as brand_id,\n"
-//        +
-//        "            null::timestamp as first_published_at,\n"
-//        +
-//        "            3 as product_id,\n"
-//        +
-//        "            4 as video_id,\n"
-//        +
-//        "            null::timestamp as created_at,\n"
-//        +
-//        "            false as is_deleted\n"
-//        +
-//        "        from dummy_table\n"
+//        "        from emp\n"
 //        +
 //        ")\n"
 //        +
-//        "\n"
+//        "select * from dept join emp on "
 //        +
-//        "\n"
-//        +
-//        "select\n"
-//        +
-//        "             po.product_id\n"
-//        +
-//        "             from etl_datascience_products_daily_summary_spoof pds "
-//        +
-//        " right join product_options po\n"
-//        +
-//        "on po.product_id = pds.product_id\n"
-//        +
-//        "                 and pds.ds::date = (select max(ds) from ("
-//        +
-//        "select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
-//        +
-//        "         emp.deptno = etl_spoof.product_id))\n"
-//        +
-//        "                 and pds.secondary_product_id = (select max(secondary_product_id) from "
-//        +
-//        "etl_datascience_products_daily_summary_spoof)\n"
-//        +
-//        "                      left join production_product_videos_spoof pv\n"
-//        +
-//        "on pv.product_id = po.product_id and pv.updated_at::date <= (select max(ds) from ("
-//        +
-//        "select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
-//        +
-//        "         emp.deptno = etl_spoof.product_id and"
-//        +
-//        "         emp.ename in (Select deptno::varchar from emp where empno > 5)))\n"
-//        +
-//        "         join emp on emp.deptno = po.product_id\n"
-//        +
-//        "         join dept on emp.deptno = dept.deptno\n";
+//        "         emp.ename,  in (Select MAX(deptno::varchar) from emp where empno > 5)\n";
+//
 //    withPostgresLib(sql(sql)).ok();
-//  }
+  }
+
+  @Test void testJoinConditionSubQuery5part4() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+
+    //TODO: currently, in situations where we have an in statement that requires values from both
+    // the left and right rel, we push it on top of the join as a filter.
+
+    // For this specific filter, there is no followup optimization to push this past the join,
+    // since the LHS is an expression that references both sides of the join.
+
+    String tmp_sql = "SELECT (emp.ename || dept.deptno::varchar) in (Select MAX(deptno::varchar) "
+        + "from emp where empno > 5) from emp join dept on true";
+    withPostgresLib(sql(tmp_sql)).ok();
+
+
+//    String sql = "with "
+//        +
+//        "etl_datascience_products_daily_summary_spoof as (\n"
+//        +
+//        "        select\n"
+//        +
+//        "            1 as product_id,\n"
+//        +
+//        "            null::date as ds,\n"
+//        +
+//        "            2 as secondary_product_id\n"
+//        +
+//        "        from emp\n"
+//        +
+//        ")\n"
+//        +
+//        "select * from dept join emp on "
+//        +
+//        "         emp.ename,  in (Select MAX(deptno::varchar) from emp where empno > 5)\n";
+//
+//    withPostgresLib(sql(sql)).ok();
+  }
+
+  @Test void testJoinConditionSubQuery6() {
+    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+
+    String sql = "with dummy_table as (select 1 as A),\n"
+        +
+        "\n"
+        +
+        "product_options as (\n"
+        +
+        "         select 1 as brand_id\n"
+        +
+        "              , 2 as product_id\n"
+        +
+        "         from dummy_table\n"
+        +
+        "     ),\n"
+        +
+        "\n"
+        +
+        "products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds\n"
+        +
+        "        from dummy_table\n"
+        +
+        "),\n"
+        +
+        "\n"
+        +
+        "etl_datascience_products_daily_summary_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as product_id,\n"
+        +
+        "            null::date as ds,\n"
+        +
+        "            2 as secondary_product_id\n"
+        +
+        "        from dummy_table\n"
+        +
+        "),\n"
+        +
+        "\n"
+        +
+        "production_product_videos_spoof as (\n"
+        +
+        "        select\n"
+        +
+        "            1 as id,\n"
+        +
+        "            null::timestamp as updated_at,\n"
+        +
+        "            null::varchar as token,\n"
+        +
+        "            null::varchar as state,\n"
+        +
+        "            2 as brand_id,\n"
+        +
+        "            null::timestamp as first_published_at,\n"
+        +
+        "            3 as product_id,\n"
+        +
+        "            4 as video_id,\n"
+        +
+        "            null::timestamp as created_at,\n"
+        +
+        "            false as is_deleted\n"
+        +
+        "        from dummy_table\n"
+        +
+        ")\n"
+        +
+        "\n"
+        +
+        "\n"
+        +
+        "select\n"
+        +
+        "             po.product_id\n"
+        +
+        "             from etl_datascience_products_daily_summary_spoof pds "
+        +
+        " right join product_options po\n"
+        +
+        "on po.product_id = pds.product_id\n"
+        +
+        "                 and pds.ds::date = (select max(ds) from ("
+        +
+        "select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
+        +
+        "         emp.deptno = etl_spoof.product_id))\n"
+        +
+        "                 and pds.secondary_product_id = (select max(secondary_product_id) from "
+        +
+        "etl_datascience_products_daily_summary_spoof)\n"
+        +
+        "                      left join production_product_videos_spoof pv\n"
+        +
+        "on pv.product_id = po.product_id and pv.updated_at::date <= (select max(ds) from ("
+        +
+        "select * from etl_datascience_products_daily_summary_spoof etl_spoof join emp on "
+        +
+        "         emp.deptno = etl_spoof.product_id and"
+        +
+        "         emp.ename in (Select deptno::varchar from emp where empno > 5)))\n"
+        +
+        "         join emp on emp.deptno = po.product_id\n"
+        +
+        "         join dept on emp.deptno = dept.deptno\n";
+    withPostgresLib(sql(sql)).ok();
+  }
 }
