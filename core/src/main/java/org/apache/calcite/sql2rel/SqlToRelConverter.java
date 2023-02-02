@@ -86,6 +86,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
 import org.apache.calcite.rex.RexRangeRef;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexInputRefShiftShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBound;
@@ -1210,7 +1211,7 @@ public class SqlToRelConverter {
 
   private void replaceSubQueriesOnCondition(
       Blackboard fromBlackboard, Blackboard leftBlackboard, Blackboard rightBlackboard,
-      RelNode leftRel, RelNode rightRel, SqlNode condition) {
+      RelNode leftRel, RelNode rightRel, SqlNode condition, SqlJoin join) {
     // Specialized handler for converting sub queries in the "on" condition of a join.
     // this is needed due to the fact that (specifically for in/all/exists) we may need to
     // modify either the left or the right rels, or even push the on condition to be a filter
@@ -1219,22 +1220,35 @@ public class SqlToRelConverter {
     findSubQueries(leftBlackboard, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
     findSubQueries(rightBlackboard, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
 
-//    @Nullable SqlValidatorScope scope,
-//    @Nullable Map<String, RexNode> nameToNodeMap,
-//    boolean top
+    //Sanity check
 
-    //scope can be nullable what does that even do?
-    //From docs: can be null only for leaf nodes
-    // ... so that doesn't work
-    Blackboard fauxRightBlackBoard = createBlackboard(
+    assert fromBlackboard.subQueryList.size() == leftBlackboard.subQueryList.size() &&
+        leftBlackboard.subQueryList.size() == rightBlackboard.subQueryList.size();
+    for (int i = 0; i < fromBlackboard.subQueryList.size(); i++) {
+      assert fromBlackboard.subQueryList.get(i).node.equals(leftBlackboard.subQueryList.get(i).node)
+          && leftBlackboard.subQueryList.get(i).node.equals(
+              rightBlackboard.subQueryList.get(i).node);
+    }
+
+
+    Blackboard temporaryConversionBlackBoard = createBlackboard(
         fromBlackboard.scope(),
         fromBlackboard.nameToNodeMap,
         false
     );
-    fauxRightBlackBoard.setRoot(
+
+    temporaryConversionBlackBoard.setRoot(ImmutableList.of(leftRel, rightRel));
+
+
+    RelNode tempJoin = createJoin(
+        temporaryConversionBlackBoard,
+        leftRel,
         rightRel,
-        false //Leaf (should this be true?)
-    );
+        getRexBuilder().makeLiteral(true),
+        convertJoinType(join.getJoinType()));
+
+    temporaryConversionBlackBoard.setRoot(tempJoin, false);
+
 
     // So, the way that we're handling this is as follows:
     // IE, we only need the scope in the case specifically for converting the LHS nodes
@@ -1242,9 +1256,9 @@ public class SqlToRelConverter {
     // convert the LHS in the scope of the join, adjust all of the input refs by a fixed amount
     // equal to the number of rows in the LHS, (in the case that
     // we're working on the right rel, otherwise leave as they are).
-    //
-    //
 
+    List<SqlNode> LeftPredicates = new ArrayList<>();;
+    List<SqlNode> RightPredicates = new ArrayList<>();
 
     for (SubQuery node : fromBlackboard.subQueryList) {
       if (needsJoinOnSpecificRel(node)) {
@@ -1258,15 +1272,48 @@ public class SqlToRelConverter {
           throw new RuntimeException(
               "TODO: actually push the condition to a filter on top of the join");
         } else if (parentRel.getId() == leftRel.getId()) {
-          substituteSubQuery(leftBlackboard, node);
+          substituteSubQuery(temporaryConversionBlackBoard, node);
+          LeftPredicates.add(node.node);
         } else if (parentRel.getId() == rightRel.getId()) {
-          substituteSubQuery(fauxRightBlackBoard, node);
+          substituteSubQuery(temporaryConversionBlackBoard,
+              node, leftRel.getRowType().getFieldCount());
+          RightPredicates.add(node.node);
         } else {
           throw new RuntimeException("This should be impossible");
         }
       }
+//      Do nothing?
+//      substituteSubQuery(fromBlackboard, node);
+    }
+
+    for (int i = 0; i < fromBlackboard.subQueryList.size(); i++) {
+      leftBlackboard.subQueryList.get(i).expr = fromBlackboard.subQueryList.get(i).expr;
+      rightBlackboard.subQueryList.get(i).expr = fromBlackboard.subQueryList.get(i).expr;
+    }
+
+    //So, need a BB for the left/right rel?
+
+    //Re-register the left/right rels
+    RelNode adjustedLeftRel = leftBlackboard.reRegister(leftRel);
+    RelNode adjustedRightRel = rightBlackboard.reRegister(rightRel);
+
+    //apply the filters
+
+    List<RexNode> leftRexPredicates = new ArrayList<>();
+    for (int i = 0; i < LeftPredicates.size(); i++) {
+      leftRexPredicates.add(leftBlackboard.convertExpression(LeftPredicates.get(i)));
+    }
+
+    relBuilder.push(leftBlackboard.root()).filter(leftRexPredicates).build();
+
+
+    fromBlackboard.setRoot(ImmutableList.of(adjustedLeftRel, adjustedRightRel));
+
+    for (SubQuery node : fromBlackboard.subQueryList) {
       substituteSubQuery(fromBlackboard, node);
     }
+
+    System.out.println("Does this even work?");
   }
 
   private boolean needsJoinOnSpecificRel(SubQuery node) {
@@ -1333,7 +1380,8 @@ public class SqlToRelConverter {
 
   }
 
-  private void substituteSubQueryForInAndNotInAndSomeAndAll(Blackboard bb, SubQuery subQuery) {
+  private void substituteSubQueryForInAndNotInAndSomeAndAll(Blackboard bb, SubQuery subQuery,
+      Integer offset) {
     final SqlBasicCall call;
     final RelNode rel;
     final SqlNode query;
@@ -1346,7 +1394,7 @@ public class SqlToRelConverter {
     }
     final SqlNode leftKeyNode = call.operand(0);
 
-    final List<RexNode> leftKeys;
+    List<RexNode> leftKeys;
     switch (leftKeyNode.getKind()) {
     case ROW:
       leftKeys = new ArrayList<>();
@@ -1356,6 +1404,19 @@ public class SqlToRelConverter {
       break;
     default:
       leftKeys = ImmutableList.of(bb.convertExpression(leftKeyNode));
+    }
+
+    if (offset != 0) {
+      RexInputRefShiftShuttle tmp = new RexInputRefShiftShuttle(rexBuilder, offset);
+      // Update inputRefs
+
+      List<RexNode> newLeftKeys = new ArrayList<>();
+
+      for (int i = 0; i < leftKeys.size(); i++) {
+        RexNode newVal = leftKeys.get(i).accept(tmp);
+        newLeftKeys.add(i, newVal);
+      }
+      leftKeys = newLeftKeys;
     }
 
     if (query instanceof SqlNodeList) {
@@ -1461,19 +1522,25 @@ public class SqlToRelConverter {
     default:
       break;
     }
+
     subQuery.expr = translateIn(logic, bb.root, rex);
     if (notIn) {
       subQuery.expr =
           rexBuilder.makeCall(SqlStdOperatorTable.NOT, subQuery.expr);
     }
-  }
 
-  //TODO: remove me
-  private void substituteSubQuery(Blackboard bb, SubQuery subQuery, @Nullable RelNode actualRoot) {
-    substituteSubQuery(bb, subQuery);
+    if (offset != 0) {
+      RexInputRefShiftShuttle tmp2 = new RexInputRefShiftShuttle(getRexBuilder(), -offset);
+      subQuery.expr = subQuery.expr.accept(tmp2);
+    }
+
   }
 
   private void substituteSubQuery(Blackboard bb, SubQuery subQuery) {
+    substituteSubQuery(bb, subQuery, 0);
+  }
+
+  private void substituteSubQuery(Blackboard bb, SubQuery subQuery, int offset) {
     final RexNode expr = subQuery.expr;
     if (expr != null) {
       // Already done.
@@ -1505,7 +1572,7 @@ public class SqlToRelConverter {
     case NOT_IN:
     case SOME:
     case ALL:
-      substituteSubQueryForInAndNotInAndSomeAndAll(bb, subQuery);
+      substituteSubQueryForInAndNotInAndSomeAndAll(bb, subQuery, offset);
       return;
 
     case EXISTS:
@@ -3448,7 +3515,7 @@ public class SqlToRelConverter {
         () -> "getCondition for join " + join);
 
     replaceSubQueriesOnCondition(fromBlackboard, leftBlackboard, rightBlackboard, leftRel,
-        rightRel, condition);
+        rightRel, condition, join);
 
     //TODO: fix this
     boolean newRels = true;
@@ -3462,6 +3529,7 @@ public class SqlToRelConverter {
         : rightBlackboard.reRegister(leftRel);
 
     fromBlackboard.setRoot(ImmutableList.of(newLeftRel, newRightRel));
+
 
     final LookupContext old_right_rels = new LookupContext(
         fromBlackboard, ImmutableList.of(rightRel), fromBlackboard.systemFieldList.size());
