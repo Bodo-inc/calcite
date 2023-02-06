@@ -86,7 +86,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
 import org.apache.calcite.rex.RexRangeRef;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.rex.RexInputRefShiftShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBound;
@@ -1209,338 +1208,7 @@ public class SqlToRelConverter {
     }
   }
 
-  private void replaceSubQueriesOnCondition(
-      Blackboard fromBlackboard, Blackboard leftBlackboard, Blackboard rightBlackboard,
-      RelNode leftRel, RelNode rightRel, SqlNode condition, SqlJoin join) {
-    // Specialized handler for converting sub queries in the "on" condition of a join.
-    // this is needed due to the fact that (specifically for in/all/exists) we may need to
-    // modify either the left or the right rels, or even push the on condition to be a filter
-
-    findSubQueries(fromBlackboard, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
-    findSubQueries(leftBlackboard, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
-    findSubQueries(rightBlackboard, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
-
-    //Sanity check
-
-    assert fromBlackboard.subQueryList.size() == leftBlackboard.subQueryList.size() &&
-        leftBlackboard.subQueryList.size() == rightBlackboard.subQueryList.size();
-    for (int i = 0; i < fromBlackboard.subQueryList.size(); i++) {
-      assert fromBlackboard.subQueryList.get(i).node.equals(leftBlackboard.subQueryList.get(i).node)
-          && leftBlackboard.subQueryList.get(i).node.equals(
-              rightBlackboard.subQueryList.get(i).node);
-    }
-
-
-    Blackboard temporaryConversionBlackBoard = createBlackboard(
-        fromBlackboard.scope(),
-        fromBlackboard.nameToNodeMap,
-        false
-    );
-
-    temporaryConversionBlackBoard.setRoot(ImmutableList.of(leftRel, rightRel));
-
-
-    RelNode tempJoin = createJoin(
-        temporaryConversionBlackBoard,
-        leftRel,
-        rightRel,
-        getRexBuilder().makeLiteral(true),
-        convertJoinType(join.getJoinType()));
-
-    temporaryConversionBlackBoard.setRoot(tempJoin, false);
-
-
-    // So, the way that we're handling this is as follows:
-    // IE, we only need the scope in the case specifically for converting the LHS nodes
-    // (I THINK) therefore, we do this EGREGIOUSLY hacky solution, where we
-    // convert the LHS in the scope of the join, adjust all of the input refs by a fixed amount
-    // equal to the number of rows in the LHS, (in the case that
-    // we're working on the right rel, otherwise leave as they are).
-
-    List<SqlNode> LeftPredicates = new ArrayList<>();;
-    List<SqlNode> RightPredicates = new ArrayList<>();
-
-    for (SubQuery node : fromBlackboard.subQueryList) {
-      if (needsJoinOnSpecificRel(node)) {
-        RelNode parentRel = getParentRel(node,
-            fromBlackboard, leftBlackboard, rightBlackboard, leftRel, rightRel);
-        // If the node requires to be joined to the left sub query...
-        if (parentRel == null) {
-          // If the parent Rel is null, that means that getParentRel found multiple parents
-          // if this is the case, we need to push the condition to a filter on top of the join
-          node.expr = rexBuilder.makeLiteral(true);
-          throw new RuntimeException(
-              "TODO: actually push the condition to a filter on top of the join");
-        } else if (parentRel.getId() == leftRel.getId()) {
-          substituteSubQuery(temporaryConversionBlackBoard, node);
-          LeftPredicates.add(node.node);
-        } else if (parentRel.getId() == rightRel.getId()) {
-          substituteSubQuery(temporaryConversionBlackBoard,
-              node, leftRel.getRowType().getFieldCount());
-          RightPredicates.add(node.node);
-        } else {
-          throw new RuntimeException("This should be impossible");
-        }
-      }
-//      Do nothing?
-//      substituteSubQuery(fromBlackboard, node);
-    }
-
-    for (int i = 0; i < fromBlackboard.subQueryList.size(); i++) {
-      leftBlackboard.subQueryList.get(i).expr = fromBlackboard.subQueryList.get(i).expr;
-      rightBlackboard.subQueryList.get(i).expr = fromBlackboard.subQueryList.get(i).expr;
-    }
-
-    //So, need a BB for the left/right rel?
-
-    //Re-register the left/right rels
-    RelNode adjustedLeftRel = leftBlackboard.reRegister(leftRel);
-    RelNode adjustedRightRel = rightBlackboard.reRegister(rightRel);
-
-    //apply the filters
-
-    List<RexNode> leftRexPredicates = new ArrayList<>();
-    for (int i = 0; i < LeftPredicates.size(); i++) {
-      leftRexPredicates.add(leftBlackboard.convertExpression(LeftPredicates.get(i)));
-    }
-
-    relBuilder.push(leftBlackboard.root()).filter(leftRexPredicates).build();
-
-
-    fromBlackboard.setRoot(ImmutableList.of(adjustedLeftRel, adjustedRightRel));
-
-    for (SubQuery node : fromBlackboard.subQueryList) {
-      substituteSubQuery(fromBlackboard, node);
-    }
-
-    System.out.println("Does this even work?");
-  }
-
-  private boolean needsJoinOnSpecificRel(SubQuery node) {
-    switch (node.node.getKind()) {
-    case IN:
-      //TODO: include NOT IN/ all the rest?
-      return true;
-    default:
-      return false;
-    }
-  }
-
-  private RelNode getParentRel(SubQuery node,
-      Blackboard fromBlackBoard,
-      Blackboard leftBlackBoard,
-      Blackboard rightBlackBoard,
-      RelNode leftRel,
-      RelNode rightRel) {
-    assert node.node.getKind() == SqlKind.IN;
-
-    SqlCall call = (SqlCall) node.node;
-    final SqlNode leftKeyNode = call.operand(0);
-
-    SqlIdentifierFinder finder = new SqlIdentifierFinder();
-    leftKeyNode.accept(finder);
-    List<SqlIdentifier> identifierList = finder.getFoundIdentifiers();
-
-    // If we have no identifiers, we can join this with either rel, so I'm arbitrarily picking the
-    // right rel
-    if (identifierList.size() == 0) {
-      return rightRel;
-    }
-    fromBlackBoard.setRoot(ImmutableList.of(leftRel, rightRel));
-
-    int numLeftRels = leftRel.getRowType().getFieldNames().size();
-    int numRightRels = rightRel.getRowType().getFieldNames().size();
-
-    boolean seenIdentifierFromLeft = false;
-    boolean seenIdentifierFromRight = false;
-
-    for (SqlIdentifier id: identifierList) {
-      RexNode output = fromBlackBoard.convertExpression(id);
-      if (!(output instanceof RexInputRef)) {
-        throw new RuntimeException("TODO!");
-      }
-      int outputIndex = ((RexInputRef) output).getIndex();
-      if (outputIndex <= numLeftRels) {
-        seenIdentifierFromLeft |= true;
-      } else {
-        seenIdentifierFromRight |= true;
-      }
-      if (seenIdentifierFromLeft && seenIdentifierFromRight) {
-        return null;
-      }
-    }
-
-    //Checked the case where we've seen both already
-    if (seenIdentifierFromLeft) {
-      return leftRel;
-    } else {
-      //In the case that we have neither, it is still valid to return the right rel
-      return rightRel;
-    }
-
-  }
-
-  private void substituteSubQueryForInAndNotInAndSomeAndAll(Blackboard bb, SubQuery subQuery,
-      Integer offset) {
-    final SqlBasicCall call;
-    final RelNode rel;
-    final SqlNode query;
-    final RelOptUtil.Exists converted;
-
-    call = (SqlBasicCall) subQuery.node;
-    query = call.operand(1);
-    if (!config.isExpand() && !(query instanceof SqlNodeList)) {
-      return;
-    }
-    final SqlNode leftKeyNode = call.operand(0);
-
-    List<RexNode> leftKeys;
-    switch (leftKeyNode.getKind()) {
-    case ROW:
-      leftKeys = new ArrayList<>();
-      for (SqlNode sqlExpr : ((SqlBasicCall) leftKeyNode).getOperandList()) {
-        leftKeys.add(bb.convertExpression(sqlExpr));
-      }
-      break;
-    default:
-      leftKeys = ImmutableList.of(bb.convertExpression(leftKeyNode));
-    }
-
-    if (offset != 0) {
-      RexInputRefShiftShuttle tmp = new RexInputRefShiftShuttle(rexBuilder, offset);
-      // Update inputRefs
-
-      List<RexNode> newLeftKeys = new ArrayList<>();
-
-      for (int i = 0; i < leftKeys.size(); i++) {
-        RexNode newVal = leftKeys.get(i).accept(tmp);
-        newLeftKeys.add(i, newVal);
-      }
-      leftKeys = newLeftKeys;
-    }
-
-    if (query instanceof SqlNodeList) {
-      SqlNodeList valueList = (SqlNodeList) query;
-      // When the list size under the threshold or the list references columns, we convert to OR.
-      if (valueList.size() < config.getInSubQueryThreshold()
-          || valueList.accept(new SqlIdentifierFinder())) {
-        subQuery.expr =
-            convertInToOr(
-                bb,
-                leftKeys,
-                valueList,
-                (SqlInOperator) call.getOperator());
-        return;
-      }
-
-      // Otherwise, let convertExists translate
-      // values list into an inline table for the
-      // reference to Q below.
-    }
-
-    // Project out the search columns from the left side
-
-    // Q1:
-    // select _ from emp where emp.deptno in (select col1 from T)"
-    //
-    // is converted to
-    //
-    // select _ from
-    //   emp inner join (select distinct col1 from T) q
-    //   on emp.deptno = q.col1
-    //
-    // Q2:
-    // "select from emp where emp.deptno not in (Q)"
-    //
-    // is converted to
-    //
-    // "select from
-    //   emp left outer join (select distinct col1, TRUE from T) q
-    //   on emp.deptno = q.col1
-    //   where emp.deptno <> null
-    //         and q.indicator <> TRUE"
-    //
-    // Note: Sub-query can be used as SqlUpdate#condition like below:
-    //
-    //   UPDATE emp
-    //   SET empno = 1 WHERE emp.empno IN (
-    //     SELECT emp.empno FROM emp WHERE emp.empno = 2)
-    //
-    // In such case, when converting SqlUpdate#condition, bb.root is null
-    // and it makes no sense to do the sub-query substitution.
-
-    if (bb.root == null) {
-      return;
-//        System.out.println("TODO!");
-    }
-    final RelDataType targetRowType =
-        SqlTypeUtil.promoteToRowType(typeFactory,
-            validator().getValidatedNodeType(leftKeyNode), null);
-    final boolean notIn = call.getOperator().kind == SqlKind.NOT_IN;
-    converted =
-        convertExists(query, RelOptUtil.SubQueryType.IN, subQuery.logic,
-            notIn, targetRowType);
-    if (converted.indicator) {
-      // Generate
-      //    emp CROSS JOIN (SELECT COUNT(*) AS c,
-      //                       COUNT(deptno) AS ck FROM dept)
-      final RelDataType longType =
-          typeFactory.createSqlType(SqlTypeName.BIGINT);
-      final RelNode seek = converted.r.getInput(0); // fragile
-      final int keyCount = leftKeys.size();
-      final List<Integer> args = ImmutableIntList.range(0, keyCount);
-      LogicalAggregate aggregate =
-          LogicalAggregate.create(seek,
-              ImmutableList.of(),
-              ImmutableBitSet.of(),
-              null,
-              ImmutableList.of(
-                  AggregateCall.create(SqlStdOperatorTable.COUNT, false,
-                      false, false, ImmutableList.of(), -1, null,
-                      RelCollations.EMPTY, longType, null),
-                  AggregateCall.create(SqlStdOperatorTable.COUNT, false,
-                      false, false, args, -1, null,
-                      RelCollations.EMPTY, longType, null)));
-      LogicalJoin join =
-          LogicalJoin.create(bb.root(), aggregate, ImmutableList.of(),
-              rexBuilder.makeLiteral(true), ImmutableSet.of(), JoinRelType.INNER);
-      bb.setRoot(join, false);
-    }
-    final RexNode rex =
-        bb.register(converted.r,
-            converted.outerJoin ? JoinRelType.LEFT : JoinRelType.INNER,
-            leftKeys);
-
-    RelOptUtil.Logic logic = subQuery.logic;
-    switch (logic) {
-    case TRUE_FALSE_UNKNOWN:
-    case UNKNOWN_AS_TRUE:
-      if (!converted.indicator) {
-        logic = RelOptUtil.Logic.TRUE_FALSE;
-      }
-      break;
-    default:
-      break;
-    }
-
-    subQuery.expr = translateIn(logic, bb.root, rex);
-    if (notIn) {
-      subQuery.expr =
-          rexBuilder.makeCall(SqlStdOperatorTable.NOT, subQuery.expr);
-    }
-
-    if (offset != 0) {
-      RexInputRefShiftShuttle tmp2 = new RexInputRefShiftShuttle(getRexBuilder(), -offset);
-      subQuery.expr = subQuery.expr.accept(tmp2);
-    }
-
-  }
-
   private void substituteSubQuery(Blackboard bb, SubQuery subQuery) {
-    substituteSubQuery(bb, subQuery, 0);
-  }
-
-  private void substituteSubQuery(Blackboard bb, SubQuery subQuery, int offset) {
     final RexNode expr = subQuery.expr;
     if (expr != null) {
       // Already done.
@@ -1572,7 +1240,132 @@ public class SqlToRelConverter {
     case NOT_IN:
     case SOME:
     case ALL:
-      substituteSubQueryForInAndNotInAndSomeAndAll(bb, subQuery, offset);
+      call = (SqlBasicCall) subQuery.node;
+      query = call.operand(1);
+      if (!config.isExpand() && !(query instanceof SqlNodeList)) {
+        return;
+      }
+      final SqlNode leftKeyNode = call.operand(0);
+
+      final List<RexNode> leftKeys;
+      switch (leftKeyNode.getKind()) {
+      case ROW:
+        leftKeys = new ArrayList<>();
+        for (SqlNode sqlExpr : ((SqlBasicCall) leftKeyNode).getOperandList()) {
+          leftKeys.add(bb.convertExpression(sqlExpr));
+        }
+        break;
+      default:
+        leftKeys = ImmutableList.of(bb.convertExpression(leftKeyNode));
+      }
+
+      if (query instanceof SqlNodeList) {
+        SqlNodeList valueList = (SqlNodeList) query;
+        // When the list size under the threshold or the list references columns, we convert to OR.
+        if (valueList.size() < config.getInSubQueryThreshold()
+            || valueList.accept(new SqlIdentifierFinder())) {
+          subQuery.expr =
+              convertInToOr(
+                  bb,
+                  leftKeys,
+                  valueList,
+                  (SqlInOperator) call.getOperator());
+          return;
+        }
+
+        // Otherwise, let convertExists translate
+        // values list into an inline table for the
+        // reference to Q below.
+      }
+
+      // Project out the search columns from the left side
+
+      // Q1:
+      // "select from emp where emp.deptno in (select col1 from T)"
+      //
+      // is converted to
+      //
+      // "select from
+      //   emp inner join (select distinct col1 from T)) q
+      //   on emp.deptno = q.col1
+      //
+      // Q2:
+      // "select from emp where emp.deptno not in (Q)"
+      //
+      // is converted to
+      //
+      // "select from
+      //   emp left outer join (select distinct col1, TRUE from T) q
+      //   on emp.deptno = q.col1
+      //   where emp.deptno <> null
+      //         and q.indicator <> TRUE"
+      //
+      // Note: Sub-query can be used as SqlUpdate#condition like below:
+      //
+      //   UPDATE emp
+      //   SET empno = 1 WHERE emp.empno IN (
+      //     SELECT emp.empno FROM emp WHERE emp.empno = 2)
+      //
+      // In such case, when converting SqlUpdate#condition, bb.root is null
+      // and it makes no sense to do the sub-query substitution.
+
+      if (bb.root == null) {
+        return;
+      }
+      final RelDataType targetRowType =
+          SqlTypeUtil.promoteToRowType(typeFactory,
+              validator().getValidatedNodeType(leftKeyNode), null);
+      final boolean notIn = call.getOperator().kind == SqlKind.NOT_IN;
+      converted =
+          convertExists(query, RelOptUtil.SubQueryType.IN, subQuery.logic,
+              notIn, targetRowType);
+      if (converted.indicator) {
+        // Generate
+        //    emp CROSS JOIN (SELECT COUNT(*) AS c,
+        //                       COUNT(deptno) AS ck FROM dept)
+        final RelDataType longType =
+            typeFactory.createSqlType(SqlTypeName.BIGINT);
+        final RelNode seek = converted.r.getInput(0); // fragile
+        final int keyCount = leftKeys.size();
+        final List<Integer> args = ImmutableIntList.range(0, keyCount);
+        LogicalAggregate aggregate =
+            LogicalAggregate.create(seek,
+                ImmutableList.of(),
+                ImmutableBitSet.of(),
+                null,
+                ImmutableList.of(
+                    AggregateCall.create(SqlStdOperatorTable.COUNT, false,
+                        false, false, ImmutableList.of(), -1, null,
+                        RelCollations.EMPTY, longType, null),
+                    AggregateCall.create(SqlStdOperatorTable.COUNT, false,
+                        false, false, args, -1, null,
+                        RelCollations.EMPTY, longType, null)));
+        LogicalJoin join =
+            LogicalJoin.create(bb.root(), aggregate, ImmutableList.of(),
+                rexBuilder.makeLiteral(true), ImmutableSet.of(), JoinRelType.INNER);
+        bb.setRoot(join, false);
+      }
+      final RexNode rex =
+          bb.register(converted.r,
+              converted.outerJoin ? JoinRelType.LEFT : JoinRelType.INNER,
+              leftKeys);
+
+      RelOptUtil.Logic logic = subQuery.logic;
+      switch (logic) {
+      case TRUE_FALSE_UNKNOWN:
+      case UNKNOWN_AS_TRUE:
+        if (!converted.indicator) {
+          logic = RelOptUtil.Logic.TRUE_FALSE;
+        }
+        break;
+      default:
+        break;
+      }
+      subQuery.expr = translateIn(logic, bb.root, rex);
+      if (notIn) {
+        subQuery.expr =
+            rexBuilder.makeCall(SqlStdOperatorTable.NOT, subQuery.expr);
+      }
       return;
 
     case EXISTS:
@@ -3429,8 +3222,6 @@ public class SqlToRelConverter {
         break;
       case ON:
         Pair<RexNode, RelNode> conditionAndRightNode = convertOnCondition(fromBlackboard,
-            leftBlackboard,
-            rightBlackboard,
             join,
             leftRel,
             tempRightRel);
@@ -3504,9 +3295,7 @@ public class SqlToRelConverter {
    * However, if the query is joined on the right, side multiplicity is maintained.
    */
   private Pair<RexNode, RelNode> convertOnCondition(
-      Blackboard fromBlackboard,
-      Blackboard leftBlackboard,
-      Blackboard rightBlackboard,
+      Blackboard bb,
       SqlJoin join,
       RelNode leftRel,
       RelNode rightRel) {
@@ -3514,26 +3303,16 @@ public class SqlToRelConverter {
     SqlNode condition = requireNonNull(join.getCondition(),
         () -> "getCondition for join " + join);
 
-    replaceSubQueriesOnCondition(fromBlackboard, leftBlackboard, rightBlackboard, leftRel,
-        rightRel, condition, join);
-
-    //TODO: fix this
-    boolean newRels = true;
-
-    final RelNode newLeftRel = newRels
-        ? leftRel
-        : leftBlackboard.reRegister(leftRel);
-
-    final RelNode newRightRel = newRels
-        ? leftRel
-        : rightBlackboard.reRegister(leftRel);
-
-    fromBlackboard.setRoot(ImmutableList.of(newLeftRel, newRightRel));
-
+    bb.setRoot(ImmutableList.of(leftRel, rightRel));
 
     final LookupContext old_right_rels = new LookupContext(
-        fromBlackboard, ImmutableList.of(rightRel), fromBlackboard.systemFieldList.size());
+        bb, ImmutableList.of(rightRel), bb.systemFieldList.size());
 
+    replaceSubQueries(bb, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
+    boolean newRight = bb.root == null || bb.registered.size() == 0;
+    final RelNode newRightRel = newRight
+        ? rightRel
+        : bb.reRegister(rightRel);
 
     /**
      * Logic needed to update the offset list, which tracks at what offsets in the
@@ -3541,23 +3320,23 @@ public class SqlToRelConverter {
      * can be found in the flattened rel list. (see the variable for more information)
      */
     final LookupContext left_rels = new LookupContext(
-        fromBlackboard, ImmutableList.of(leftRel), fromBlackboard.systemFieldList.size());
+        bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
 
     final LookupContext right_rels = new LookupContext(
-        fromBlackboard, ImmutableList.of(newRightRel), fromBlackboard.systemFieldList.size());
+        bb, ImmutableList.of(newRightRel), bb.systemFieldList.size());
 
     // This variable is confusingly named, we've added sub-queries to the right rel
     // if newRight is false
-    if (!newRels) {
+    if (!newRight) {
       for (int i = 0;
            i < right_rels.relOffsetList.size() - old_right_rels.relOffsetList.size(); i++) {
-        fromBlackboard.offsetNodes.add(
+        bb.offsetNodes.add(
             left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
       }
     }
 
-    fromBlackboard.setRoot(ImmutableList.of(leftRel, newRightRel));
-    RexNode conditionExp = fromBlackboard.convertExpression(condition);
+    bb.setRoot(ImmutableList.of(leftRel, newRightRel));
+    RexNode conditionExp = bb.convertExpression(condition);
     return Pair.of(conditionExp, newRightRel);
   }
 
@@ -5899,9 +5678,6 @@ public class SqlToRelConverter {
     }
 
     void setRoot(List<RelNode> inputs) {
-      //TODO: this seems very very wrong, but my solution also seems
-      // very very wrong.
-      // (inputs.get(0) instead of null)
       setRoot(inputs, null, false);
     }
 
@@ -7315,17 +7091,6 @@ public class SqlToRelConverter {
    */
   public static class SqlIdentifierFinder implements SqlVisitor<Boolean> {
 
-    private List<SqlIdentifier> foundIdentifiers;
-
-    public List<SqlIdentifier> getFoundIdentifiers() {
-      return foundIdentifiers;
-    }
-
-    SqlIdentifierFinder() {
-      super();
-      foundIdentifiers = new ArrayList<>();
-    }
-
     @Override public Boolean visit(SqlNamedParam namedParam) {
       return false;
     }
@@ -7339,7 +7104,6 @@ public class SqlToRelConverter {
     }
 
     @Override public Boolean visit(SqlIdentifier identifier) {
-      foundIdentifiers.add(identifier);
       return true;
     }
 

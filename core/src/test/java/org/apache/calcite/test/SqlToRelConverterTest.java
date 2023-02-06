@@ -6318,7 +6318,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     // Tests with even more nested sub-queries to confirm the fix is sufficiently general
 
 
-    //TODO: currently, in situations where we have an in statement that requires values from both
+    // TODO: currently, in situations where we have an in statement that requires values from both
     // the left and right rel, we push it on top of the join as a filter.
 
     // For this specific filter, there is no followup optimization to push this past the join,
