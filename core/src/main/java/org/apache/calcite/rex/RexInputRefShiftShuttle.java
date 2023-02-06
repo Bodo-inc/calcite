@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.rex;
 
 /**
@@ -26,14 +25,13 @@ public class RexInputRefShiftShuttle extends RexShuttle {
   private final int shiftAmount;
   private final RexBuilder builder;
 
-  public RexInputRefShiftShuttle(RexBuilder builder, int shiftAmount){
+  public RexInputRefShiftShuttle(RexBuilder builder, int shiftAmount) {
     super();
     this.shiftAmount = shiftAmount;
     this.builder = builder;
   }
 
-  @Override
-  public RexNode visitTableInputRef(RexTableInputRef ref) {
+  @Override public RexNode visitTableInputRef(RexTableInputRef ref) {
     System.out.println("TODO!");
     return builder.makeInputRef(ref.type, ref.getIndex());
   }
