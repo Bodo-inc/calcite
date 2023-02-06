@@ -1208,10 +1208,16 @@ public class SqlToRelConverter {
     }
   }
 
-
-  private void substituteSubQueryInAnyAll(Blackboard bb, SubQuery subQuery) {
+  /**
+   * Handles substituting IN, NOT_IN, SOME, and ALL sub queries.
+   * This is broken into another function for readability, and to avoid the maximum row limit
+   * imposed by the style guidelines.
+   *
+   * @param bb The blackboard to use for convertion/plan creation.
+   * @param subQuery the SubQuery to substitute
+   */
+  private void substituteSubQueryInSomeAll(Blackboard bb, SubQuery subQuery) {
     final SqlBasicCall call;
-    final RelNode rel;
     final SqlNode query;
     final RelOptUtil.Exists converted;
 
@@ -1289,36 +1295,62 @@ public class SqlToRelConverter {
             validator().getValidatedNodeType(leftKeyNode), null);
 
     if (bb.root == null) {
-//      if (postJoinFilterConditions == null) {
-//        return;
-//      }
+      // Specific handling for IN in the ON clause of a join (Other sub queries are TODO)
+      if (bb.inputs != null && bb.inputs.size() == 2 && call.getOperator().kind == SqlKind.IN) {
 
-      System.out.println("TODO!");
-//      convertExists(query, RelOptUtil.SubQueryType.IN, subQuery.logic,
-//          notIn, targetRowType)
-      converted = convertExists(query, RelOptUtil.SubQueryType.SCALAR,
-          subQuery.logic, true, null);
+        //Need requireNonNull wrapper, the checker doesn't see the bb.inputs != null check
+        int outputStartingIdx = requireNonNull(bb.inputs).get(0).getRowType().getFieldCount()
+            + requireNonNull(bb.inputs).get(1).getRowType().getFieldCount();
 
-      RexNode rhsFields = bb.register(converted.r, JoinRelType.LEFT);
+        // NOTE: this works for non-scalar sub queries, despite the name
+        converted = convertExists(query, RelOptUtil.SubQueryType.SCALAR,
+            subQuery.logic, true, null);
 
-//      this.getRexBuilder().makeCall()
-      List<RexNode> equalityConditions = new ArrayList<>();
-      for (RexNode lhsNode: leftKeys) {
-        // How do I do this??
-        equalityConditions.add(
-            this.getRexBuilder().makeCall(
-            SqlStdOperatorTable.EQUALS, lhsNode, rhsFields));
+        LogicalAggregate convertedWithDistinct =
+            LogicalAggregate.create(converted.r,
+                ImmutableList.of(),
+                ImmutableBitSet.of(
+                    Util.transform(converted.r.getRowType().getFieldList(),
+                    RelDataTypeField::getIndex)),
+                null,
+                ImmutableList.of()
+                );
+
+
+        // NOTE1: JoinRelType is set to LEFT for the other sub queries that are handled via
+        // joining. I'm not certain why JoinRelType is set to LEFT. To my understanding,
+        // any of them should be equally valid, since the join condition of the resulting
+        // join is TRUE, it'll be equivalent to a cross join anyway. Therefore, I'm just going
+        // to leave this as LEFT.
+        // NOTE2: Because root is null, this will always just return Rex offset 0
+        // (Which I think is garbage? At a minimum, it's incorrect for our purposes)
+        // It has the right typing though, so we can use it to construct the needed
+        // input refs
+        RexNode rhsFields = bb.register(convertedWithDistinct, JoinRelType.LEFT);
+
+
+        // Required for IN
+        assert leftKeys.size() == rhsFields.getType().getFieldCount();
+        List<RexNode> equalityConditions = new ArrayList<>();
+        for (int i = 0; i < leftKeys.size(); i++) {
+          RexNode lhsNode = leftKeys.get(i);
+          RexNode rhsNode = this.rexBuilder.makeInputRef(
+              rhsFields.getType().getFieldList().get(i).getType(), outputStartingIdx);
+
+          // How do I do this??
+          equalityConditions.add(
+              this.getRexBuilder().makeCall(
+                  SqlStdOperatorTable.EQUALS, lhsNode, rhsNode));
+        }
+
+        //NOTE: equalityConditions.size() >= 1 because leftKeys.size() >= 1;
+        if (equalityConditions.size() == 1) {
+          subQuery.expr = equalityConditions.get(0);
+        } else {
+          subQuery.expr = bb.getRexBuilder().makeCall(SqlStdOperatorTable.AND, equalityConditions);
+        }
       }
 
-      //Note: equalityConditions.size() >= 1 because leftKeys.size() >= 1;
-      if (equalityConditions.size() == 1) {
-        subQuery.expr = equalityConditions.get(0);
-      } else {
-        subQuery.expr = bb.getRexBuilder().makeCall(SqlStdOperatorTable.AND, equalityConditions);
-      }
-
-
-//      postJoinFilterConditions.addAll(equalityConditions);
       return;
     }
 
@@ -1409,7 +1441,7 @@ public class SqlToRelConverter {
     case NOT_IN:
     case SOME:
     case ALL:
-      substituteSubQueryInAnyAll(bb, subQuery);
+      substituteSubQueryInSomeAll(bb, subQuery);
       return;
 
     case EXISTS:

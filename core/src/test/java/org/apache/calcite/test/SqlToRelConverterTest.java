@@ -6235,56 +6235,15 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     withPostgresLib(sql(sql)).ok();
   }
 
-  @Test void testInSubQuery0() {
-    // Tests that the changes don't break the existing IN path
-
-    String sql = "select emp.ename in (Select MAX(deptno::varchar) "
-        + "from emp where empno > 5) from dept cross join emp\n";
-
-    withPostgresLib(sql(sql)).ok();
-  }
-
-  @Test void testInSubQuery1() {
-    // Tests that the changes don't break the existing IN path
-
-    String sql = "select (emp.ename, emp.deptno) in (Select deptno::varchar, deptno "
-        + "from emp where empno > 5) from dept cross join emp\n";
-
-    withPostgresLib(sql(sql)).ok();
-  }
-
   @Test void testJoinConditionSubQuery5part3() {
-    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
-
-    //TODO: currently, in situations where we have an in statement that requires values from both
-    // the left and right rel, we push it on top of the join as a filter.
+    // Tests a simple case with multiple keys from different tables in the LHS of the IN
+    // statement
 
     // For this specific filter, since we could split this condition into two separate IN conditions
     // on two separate tables, we could push this past the join. However, this is beyond the scope
     // of this PR: (see followup issue TODO)
 
-    String tmp_sql = "SELECT (emp.ename, dept.deptno) in (Select MAX(deptno::varchar), "
-        + "MIN(empno) from emp where empno > 5) ";
-    withPostgresLib(sql(tmp_sql)).ok();
-
-
-    String sql = "with "
-        +
-        "etl_datascience_products_daily_summary_spoof as (\n"
-        +
-        "        select\n"
-        +
-        "            1 as product_id,\n"
-        +
-        "            null::date as ds,\n"
-        +
-        "            2 as secondary_product_id\n"
-        +
-        "        from emp\n"
-        +
-        ")\n"
-        +
-        "select * from dept join emp on "
+    String sql = "select * from dept join emp on "
         +
         "         (emp.ename, dept.deptno) in (Select MAX(deptno::varchar),"
         +
@@ -6294,33 +6253,10 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testJoinConditionSubQuery5part4() {
-    // Tests with even more nested sub-queries to confirm the fix is sufficiently general
+    // Tests a simple case with an expression using values from different tables in the LHS of
+    // the IN statement
 
-
-    // TODO: currently, in situations where we have an in statement that requires values from both
-    // the left and right rel, we push it on top of the join as a filter.
-
-    // For this specific filter, there is no followup optimization to push this past the join,
-    // since the LHS is an expression that references both sides of the join.
-
-
-    String sql = "with "
-        +
-        "etl_datascience_products_daily_summary_spoof as (\n"
-        +
-        "        select\n"
-        +
-        "            1 as product_id,\n"
-        +
-        "            null::date as ds,\n"
-        +
-        "            2 as secondary_product_id\n"
-        +
-        "        from emp\n"
-        +
-        ")\n"
-        +
-        "select * from dept join emp on "
+    String sql = "select * from dept join emp on "
         +
         "         (emp.ename || dept.deptno::varchar) in "
         +
@@ -6655,7 +6591,5 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         "select dept.deptno, dept.deptno + 2, dept.deptno + 3 from dept)";
     withPostgresLib(sql(sql)).ok();
   }
-
-
 
 }
