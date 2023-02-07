@@ -101,9 +101,9 @@ public interface CalciteResource {
   @BaseMessage("Illegal identifier '':''. Was expecting ''VALUE''")
   ExInst<CalciteException> illegalColon();
 
-  @BaseMessage("TABLESAMPLE percentage must be between 0 and 100, inclusive")
+  @BaseMessage("TABLESAMPLE argument must be between {0,number,#} and {1,number,#}, inclusive")
   @Property(name = "SQLSTATE", value = "2202H")
-  ExInst<CalciteException> invalidSampleSize();
+  ExInst<CalciteException> invalidSampleSize(Number min, Number max);
 
   @BaseMessage("Literal ''{0}'' can not be parsed to type ''{1}''")
   ExInst<CalciteException> invalidLiteral(String a0, String a1);
@@ -1027,5 +1027,8 @@ public interface CalciteResource {
 
   @BaseMessage("No operator for ''{0}'' with kind: ''{1}'', syntax: ''{2}'' during JSON deserialization")
   ExInst<CalciteException> noOperator(String name, String kind, String syntax);
+
+  @BaseMessage("Duplicate LIMIT: {0}")
+  ExInst<CalciteException> duplicateLimit(String kind);
 
 }

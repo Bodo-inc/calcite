@@ -3020,6 +3020,43 @@ public class SqlParserTest {
             + "can not be parsed to type 'java\\.lang\\.Integer'");
   }
 
+  // Test custom behavior from snowflake for tablesample.
+  @Test void testTableSampleSnowflake() {
+    // Each group is considered equivalent methods of writing the same query.
+    final String expected1 = "SELECT *\n"
+        + "FROM `EMP` AS `X` TABLESAMPLE BERNOULLI(50.0)";
+    sql("select * from emp as x tablesample row(50.0)")
+        .ok(expected1);
+    sql("select * from emp as x sample row(50.0)")
+        .ok(expected1);
+    sql("select * from emp as x tablesample (50.0)")
+        .ok(expected1);
+    sql("select * from emp as x sample (50.0)")
+        .ok(expected1);
+
+    final String expected2 = "SELECT *\n"
+        + "FROM `EMP` AS `X` TABLESAMPLE SYSTEM(50.0) REPEATABLE(10)";
+    sql("select * from emp as x tablesample system(50.0) seed(10)")
+        .ok(expected2);
+    sql("select * from emp as x sample block(50.0) repeatable(10)")
+        .ok(expected2);
+
+    final String expected3 = "SELECT *\n"
+        + "FROM `EMP` AS `X` TABLESAMPLE BERNOULLI(200 ROWS)";
+    sql("select * from emp as x tablesample row(200 rows)")
+        .ok(expected3);
+    sql("select * from emp as x sample row(200 rows)")
+        .ok(expected3);
+    sql("select * from emp as x tablesample (200 rows)")
+        .ok(expected3);
+    sql("select * from emp as x sample (200 rows)")
+        .ok(expected3);
+
+    // Too many rows.
+    sql("select * from emp as x tablesample bernoulli(10000000000 rows^)^")
+        .fails("TABLESAMPLE argument must be between 0 and 1000000, inclusive");
+  }
+
   @Test void testLiteral() {
     expr("'foo'").same();
     expr("100").same();
@@ -3428,6 +3465,33 @@ public class SqlParserTest {
     sql("select a from foo limit 2, ^all^")
         .withConformance(SqlConformanceEnum.LENIENT)
         .fails("(?s).*Encountered \"all\" at line 1.*");
+  }
+
+  @Test void testTop() {
+    sql("select top 4 a from foo order by b, c asc")
+        .ok("SELECT `A`\n"
+            + "FROM `FOO`\n"
+            + "ORDER BY `B`, `C`\n"
+            + "FETCH NEXT 4 ROWS ONLY");
+    // Top without a number can be treated as a field name.
+    sql("select top, bottom from foo")
+        .ok("SELECT `TOP`, `BOTTOM`\n"
+            + "FROM `FOO`");
+    // Works with binary operators (order by is not allowed, but snowflake allows
+    // this even if the semantics are kind of iffy).
+    sql("select top 4 a from foo union select top 4 a from bar")
+        .ok("((SELECT `A`\n"
+            + "FROM `FOO`\n"
+            + "FETCH NEXT 4 ROWS ONLY)\n"
+            + "UNION\n"
+            + "(SELECT `A`\n"
+            + "FROM `BAR`\n"
+            + "FETCH NEXT 4 ROWS ONLY))");
+    // Specifying TOP with any other kind of limit results in an error.
+    sql("select top 4 a from foo order by b ^limit^ 4")
+        .fails("Duplicate LIMIT: LIMIT");
+    sql("select top 4 a from foo order by b ^fetch^ first 4 rows only")
+        .fails("Duplicate LIMIT: FETCH");
   }
 
   @Test void testSqlInlineComment() {
