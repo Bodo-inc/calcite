@@ -1290,9 +1290,7 @@ public class SqlToRelConverter {
     // In such case, when converting SqlUpdate#condition, bb.root is null
     // and it makes no sense to do the sub-query substitution.
     // However, there are other situations where bb.root is null (specifically the ON condition
-    // of a join) which must be handled. Since we cannot distinguish between these two situations,
-    // we just do the conversion in all cases, and it will be unused in the SqlUpdate#condition
-    // case.
+    // of a join) which must be handled.
 
     final RelDataType targetRowType =
         SqlTypeUtil.promoteToRowType(typeFactory,
@@ -1325,13 +1323,15 @@ public class SqlToRelConverter {
         // NOTE1: JoinRelType is set to LEFT for the other sub queries that are handled via
         // joining. I'm not certain why JoinRelType is set to LEFT. To my understanding,
         // any of them should be equally valid, since the join condition of the resulting
-        // join is TRUE, it'll be equivalent to a cross join anyway. Therefore, I'm just going
-        // to leave this as LEFT.
+        // join is TRUE, it'll be equivalent to a cross join anyway. However, I'm going
+        // to set it to INNER since that seems like the most correct thing to do in this
+        // situation, and it will likely help with pushing down filters to either table.
+        //
         // NOTE2: Because root is null, this will always just return Rex offset 0
         // (Which I think is garbage? At a minimum, it's incorrect for our purposes)
         // It has the right typing though, so we can use it to construct the needed
         // input refs
-        RexNode rhsFields = bb.register(convertedWithDistinct, JoinRelType.LEFT);
+        RexNode rhsFields = bb.register(convertedWithDistinct, JoinRelType.INNER);
 
 
         // Required for IN
@@ -1342,7 +1342,6 @@ public class SqlToRelConverter {
           RexNode rhsNode = this.rexBuilder.makeInputRef(
               rhsFields.getType().getFieldList().get(i).getType(), outputStartingIdx);
 
-          // How do I do this??
           equalityConditions.add(
               this.getRexBuilder().makeCall(
                   SqlStdOperatorTable.EQUALS, lhsNode, rhsNode));
