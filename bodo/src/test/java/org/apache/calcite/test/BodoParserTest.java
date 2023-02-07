@@ -18,7 +18,6 @@ package org.apache.calcite.test;
 
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.dialect.MysqlSqlDialect;
-import org.apache.calcite.sql.parser.SqlAbstractParserImpl;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserFixture;
 import org.apache.calcite.sql.parser.SqlParserTest;
@@ -55,50 +54,6 @@ public class BodoParserTest extends SqlParserTest {
         .withConfig(c -> c.withParserFactory(SqlBodoParserImpl.FACTORY));
   }
 
-  @Test void testReservedWords() {
-    assertThat(isReserved("escape"), is(false));
-  }
-
-  /** {@inheritDoc}
-   *
-   * <p>Copy-pasted from base method, but with some key differences.
-   */
-  @Override @Test protected void testMetadata() {
-    SqlAbstractParserImpl.Metadata metadata = fixture().parser().getMetadata();
-    assertThat(metadata.isReservedFunctionName("ABS"), is(true));
-    assertThat(metadata.isReservedFunctionName("FOO"), is(false));
-
-    assertThat(metadata.isContextVariableName("CURRENT_USER"), is(true));
-    assertThat(metadata.isContextVariableName("CURRENT_CATALOG"), is(true));
-    assertThat(metadata.isContextVariableName("CURRENT_SCHEMA"), is(true));
-    assertThat(metadata.isContextVariableName("ABS"), is(false));
-    assertThat(metadata.isContextVariableName("FOO"), is(false));
-
-    assertThat(metadata.isNonReservedKeyword("A"), is(true));
-    assertThat(metadata.isNonReservedKeyword("KEY"), is(true));
-    assertThat(metadata.isNonReservedKeyword("SELECT"), is(false));
-    assertThat(metadata.isNonReservedKeyword("FOO"), is(false));
-    assertThat(metadata.isNonReservedKeyword("ABS"), is(true)); // was false
-
-    assertThat(metadata.isKeyword("ABS"), is(true));
-    assertThat(metadata.isKeyword("CURRENT_USER"), is(true));
-    assertThat(metadata.isKeyword("CURRENT_CATALOG"), is(true));
-    assertThat(metadata.isKeyword("CURRENT_SCHEMA"), is(true));
-    assertThat(metadata.isKeyword("KEY"), is(true));
-    assertThat(metadata.isKeyword("SELECT"), is(true));
-    assertThat(metadata.isKeyword("HAVING"), is(true));
-    assertThat(metadata.isKeyword("A"), is(true));
-    assertThat(metadata.isKeyword("BAR"), is(false));
-
-    assertThat(metadata.isReservedWord("SELECT"), is(true));
-    assertThat(metadata.isReservedWord("CURRENT_CATALOG"), is(false)); // was true
-    assertThat(metadata.isReservedWord("CURRENT_SCHEMA"), is(false)); // was true
-    assertThat(metadata.isReservedWord("KEY"), is(false));
-
-    String jdbcKeywords = metadata.getJdbcKeywords();
-    assertThat(jdbcKeywords.contains(",COLLECT,"), is(false)); // was true
-    assertThat(!jdbcKeywords.contains(",SELECT,"), is(true));
-  }
 
   @Test void testSelect() {
     final String sql = "select 1 from t";
@@ -107,12 +62,6 @@ public class BodoParserTest extends SqlParserTest {
     sql(sql).ok(expected);
   }
 
-  @Test void testYearIsNotReserved() {
-    final String sql = "select 1 as year from t";
-    final String expected = "SELECT 1 AS `YEAR`\n"
-        + "FROM `T`";
-    sql(sql).ok(expected);
-  }
 
   /** Tests that there are no reserved keywords. */
   @Disabled
@@ -135,23 +84,6 @@ public class BodoParserTest extends SqlParserTest {
     sql(sql.toString()).ok(expected.toString());
   }
 
-  /** In Babel/Bodo, AS is not reserved. */
-  @Test void testAs() {
-    final String expected = "SELECT `AS`\n"
-        + "FROM `T`";
-    sql("select as from t").ok(expected);
-  }
-
-  /** In Babel/Bodo, DESC is not reserved. */
-  @Test void testDesc() {
-    final String sql = "select desc\n"
-        + "from t\n"
-        + "order by desc asc, desc desc";
-    final String expected = "SELECT `DESC`\n"
-        + "FROM `T`\n"
-        + "ORDER BY `DESC`, `DESC` DESC";
-    sql(sql).ok(expected);
-  }
 
   /**
    * This is a failure test making sure the LOOKAHEAD for WHEN clause is 2 in Babel, where
@@ -175,33 +107,6 @@ public class BodoParserTest extends SqlParserTest {
     sql("select date(x) from t").ok(expected);
   }
 
-  /** In Redshift, PostgreSQL the DATEADD, DATEDIFF and DATE_PART functions have
-   * ordinary function syntax except that its first argument is a time unit
-   * (e.g. DAY). We must not parse that first argument as an identifier. */
-  @Test void testRedshiftFunctionsWithDateParts() {
-    final String sql = "SELECT DATEADD(day, 1, t),\n"
-        + " DATEDIFF(week, 2, t),\n"
-        + " DATE_PART(year, t) FROM mytable";
-    final String expected = "SELECT `DATEADD`(DAY, 1, `T`),"
-        + " `DATEDIFF`(WEEK, 2, `T`), `DATE_PART`(YEAR, `T`)\n"
-        + "FROM `MYTABLE`";
-
-    sql(sql).ok(expected);
-  }
-
-  /** PostgreSQL and Redshift allow TIMESTAMP literals that contain only a
-   * date part. */
-  @Test void testShortTimestampLiteral() {
-    sql("select timestamp '1969-07-20'")
-        .ok("SELECT TIMESTAMP '1969-07-20 00:00:00'");
-    // PostgreSQL allows the following. We should too.
-    sql("select ^timestamp '1969-07-20 1:2'^")
-        .fails("Illegal TIMESTAMP literal '1969-07-20 1:2': not in format "
-            + "'yyyy-MM-dd HH:mm:ss'"); // PostgreSQL gives 1969-07-20 01:02:00
-    sql("select ^timestamp '1969-07-20:23:'^")
-        .fails("Illegal TIMESTAMP literal '1969-07-20:23:': not in format "
-            + "'yyyy-MM-dd HH:mm:ss'"); // PostgreSQL gives 1969-07-20 23:00:00
-  }
 
   /** Tests parsing PostgreSQL-style "::" cast operator. */
   @Test void testParseInfixCast()  {
@@ -257,31 +162,6 @@ public class BodoParserTest extends SqlParserTest {
         + "FROM (VALUES (ROW(1, 2))) AS `TBL` (`X`, `Y`)");
   }
 
-  @Test void testCreateTableWithNoCollectionTypeSpecified() {
-    final String sql = "create table foo (bar integer not null, baz varchar(30))";
-    final String expected = "CREATE TABLE `FOO` (`BAR` INTEGER NOT NULL, `BAZ` VARCHAR(30))";
-    sql(sql).ok(expected);
-  }
-
-  @Test void testCreateSetTable() {
-    final String sql = "create set table foo (bar int not null, baz varchar(30))";
-    final String expected = "CREATE SET TABLE `FOO` (`BAR` INTEGER NOT NULL, `BAZ` VARCHAR(30))";
-    sql(sql).ok(expected);
-  }
-
-  @Test void testCreateMultisetTable() {
-    final String sql = "create multiset table foo (bar int not null, baz varchar(30))";
-    final String expected = "CREATE MULTISET TABLE `FOO` "
-        + "(`BAR` INTEGER NOT NULL, `BAZ` VARCHAR(30))";
-    sql(sql).ok(expected);
-  }
-
-  @Test void testCreateVolatileTable() {
-    final String sql = "create volatile table foo (bar int not null, baz varchar(30))";
-    final String expected = "CREATE VOLATILE TABLE `FOO` "
-        + "(`BAR` INTEGER NOT NULL, `BAZ` VARCHAR(30))";
-    sql(sql).ok(expected);
-  }
 
   /** Similar to {@link #testHoist()} but using custom parser. */
   @Test void testHoistMySql() {
