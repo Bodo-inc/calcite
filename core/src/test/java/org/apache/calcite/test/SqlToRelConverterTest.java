@@ -6239,10 +6239,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     // Tests a simple case with multiple keys from different tables in the LHS of the IN
     // statement
 
-    // For this specific filter, since we could split this condition into two separate IN conditions
-    // on two separate tables, we could push this past the join. However, this is beyond the scope
-    // of this PR: (see followup issue TODO)
-
     String sql = "select * from dept join emp on "
         +
         "         (emp.ename, dept.deptno) in (Select MAX(deptno::varchar),"

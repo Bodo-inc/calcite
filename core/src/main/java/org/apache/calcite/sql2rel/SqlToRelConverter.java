@@ -1289,13 +1289,18 @@ public class SqlToRelConverter {
     //
     // In such case, when converting SqlUpdate#condition, bb.root is null
     // and it makes no sense to do the sub-query substitution.
+    // However, there are other situations where bb.root is null (specifically the ON condition
+    // of a join) which must be handled. Since we cannot distinguish between these two situations,
+    // we just do the conversion in all cases, and it will be unused in the SqlUpdate#condition
+    // case.
 
     final RelDataType targetRowType =
         SqlTypeUtil.promoteToRowType(typeFactory,
             validator().getValidatedNodeType(leftKeyNode), null);
 
     if (bb.root == null) {
-      // Specific handling for IN in the ON clause of a join (Other sub queries are TODO)
+      // Specific handling for IN in the ON clause of a join
+      // (Other sub queries are TODO: https://bodo.atlassian.net/browse/BE-4307)
       if (bb.inputs != null && bb.inputs.size() == 2 && call.getOperator().kind == SqlKind.IN) {
 
         //Need requireNonNull wrapper, the checker doesn't see the bb.inputs != null check
@@ -3381,8 +3386,8 @@ public class SqlToRelConverter {
 
     bb.setRoot(ImmutableList.of(leftRel, rightRel));
 
-    final LookupContext left_rels = new LookupContext(
-        bb, ImmutableList.of(leftRel), bb.systemFieldList.size());
+    final int num_left_rels = new LookupContext(
+        bb, ImmutableList.of(leftRel), bb.systemFieldList.size()).relOffsetList.size();
 
 
     /**
@@ -3391,21 +3396,23 @@ public class SqlToRelConverter {
      * By default, for a blackboard in the "ON" condition, we have no root, but two inputs.
      *
      * When converting sub queries, we sometimes temporarily set the root of the blackboard
-     * as being the right rel in order to handle joining the sub-querry.
+     * to the right rel in order to handle joining the sub-querry.
      *
      * This can cause issues, specifically for the IN clause, as we need
      * to convert the LHS of the IN expression in the scope of the overall join, which requires
      * the inputs/root to be set to the original join inputs + empty root.
      *
      *
-     * The way that we handle this is by resetting the left/right rel as inputs in between
+     * The way that we handle this is by resetting the left/right rel as the inputs, and
+     * setting the root to null in between
      * every sub-query conversion. This works because we handle converting the LHS prior to setting
      * the root to the right rel to handle joining the sub-query. This may need to be adjusted
      * if/when the code for handling IN sub-queries in the ON condition is adjusted.
      */
 
-    LookupContext old_right_rels = new LookupContext(
-        bb, ImmutableList.of(rightRel), bb.systemFieldList.size());
+
+    int old_right_rel_count = new LookupContext(
+        bb, ImmutableList.of(rightRel), bb.systemFieldList.size()).relOffsetList.size();
     RelNode curRightRel = rightRel;
     findSubQueries(bb, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE, false);
     for (SubQuery node : bb.subQueryList) {
@@ -3426,17 +3433,16 @@ public class SqlToRelConverter {
             ? curRightRel
             : bb.reRegister(rightRel);
 
-        final LookupContext cur_right_rels = new LookupContext(
-            bb, ImmutableList.of(curRightRel), bb.systemFieldList.size());
-
+        final int cur_right_rel_count = new LookupContext(
+            bb, ImmutableList.of(curRightRel), bb.systemFieldList.size()).relOffsetList.size();
 
         for (int i = 0;
-             i < cur_right_rels.relOffsetList.size() - old_right_rels.relOffsetList.size(); i++) {
+             i < cur_right_rel_count - old_right_rel_count; i++) {
           bb.offsetNodes.add(
-              left_rels.relOffsetList.size() + old_right_rels.relOffsetList.size() + i);
+              num_left_rels + old_right_rel_count + i);
         }
 
-        old_right_rels = cur_right_rels;
+        old_right_rel_count = cur_right_rel_count;
         bb.setRoot(ImmutableList.of(leftRel, curRightRel));
       }
     }
