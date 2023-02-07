@@ -37,7 +37,6 @@ data: {
     # not a reserved keyword, add it to the 'nonReservedKeywords' section.
     keywords: [
       "IF"
-      "SEMI"
       "VOLATILE"
     ]
 
