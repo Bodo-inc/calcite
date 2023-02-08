@@ -35,17 +35,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.SingleRel;
-import org.apache.calcite.rel.core.AggregateCall;
-import org.apache.calcite.rel.core.Collect;
-import org.apache.calcite.rel.core.CorrelationId;
-import org.apache.calcite.rel.core.Filter;
-import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.core.JoinInfo;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.core.RelFactories;
-import org.apache.calcite.rel.core.Sample;
-import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
@@ -4407,8 +4397,11 @@ public class SqlToRelConverter {
 
 //    LogicalTableModify
 //    return LogicalTableModify.create(LogicalTableModify)
-    RelOptTable targetTable = getTargetTable(call);
-    return null;
+//    RelOptTable targetTable = getTargetTable(call);
+
+    RelRoot relRoot = convertQueryRecursive(call.query, false, null);
+
+    return LogicalTableCreate.create(relRoot.rel);
   }
 
   private RelNode convertUpdate(SqlUpdate call) {

@@ -138,8 +138,10 @@ public class SqlValidatorUtil {
             datasetName, usedDataset, extendedFields);
       }
     } else if (namespace.isWrapperFor(SqlValidatorImpl.DdlNamespace.class)) {
-
-      System.out.println("TODO");
+      final SqlValidatorImpl.DdlNamespace ddlNamespace = namespace.unwrap(
+          SqlValidatorImpl.DdlNamespace.class);
+      final SqlValidatorNamespace resolvedNamespace = ddlNamespace.resolve();
+      System.out.println("TODO, maybe?");
     }
     return null;
   }

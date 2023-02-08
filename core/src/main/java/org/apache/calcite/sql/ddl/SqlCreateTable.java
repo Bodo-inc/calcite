@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.ddl;
 
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -35,6 +36,10 @@ public class SqlCreateTable extends SqlCreate {
   public final @Nullable SqlNodeList columnList;
   public final @Nullable SqlNode query;
 
+
+  private @Nullable String outputTableName;
+  private @Nullable CalciteSchema outputTableSchema;
+
   private static final SqlOperator OPERATOR =
       new SqlSpecialOperator("CREATE TABLE", SqlKind.CREATE_TABLE);
 
@@ -52,17 +57,6 @@ public class SqlCreateTable extends SqlCreate {
     return ImmutableNullableList.of(name, columnList, query);
   }
 
-//  @Override
-  public void validateCall(
-      SqlCall call,
-      SqlValidator validator,
-      SqlValidatorScope scope,
-      SqlValidatorScope operandScope) {
-//    assert call.getOperator() == this;
-    for (SqlNode operand : call.getOperandList()) {
-      operand.validateExpr(validator, operandScope);
-    }
-  }
 
 
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
@@ -89,6 +83,20 @@ public class SqlCreateTable extends SqlCreate {
 
   @Override public void validate(SqlValidator validator, SqlValidatorScope scope) {
     validator.validateCreateTable(this);
+  }
+
+  /**
+   * Used during validation, outputTableName is null before validation.
+   */
+  public void setOutputTableName(String outputTableName) {
+    this.outputTableName = outputTableName;
+  }
+
+  /**
+   * Used during validation, outputTableName is null before validation.
+   */
+  public void setOutputTableSchema(CalciteSchema schema) {
+    this.outputTableSchema = schema;
   }
 
 }

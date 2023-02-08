@@ -36,6 +36,7 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.*;
@@ -3144,22 +3145,30 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       System.out.println("TODO");
       List<SqlNode> operandList = createTable.getOperandList();
       //should have three values, name, columnList, query
+      // (query can be null, in the case that we're just doing a table definition with no data.
+      // For now, only supporting the case where we have a query)
+
       assert operandList.size() == 3;
       //scope of the select should be the scope of the overall schema
       //TODO: do I need a namespace for create table? I don't think I do, but merge
       //has one. It might be an invariant that every node has a namespace?
-      registerQuery(
-          parentScope, //Should this be createTableNs?
-          usingScope, //Should be null?
-          operandList.get(2),
-          enclosingNode,
-          null,
-          false
-          );
+      final SqlNode queryNode = operandList.get(2);
+      if (queryNode != null) {
+        registerQuery(
+            parentScope, //Should this be createTableNs?
+            usingScope, //Should be null?
+            queryNode,
+            enclosingNode,
+            null,
+            false
+        );
+        SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
+        DdlNamespace createTableNs = new DdlNamespace((SqlCreate) node, childNs, parentScope);
+        registerNamespace(usingScope, null, createTableNs, forceNullable);
 
-      SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
-      DdlNamespace createTableNs = new DdlNamespace((SqlCreate) node, childNs, parentScope);
-      registerNamespace(usingScope, null, createTableNs, forceNullable);
+      } else {
+        throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
+      }
 
       break;
 
@@ -5377,7 +5386,60 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     validateAccess(call.getTargetTable(), table, SqlAccessEnum.UPDATE);
   }
 
-  @Override public void validateCreateTable(SqlCreateTable call) {
+  @Override public void validateCreateTable(SqlCreateTable createTable) {
+
+
+    //scope of the select should be the scope of the overall schema
+    //TODO: do I need a namespace for create table? I don't think I do, but merge
+    //has one. It might be an invariant that every node has a namespace?
+    final SqlNode queryNode = createTable.query;
+    if (queryNode == null) {
+      throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
+    }
+
+    final SqlValidatorScope queryScope = scopes.get(queryNode);
+    //Note, this can either a row expression or a query expression with an optional ORDER BY
+    if (queryNode instanceof SqlSelect) {
+      final SqlSelect sqlSelect = (SqlSelect) queryNode;
+      validateSelect(sqlSelect, unknownType);
+    } else {
+      validateQuery(queryNode, queryScope, unknownType);
+    }
+
+    final SqlValidatorNamespace queryNS = getNamespaceOrThrow(queryNode);
+    final DdlNamespace createTableNS = (DdlNamespace) getNamespaceOrThrow(createTable);
+
+    //Row type of the overall create statement should be the same as that of the underlying query
+    assert queryNS.getRowType().equals(createTableNS.getRowType());
+
+    final SqlIdentifier tableNameNode = createTable.name;
+    final List<String> names = createTable.name.names;
+
+
+    CalciteSchema curSchema = this.catalogReader.getRootSchema();
+
+
+//    Should this use this.catalogReader.getSchemaPaths() instead?
+    for (int i = 0; i < names.size() - 1; i++) {
+      //TODO: should this be case sensative?
+      curSchema = curSchema.getSubSchema(names.get(i), false);
+    }
+
+    createTable.setOutputTableName(names.get(names.size()-1));
+    createTable.setOutputTableSchema(curSchema);
+
+//    private static @Nullable Table resolveTable(SqlIdentifier identifier, SqlValidatorScope scope) {
+//      SqlQualified fullyQualified = scope.fullyQualify(identifier);
+//      assert fullyQualified.namespace != null : "namespace must not be null in " + fullyQualified;
+//      SqlValidatorTable sqlValidatorTable =
+//          fullyQualified.namespace.getTable();
+//      if (sqlValidatorTable != null) {
+//        return sqlValidatorTable.table();
+//      }
+//      return null;
+//    }
+
+
     System.out.println("TODO!");
   }
 
@@ -6862,10 +6924,25 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   public static class DdlNamespace implements SqlValidatorNamespace {
     private final SqlCreate node;
     private final SqlValidatorNamespace childQueryNamespace;
-    private final SqlValidatorNamespace parentScope;
+    private final SqlValidatorScope parentScope;
+
+//    private final SqlValidatorNamespace ns;
+//
+//    protected DmlNamespace(SqlValidatorImpl validator, SqlNode id,
+//        SqlNode enclosingNode, SqlValidatorScope parentScope) {
+//      switch (id.getKind()) {
+//      case TABLE_IDENTIFIER_WITH_ID:
+//      case TABLE_REF_WITH_ID:
+//        ns = new TableIdentifierWithIDNamespace(validator, id, enclosingNode, parentScope);
+//        break;
+//      default:
+//        ns = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
+//      }
+//    }
 
 
-    DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace, SqlValidatorNamespace parentScope) {
+    DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace,
+        SqlValidatorScope parentScope) {
       requireNonNull(childQueryNamespace);
       requireNonNull(node);
       this.node = node;
@@ -7063,8 +7140,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public SqlValidatorNamespace resolve() {
-
       //TODO: Keaton: this should probably resolve to a tableNamespace?
+
       return this;
     }
 
