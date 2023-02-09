@@ -36,13 +36,14 @@ data: {
     # List of new keywords. Example: "DATABASES", "TABLES". If the keyword is
     # not a reserved keyword, add it to the 'nonReservedKeywords' section.
     keywords: [
-      "IF"
-      "VOLATILE"
+      "IF",
+      "VOLATILE",
     ]
 
     # List of non-reserved keywords to add;
     # items in this list become non-reserved
     nonReservedKeywordsToAdd: [
+    "IF",
     ]
 
     # List of additional join types. Each is a method with no arguments.
