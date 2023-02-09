@@ -23,8 +23,13 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
+
+import org.apache.calcite.schema.Schema;
+
+import org.apache.calcite.sql.SqlIdentifier;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -32,6 +37,8 @@ import java.util.List;
 
 public class LogicalTableCreate extends TableCreate {
 
+  private final Schema schema;
+  private final String TableName;
   /**
    * Creates a <code>SingleRel</code>.
    *
@@ -40,12 +47,15 @@ public class LogicalTableCreate extends TableCreate {
    * @param input   Input relational expression
    */
   protected LogicalTableCreate(final RelOptCluster cluster, final RelTraitSet traits,
-      final RelNode input) {
+      final RelNode input, final Schema schema, final String tableName) {
     super(cluster, traits, input);
+    this.schema = schema;
+    this.TableName = tableName;
   }
 
   /** Creates a LogicalTableModify. */
-  public static LogicalTableCreate create(RelNode input) {
+  public static LogicalTableCreate create(RelNode input,
+      final Schema schema, final String tableName) {
 
 //    RelOptTable table,
 //    Prepare.CatalogReader schema,
@@ -56,7 +66,19 @@ public class LogicalTableCreate extends TableCreate {
 
     final RelOptCluster cluster = input.getCluster();
     final RelTraitSet traitSet = cluster.traitSetOf(Convention.NONE);
-    return new LogicalTableCreate(cluster, traitSet, input);
+    return new LogicalTableCreate(cluster, traitSet, input, schema, tableName);
   }
 
+  @Override public RelWriter explainTerms(RelWriter pw) {
+    return super.explainTerms(pw)
+        .item("TableName", this.TableName).item("Table Schema", this.schema);
+  }
+
+  public Schema getSchema() {
+    return schema;
+  }
+
+  public String getTableName() {
+    return TableName;
+  }
 }

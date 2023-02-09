@@ -4401,7 +4401,7 @@ public class SqlToRelConverter {
 
     RelRoot relRoot = convertQueryRecursive(call.query, false, null);
 
-    return LogicalTableCreate.create(relRoot.rel);
+    return LogicalTableCreate.create(relRoot.rel, call.getOutputTableSchema(), call.getOutputTableName());
   }
 
   private RelNode convertUpdate(SqlUpdate call) {

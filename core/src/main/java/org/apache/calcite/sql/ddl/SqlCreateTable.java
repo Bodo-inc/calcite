@@ -17,6 +17,7 @@
 package org.apache.calcite.sql.ddl;
 
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -38,7 +39,7 @@ public class SqlCreateTable extends SqlCreate {
 
 
   private @Nullable String outputTableName;
-  private @Nullable CalciteSchema outputTableSchema;
+  private @Nullable Schema outputTableSchema;
 
   private static final SqlOperator OPERATOR =
       new SqlSpecialOperator("CREATE TABLE", SqlKind.CREATE_TABLE);
@@ -96,7 +97,14 @@ public class SqlCreateTable extends SqlCreate {
    * Used during validation, outputTableName is null before validation.
    */
   public void setOutputTableSchema(CalciteSchema schema) {
-    this.outputTableSchema = schema;
+    this.outputTableSchema = schema.schema;
   }
 
+  public Schema getOutputTableSchema() {
+    return outputTableSchema;
+  }
+
+  public String getOutputTableName() {
+    return outputTableName;
+  }
 }

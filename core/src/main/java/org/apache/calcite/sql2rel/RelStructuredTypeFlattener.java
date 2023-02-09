@@ -400,7 +400,9 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
     //TODO: extend this
     LogicalTableCreate newRel =
         LogicalTableCreate.create(
-            getNewForOldRel(rel.getInput())
+            getNewForOldRel(rel.getInput()),
+            rel.getSchema(),
+            rel.getTableName()
         );
     setNewForOldRel(rel, newRel);
   }
