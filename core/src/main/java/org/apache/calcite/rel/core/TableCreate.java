@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.rel.core;
 
 import org.apache.calcite.plan.RelOptCluster;
@@ -25,6 +24,9 @@ import org.apache.calcite.rel.type.RelDataType;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
+/**
+ * Abstract class for Table Creation statements.
+ */
 public abstract class TableCreate extends SingleRel {
 
   private @MonotonicNonNull RelDataType inputRowType;
@@ -33,7 +35,7 @@ public abstract class TableCreate extends SingleRel {
    * Creates a <code>SingleRel</code>.
    *
    * @param cluster Cluster this relational expression belongs to
-   * @param traits
+   * @param traits The traits
    * @param input   Input relational expression
    */
   protected TableCreate(final RelOptCluster cluster, final RelTraitSet traits,

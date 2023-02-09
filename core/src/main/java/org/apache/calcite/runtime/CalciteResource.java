@@ -863,7 +863,7 @@ public interface CalciteResource {
   ExInst<SqlValidatorException> tableExists(String name);
 
   // CREATE TABLE currently requires an "AS query"
-  @BaseMessage("Missing column list")
+  @BaseMessage("CreateTable statements currently require an 'AS query'")
   ExInst<SqlValidatorException> createTableRequiresAsQuery();
 
   // If CREATE TABLE does not have "AS query", there must be a column list

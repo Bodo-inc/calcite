@@ -14,43 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.rel.core;
 
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelTraitSet;
-import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
-import org.apache.calcite.rel.logical.LogicalTableModify;
-import org.apache.calcite.rex.RexNode;
-
 import org.apache.calcite.schema.Schema;
 
-import org.apache.calcite.sql.SqlIdentifier;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.util.List;
-
+/**
+ * Default Implementation of TableCreate node.
+ */
 public class LogicalTableCreate extends TableCreate {
 
   private final Schema schema;
-  private final String TableName;
+  private final String tableName;
   /**
    * Creates a <code>SingleRel</code>.
    *
    * @param cluster Cluster this relational expression belongs to
-   * @param traits
+   * @param traits the traits
    * @param input   Input relational expression
    */
   protected LogicalTableCreate(final RelOptCluster cluster, final RelTraitSet traits,
       final RelNode input, final Schema schema, final String tableName) {
     super(cluster, traits, input);
     this.schema = schema;
-    this.TableName = tableName;
+    this.tableName = tableName;
   }
 
   /** Creates a LogicalTableModify. */
@@ -71,7 +62,7 @@ public class LogicalTableCreate extends TableCreate {
 
   @Override public RelWriter explainTerms(RelWriter pw) {
     return super.explainTerms(pw)
-        .item("TableName", this.TableName).item("Table Schema", this.schema);
+        .item("TableName", this.tableName).item("Schema", this.schema);
   }
 
   public Schema getSchema() {
@@ -79,6 +70,6 @@ public class LogicalTableCreate extends TableCreate {
   }
 
   public String getTableName() {
-    return TableName;
+    return tableName;
   }
 }

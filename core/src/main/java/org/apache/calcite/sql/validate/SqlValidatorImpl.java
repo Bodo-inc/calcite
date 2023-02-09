@@ -36,10 +36,55 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
-import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.JoinConditionType;
+import org.apache.calcite.sql.JoinType;
+import org.apache.calcite.sql.SqlAccessEnum;
+import org.apache.calcite.sql.SqlAccessType;
+import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCallBinding;
+import org.apache.calcite.sql.SqlCreate;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlDelete;
+import org.apache.calcite.sql.SqlDynamicParam;
+import org.apache.calcite.sql.SqlExplain;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlInsert;
+import org.apache.calcite.sql.SqlIntervalLiteral;
+import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlJoin;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlMatchRecognize;
+import org.apache.calcite.sql.SqlMerge;
+import org.apache.calcite.sql.SqlNamedParam;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlPivot;
+import org.apache.calcite.sql.SqlSampleSpec;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlSelectKeyword;
+import org.apache.calcite.sql.SqlSnapshot;
+import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.SqlTableFunction;
+import org.apache.calcite.sql.SqlTableIdentifierWithID;
+import org.apache.calcite.sql.SqlUnpivot;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
+import org.apache.calcite.sql.SqlUpdate;
+import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.SqlValuesOperator;
+import org.apache.calcite.sql.SqlWindow;
+import org.apache.calcite.sql.SqlWindowTableFunction;
+import org.apache.calcite.sql.SqlWith;
+import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -2828,6 +2873,54 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   /**
+   * Helper fn to avoid calcite function line limits.
+   */
+  private void registerCreateTableQuery(SqlValidatorScope parentScope,
+      @Nullable SqlValidatorScope usingScope,
+      SqlCreateTable createTable,
+      SqlNode enclosingNode,
+      boolean forceNullable) {
+    //TODO: I'll likely need some sort of call to
+    // validateFeature()
+    // to confirm that the sql dialect we're validating for supports CREATE_TABLE.
+    // For now, leaving this blank
+    System.out.println("TODO");
+    List<SqlNode> operandList = createTable.getOperandList();
+    //should have three values, name, columnList, query
+    // (query can be null, in the case that we're just doing a table definition with no data.
+    // For now, only supporting the case where we have a query)
+
+    assert operandList.size() == 3;
+    //scope of the select should be the scope of the overall schema
+    //TODO: do I need a namespace for create table? I don't think I do, but merge
+    //has one. It might be an invariant that every node has a namespace?
+    final SqlNode queryNode = operandList.get(2);
+    if (queryNode != null) {
+      registerQuery(
+          parentScope, //Should this be createTableNs?
+          usingScope, //Should be null?
+          queryNode,
+          enclosingNode,
+          null,
+          false
+      );
+      SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
+      DdlNamespace createTableNs = new DdlNamespace(createTable, childNs, parentScope);
+      registerNamespace(usingScope, null, createTableNs, forceNullable);
+
+    } else {
+      throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
+    }
+    //      SqlValidatorScope parentScope,
+    //      @Nullable SqlValidatorScope usingScope,
+    //      SqlNode node,
+    //      SqlNode enclosingNode,f
+    //      @Nullable String alias,
+    //      boolean forceNullable
+    //      boolean checkUpdate
+  }
+
+  /**
    * Registers a query in a parent scope.
    *
    * @param parentScope Parent scope which this scope turns to in order to
@@ -3137,48 +3230,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       break;
 
     case CREATE_TABLE:
-      //TODO: I'll likely need some sort of call to
-      // validateFeature()
-      // to confirm that the sql dialect we're validating for supports CREATE_TABLE.
-      // For now, leaving this blank
-      SqlCreateTable createTable = (SqlCreateTable) node;
-      System.out.println("TODO");
-      List<SqlNode> operandList = createTable.getOperandList();
-      //should have three values, name, columnList, query
-      // (query can be null, in the case that we're just doing a table definition with no data.
-      // For now, only supporting the case where we have a query)
-
-      assert operandList.size() == 3;
-      //scope of the select should be the scope of the overall schema
-      //TODO: do I need a namespace for create table? I don't think I do, but merge
-      //has one. It might be an invariant that every node has a namespace?
-      final SqlNode queryNode = operandList.get(2);
-      if (queryNode != null) {
-        registerQuery(
-            parentScope, //Should this be createTableNs?
-            usingScope, //Should be null?
-            queryNode,
-            enclosingNode,
-            null,
-            false
-        );
-        SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
-        DdlNamespace createTableNs = new DdlNamespace((SqlCreate) node, childNs, parentScope);
-        registerNamespace(usingScope, null, createTableNs, forceNullable);
-
-      } else {
-        throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
-      }
-
+      registerCreateTableQuery(parentScope, usingScope,
+          (SqlCreateTable) node, enclosingNode, forceNullable);
       break;
-
-      //      SqlValidatorScope parentScope,
-      //      @Nullable SqlValidatorScope usingScope,
-      //      SqlNode node,
-      //      SqlNode enclosingNode,
-      //      @Nullable String alias,
-      //      boolean forceNullable
-      //      boolean checkUpdate
 
     case MERGE:
       validateFeature(RESOURCE.sQLFeature_F312(), node.getParserPosition());
@@ -5425,10 +5479,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       curSchema = curSchema.getSubSchema(names.get(i), false);
     }
 
-    createTable.setOutputTableName(names.get(names.size()-1));
+    createTable.setOutputTableName(names.get(names.size() - 1));
     createTable.setOutputTableSchema(curSchema);
 
-//    private static @Nullable Table resolveTable(SqlIdentifier identifier, SqlValidatorScope scope) {
+//    private static @Nullable Table resolveTable(
+//    SqlIdentifier identifier, SqlValidatorScope scope) {
 //      SqlQualified fullyQualified = scope.fullyQualify(identifier);
 //      assert fullyQualified.namespace != null : "namespace must not be null in " + fullyQualified;
 //      SqlValidatorTable sqlValidatorTable =
@@ -6943,8 +6998,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace,
         SqlValidatorScope parentScope) {
-      requireNonNull(childQueryNamespace);
-      requireNonNull(node);
+      requireNonNull(childQueryNamespace, "childQueryNamespace");
+      requireNonNull(node, "node");
       this.node = node;
       this.childQueryNamespace = childQueryNamespace;
       this.parentScope = parentScope;
@@ -6956,16 +7011,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *
      * @return validator
      */
-    @Override
-    public SqlValidator getValidator() {
+    @Override public SqlValidator getValidator() {
       return childQueryNamespace.getValidator();
     }
 
     /**
      * Returns the underlying table, or null if there is none.
      */
-    @Override
-    public @Nullable SqlValidatorTable getTable() {
+    @Override public @Nullable SqlValidatorTable getTable() {
       return null;
     }
 
@@ -6976,8 +7029,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *
      * @return Row type of this namespace, never null, always a struct
      */
-    @Override
-    public RelDataType getRowType() {
+    @Override public RelDataType getRowType() {
       return childQueryNamespace.getRowType();
     }
 
@@ -6986,8 +7038,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *
      * @return Row type converted to struct
      */
-    @Override
-    public RelDataType getType() {
+    @Override public RelDataType getType() {
       return childQueryNamespace.getType();
     }
 
@@ -7001,10 +7052,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * the row type is the type wrapped as a struct with a single column,
      * otherwise the type and row type are the same.</p>
      *
-     * @param type
+     * @param type the type to set
      */
-    @Override
-    public void setType(final RelDataType type) {
+    @Override public void setType(final RelDataType type) {
       //I think this should be a no-op? The type of the create statement should entirely
       //depend on the underlying query.
     }
@@ -7014,8 +7064,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *
      * @return Row type sans system columns
      */
-    @Override
-    public RelDataType getRowTypeSansSystemColumns() {
+    @Override public RelDataType getRowTypeSansSystemColumns() {
       return childQueryNamespace.getRowTypeSansSystemColumns();
     }
 
@@ -7030,8 +7079,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param targetRowType Desired row type, must not be null, may be the data
      *                      type 'unknown'.
      */
-    @Override
-    public void validate(final RelDataType targetRowType) {
+    @Override public void validate(final RelDataType targetRowType) {
       childQueryNamespace.validate(targetRowType);
     }
 
@@ -7044,8 +7092,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * includes all decorations. If there are no decorations, returns the same
      * as {@link #getNode()}.
      */
-    @Override
-    public @Nullable SqlNode getEnclosingNode() {
+    @Override public @Nullable SqlNode getEnclosingNode() {
       return node;
     }
 
@@ -7059,8 +7106,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param name Name of namespace
      * @return Namespace
      */
-    @Override
-    public @Nullable SqlValidatorNamespace lookupChild(final String name) {
+    @Override public @Nullable SqlValidatorNamespace lookupChild(final String name) {
       return this.childQueryNamespace.lookupChild(name);
     }
 
@@ -7070,8 +7116,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param name Field name
      * @return Whether field exists
      */
-    @Override
-    public boolean fieldExists(final String name) {
+    @Override public boolean fieldExists(final String name) {
       return this.childQueryNamespace.fieldExists(name);
     }
 
@@ -7081,23 +7126,20 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * called "TIMESTAMP", then the list would contain a
      * {@link SqlIdentifier} called "TIMESTAMP".
      */
-    @Override
-    public List<Pair<SqlNode, SqlMonotonicity>> getMonotonicExprs() {
+    @Override public List<Pair<SqlNode, SqlMonotonicity>> getMonotonicExprs() {
       return this.childQueryNamespace.getMonotonicExprs();
     }
 
     /**
      * Returns whether and how a given column is sorted.
      *
-     * @param columnName
+     * @param columnName the column to check
      */
-    @Override
-    public SqlMonotonicity getMonotonicity(final String columnName) {
+    @Override public SqlMonotonicity getMonotonicity(final String columnName) {
       return this.childQueryNamespace.getMonotonicity(columnName);
     }
 
-    @Override
-    @Deprecated
+    @Override @Deprecated
     public void makeNullable() {
       this.childQueryNamespace.makeNullable();
     }
@@ -7110,8 +7152,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return This namespace cast to desired type
      * @throws ClassCastException if no such interface is available
      */
-    @Override
-    public <T> T unwrap(final Class<T> clazz) {
+    @Override public <T> T unwrap(final Class<T> clazz) {
       return null;
     }
 
@@ -7122,8 +7163,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param clazz Interface
      * @return Whether namespace implements given interface
      */
-    @Override
-    public boolean isWrapperFor(final Class<?> clazz) {
+    @Override public boolean isWrapperFor(final Class<?> clazz) {
       return clazz.isInstance(this);
     }
 
@@ -7138,8 +7178,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * <p>You must not call this method before {@link #validate(RelDataType)} has
      * completed.</p>
      */
-    @Override
-    public SqlValidatorNamespace resolve() {
+    @Override public SqlValidatorNamespace resolve() {
       //TODO: Keaton: this should probably resolve to a tableNamespace?
 
       return this;
@@ -7151,8 +7190,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *
      * @param modality Modality
      */
-    @Override
-    public boolean supportsModality(final SqlModality modality) {
+    @Override public boolean supportsModality(final SqlModality modality) {
       return childQueryNamespace.supportsModality(modality);
     }
   }
