@@ -215,6 +215,11 @@ public abstract class DelegatingScope implements SqlValidatorScope {
     parent.resolveTable(names, nameMatcher, path, resolved, extensionList);
   }
 
+  @Override public void resolveSchema(List<String> names, SqlNameMatcher nameMatcher, Path path,
+      Resolved resolved) {
+    parent.resolveSchema(names, nameMatcher, path, resolved);
+  }
+
   @Override public SqlValidatorScope getOperandScope(SqlCall call) {
     if (call instanceof SqlSelect) {
       return validator.getSelectScope((SqlSelect) call);

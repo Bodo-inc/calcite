@@ -5442,7 +5442,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   @Override public void validateCreateTable(SqlCreateTable createTable) {
 
-
     //scope of the select should be the scope of the overall schema
     //TODO: do I need a namespace for create table? I don't think I do, but merge
     //has one. It might be an invariant that every node has a namespace?
@@ -5467,10 +5466,26 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     assert queryNS.getRowType().equals(createTableNS.getRowType());
 
     final SqlIdentifier tableNameNode = createTable.name;
-    final List<String> names = createTable.name.names;
+    final List<String> names = tableNameNode.names;
 
-
+    final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
     CalciteSchema curSchema = this.catalogReader.getRootSchema();
+    CatalogScope temp = ((CatalogScope) ((SelectScope) queryScope).parent);
+
+//    temp.resolve(
+//        List<String> names,
+//        SqlNameMatcher nameMatcher,
+//        boolean deep,
+//        Resolved resolved,
+//    );
+
+    temp.resolveSchema(
+        names,
+        this.catalogReader.nameMatcher(),
+        SqlValidatorScope.Path.EMPTY,
+        resolved
+    );
+
 
 
 //    Should this use this.catalogReader.getSchemaPaths() instead?
