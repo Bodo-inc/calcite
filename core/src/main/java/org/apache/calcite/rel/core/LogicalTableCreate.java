@@ -32,6 +32,9 @@ public class LogicalTableCreate extends TableCreate {
 
   private final Schema schema;
   private final String tableName;
+  private final boolean isReplace;
+  private final boolean ifNotExists;
+
   /**
    * Creates a <code>SingleRel</code>.
    *
@@ -40,26 +43,25 @@ public class LogicalTableCreate extends TableCreate {
    * @param input   Input relational expression
    */
   protected LogicalTableCreate(final RelOptCluster cluster, final RelTraitSet traits,
-      final RelNode input, final Schema schema, final String tableName) {
+      final RelNode input, final Schema schema, final String tableName,
+      final boolean isReplace, final boolean ifNotExists) {
     super(cluster, traits, input);
     this.schema = schema;
     this.tableName = tableName;
+    this.isReplace = isReplace;
+    this.ifNotExists = ifNotExists;
   }
 
   /** Creates a LogicalTableModify. */
-  public static LogicalTableCreate create(RelNode input,
-      final Schema schema, final String tableName) {
+  public static LogicalTableCreate create(final RelNode input,
+      final Schema schema, final String tableName,
+      final boolean isReplace, final boolean ifNotExists) {
 
-//    RelOptTable table,
-//    Prepare.CatalogReader schema,
-//    TableModify.Operation operation,
-//    @Nullable List<String> updateColumnList,
-//    @Nullable List<RexNode> sourceExpressionList,
-//    boolean flattened
 
     final RelOptCluster cluster = input.getCluster();
     final RelTraitSet traitSet = cluster.traitSetOf(Convention.NONE);
-    return new LogicalTableCreate(cluster, traitSet, input, schema, tableName);
+    return new LogicalTableCreate(cluster, traitSet, input, schema, tableName,
+        isReplace, ifNotExists);
   }
 
   @Override public RelWriter explainTerms(RelWriter pw) {
@@ -75,12 +77,23 @@ public class LogicalTableCreate extends TableCreate {
     return tableName;
   }
 
+  public boolean getIfNotExists() {
+    return ifNotExists;
+  }
+
+  public boolean isReplace() {
+    return isReplace;
+  }
+
   @Override public LogicalTableCreate copy(RelTraitSet traitSet,
       List<RelNode> inputs) {
     assert traitSet.containsIfApplicable(Convention.NONE);
     assert inputs.size() == 1;
     return new LogicalTableCreate(
-        getCluster(), traitSet, inputs.get(0), this.schema, this.tableName);
+        getCluster(), traitSet, inputs.get(0), this.schema, this.tableName,
+        this.isReplace, this.ifNotExists);
   }
+
+
 
 }
