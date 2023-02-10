@@ -16,7 +16,6 @@
  */
 package org.apache.calcite.sql.ddl;
 
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -103,8 +102,8 @@ public class SqlCreateTable extends SqlCreate {
   /**
    * Used during validation, outputTableName is null before validation.
    */
-  public void setOutputTableSchema(CalciteSchema schema) {
-    this.outputTableSchema = schema.schema;
+  public void setOutputTableSchema(Schema schema) {
+    this.outputTableSchema = schema;
   }
 
   public Schema getOutputTableSchema() {

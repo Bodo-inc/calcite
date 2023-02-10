@@ -141,15 +141,23 @@ class EmptyScope implements SqlValidatorScope {
     final List<Resolve> resolves = ((ResolvedImpl) resolved).resolves;
 
 
+    //Note: names omits the table name, we only have the full
+
     // Look in the default schema, then default catalog, then root schema.
     for (List<String> schemaPath : validator.catalogReader.getSchemaPaths()) {
-      resolve_schema_(validator.catalogReader.getRootSchema(), names, schemaPath,
+      resolveSchema(validator.catalogReader.getRootSchema(), names, schemaPath,
           nameMatcher, path, resolved);
       for (Resolve resolve : resolves) {
+        //Should have just the tablename remaining
         if (resolve.remainingNames.isEmpty()) {
           // There is a full match. Return it as the only match.
           ((ResolvedImpl) resolved).clear();
           resolves.add(resolve);
+          //NOTE: at this point, we just return the find. This is what is done in resolveTable
+          // Is this valid? We could have multiple matching schemas, right? In which case,
+          // we'd want to throw an error?
+          // It seems like we would always return the first match from
+          // validator.catalogReader.getSchemaPaths(). Is this the correct behavior?
           return;
         }
       }
@@ -162,19 +170,31 @@ class EmptyScope implements SqlValidatorScope {
     }
   }
 
-  private void resolve_schema_(final CalciteSchema rootSchema, List<String> names,
+  private void resolveSchema(final CalciteSchema rootSchema, List<String> names,
       List<String> schemaNames, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
     //TODO: right now this is just a copy of resolve_. My hope is that by stepping through it,
     //I can better understand what is going on
+//    schemaNames.add("Does_this_do_what_I_think_it_does");
 
+//    List<String> schemaNames2 = new ArrayList<>();
+//    schemaNames2.addAll(schemaNames);
+//    schemaNames2.add("Does_this_do_what_I_think_it_does");
+//    //Generates all possible
+//    final List<String> concat2 = ImmutableList.<String>builder()
+//        .addAll(schemaNames2).addAll(names).build();
 
+    //Generates all possible
     final List<String> concat = ImmutableList.<String>builder()
         .addAll(schemaNames).addAll(names).build();
+
+    // Variables updated in the loop
     CalciteSchema schema = rootSchema;
     SqlValidatorNamespace namespace = null;
     List<String> remainingNames = concat;
+
     for (String schemaName : concat) {
+      // Ignore rootSchema
       if (schema == rootSchema
           && nameMatcher.matches(schemaName, schema.name)) {
         remainingNames = Util.skip(remainingNames);
@@ -182,6 +202,9 @@ class EmptyScope implements SqlValidatorScope {
       }
       final CalciteSchema subSchema =
           schema.getSubSchema(schemaName, nameMatcher.isCaseSensitive());
+
+      // If we have a subSchema, update the loop variables, and continue, to see
+      // If we can find a lower subSchema.
       if (subSchema != null) {
         path = path.plus(null, -1, subSchema.name, StructKind.NONE);
         remainingNames = Util.skip(remainingNames);
@@ -190,35 +213,16 @@ class EmptyScope implements SqlValidatorScope {
             ImmutableList.copyOf(path.stepNames()));
         continue;
       }
-      CalciteSchema.TableEntry entry =
-          schema.getTable(schemaName, nameMatcher.isCaseSensitive());
-      if (entry == null) {
-        entry = schema.getTableBasedOnNullaryFunction(schemaName,
-            nameMatcher.isCaseSensitive());
-      }
-      if (entry != null) {
-        path = path.plus(null, -1, entry.name, StructKind.NONE);
-        remainingNames = Util.skip(remainingNames);
-        final Table table = entry.getTable();
-        SqlValidatorTable table2 = null;
-        if (table instanceof Wrapper) {
-          table2 = ((Wrapper) table).unwrap(Prepare.PreparingTable.class);
-        }
-        if (table2 == null) {
-          final RelOptSchema relOptSchema =
-              validator.catalogReader.unwrap(RelOptSchema.class);
-          final RelDataType rowType = table.getRowType(validator.typeFactory);
-          table2 = RelOptTableImpl.create(relOptSchema, rowType, entry, null);
-        }
-        namespace = new TableNamespace(validator, table2, extensionFields);
+      //Return early if we can't find any further sub schemas
+      if (namespace != null) {
         resolved.found(namespace, false, null, path, remainingNames);
         return;
       }
-      // neither sub-schema nor table
-      if (namespace != null
-          && !remainingNames.equals(names)) {
-        resolved.found(namespace, false, null, path, remainingNames);
-      }
+    }
+
+    //Return if we've iterate through all the names in the identifier
+    if (namespace != null) {
+      resolved.found(namespace, false, null, path, remainingNames);
       return;
     }
 

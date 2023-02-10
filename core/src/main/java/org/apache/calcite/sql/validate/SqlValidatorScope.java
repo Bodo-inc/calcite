@@ -218,7 +218,7 @@ public interface SqlValidatorScope {
   /**
    * Helper function used for DDL statements. Returns the schema
    *
-   * @param names
+   * @param names names for the schema
    */
   void resolveSchema(List<String> names, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved);

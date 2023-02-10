@@ -36,6 +36,7 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;
@@ -5470,7 +5471,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
     CalciteSchema curSchema = this.catalogReader.getRootSchema();
-    CatalogScope temp = ((CatalogScope) ((SelectScope) queryScope).parent);
+    CatalogScope temp = (CatalogScope) ((SelectScope) queryScope).parent;
 
 //    temp.resolve(
 //        List<String> names,
@@ -5479,23 +5480,36 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 //        Resolved resolved,
 //    );
 
+
     temp.resolveSchema(
-        names,
+        Util.skipLast(names), //Skip the last name element (the table name)
         this.catalogReader.nameMatcher(),
         SqlValidatorScope.Path.EMPTY,
         resolved
     );
 
+    if (resolved.count() != 1) {
+      throw new RuntimeException("TODO");
+    }
+
+    SqlValidatorScope.Resolve tmp = resolved.only();
+    Schema resolvedSchema = ((SchemaNamespace) tmp.namespace).getSchema();
+    if (!tmp.remainingNames.isEmpty()) {
+      throw new RuntimeException(
+          "Unable to find schema "
+              + String.join(".", tmp.remainingNames)
+              + " in {}" + resolvedSchema.toString());
+    }
 
 
 //    Should this use this.catalogReader.getSchemaPaths() instead?
-    for (int i = 0; i < names.size() - 1; i++) {
-      //TODO: should this be case sensative?
-      curSchema = curSchema.getSubSchema(names.get(i), false);
-    }
+//    for (int i = 0; i < names.size() - 1; i++) {
+//      //TODO: should this be case sensative?
+//      curSchema = curSchema.getSubSchema(names.get(i), false);
+//    }
 
-    createTable.setOutputTableName(names.get(names.size() - 1));
-    createTable.setOutputTableSchema(curSchema);
+    createTable.setOutputTableName(Util.last(names));
+    createTable.setOutputTableSchema(resolvedSchema);
 
 //    private static @Nullable Table resolveTable(
 //    SqlIdentifier identifier, SqlValidatorScope scope) {
