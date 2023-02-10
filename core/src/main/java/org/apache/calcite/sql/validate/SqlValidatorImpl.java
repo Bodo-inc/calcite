@@ -5470,16 +5470,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final List<String> names = tableNameNode.names;
 
     final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
-    CalciteSchema curSchema = this.catalogReader.getRootSchema();
     CatalogScope temp = (CatalogScope) ((SelectScope) queryScope).parent;
-
-//    temp.resolve(
-//        List<String> names,
-//        SqlNameMatcher nameMatcher,
-//        boolean deep,
-//        Resolved resolved,
-//    );
-
 
     temp.resolveSchema(
         Util.skipLast(names), //Skip the last name element (the table name)

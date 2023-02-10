@@ -148,7 +148,7 @@ class EmptyScope implements SqlValidatorScope {
       resolveSchema(validator.catalogReader.getRootSchema(), names, schemaPath,
           nameMatcher, path, resolved);
       for (Resolve resolve : resolves) {
-        //Should have just the tablename remaining
+        //Should have nothing remaining if we have a full match
         if (resolve.remainingNames.isEmpty()) {
           // There is a full match. Return it as the only match.
           ((ResolvedImpl) resolved).clear();

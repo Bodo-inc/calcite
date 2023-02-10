@@ -21,7 +21,11 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
+import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.schema.Schema;
+import org.apache.calcite.util.Util;
+
+import java.util.List;
 
 /**
  * Default Implementation of TableCreate node.
@@ -72,4 +76,13 @@ public class LogicalTableCreate extends TableCreate {
   public String getTableName() {
     return tableName;
   }
+
+  @Override public LogicalTableCreate copy(RelTraitSet traitSet,
+      List<RelNode> inputs) {
+    assert traitSet.containsIfApplicable(Convention.NONE);
+    assert inputs.size() == 1;
+    return new LogicalTableCreate(
+        getCluster(), traitSet, inputs.get(0), this.schema, this.tableName);
+  }
+
 }
