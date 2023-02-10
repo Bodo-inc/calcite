@@ -46,30 +46,25 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testCreateTableSimple() {
-    // Simple test to confirm that we correctly read the expected output
-    // from the XML file
+    // Simple test to confirm that we can handle create table statements
     final String sql = "CREATE TABLE out_test AS select 1, 2, 3 from emp";
     sql(sql).ok();
   }
 
-  @Test void testMergeInsertOnly() {
-    //Tests a basic merge query with only an insert condition
-    final String sql1 = "merge into empnullables as target\n"
-        + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.sal = source.sal\n"
-        + "when not matched then\n"
-        + "  insert (empno, sal, ename)\n"
-        + "  values (source.empno, source.sal, source.ename)";
-
-    final String sql2 = "merge_into empnullables as target\n"
-        + "using (select * from emp where deptno = 30) as source\n"
-        + "on target.sal = source.sal\n"
-        + "when not matched then\n"
-        + "  insert (empno, sal, ename)\n"
-        + "  values (source.empno, source.sal, source.ename)";
-
-    sql(sql1).ok();
-//    sql(sql2).ok();
+  @Test void testCreateTableIfNotExists() {
+    // Tests create table with
+    final String sql = "CREATE TABLE out_test IF NOT EXISTS AS select * from emp";
+    sql(sql).ok();
   }
+
+
+  @Test void testCreateOrReplaceTable() {
+    // Tests create table with
+    final String sql = "CREATE OR REPLACE TABLE out_test IF NOT EXISTS AS\n"
+        + "select deptno, empname, empno from emp";
+
+    sql(sql).ok();
+  }
+
 
 }

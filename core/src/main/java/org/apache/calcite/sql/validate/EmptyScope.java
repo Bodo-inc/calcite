@@ -135,7 +135,6 @@ class EmptyScope implements SqlValidatorScope {
 
   @Override public void resolveSchema(List<String> names, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
-    System.out.println("TODO!");
 
     final List<Resolve> imperfectResolves = new ArrayList<>();
     final List<Resolve> resolves = ((ResolvedImpl) resolved).resolves;
@@ -178,18 +177,9 @@ class EmptyScope implements SqlValidatorScope {
   private void resolveSchema(final CalciteSchema rootSchema, List<String> names,
       List<String> schemaNames, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
-    //TODO: right now this is just a copy of resolve_. My hope is that by stepping through it,
-    //I can better understand what is going on
-//    schemaNames.add("Does_this_do_what_I_think_it_does");
 
-//    List<String> schemaNames2 = new ArrayList<>();
-//    schemaNames2.addAll(schemaNames);
-//    schemaNames2.add("Does_this_do_what_I_think_it_does");
-//    //Generates all possible
-//    final List<String> concat2 = ImmutableList.<String>builder()
-//        .addAll(schemaNames2).addAll(names).build();
-
-    //Generates all possible
+    // Concatenate the default/implicit schema names with those explicitly set
+    // by the user
     final List<String> concat = ImmutableList.<String>builder()
         .addAll(schemaNames).addAll(names).build();
 

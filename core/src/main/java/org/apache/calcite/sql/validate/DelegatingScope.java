@@ -215,6 +215,18 @@ public abstract class DelegatingScope implements SqlValidatorScope {
     parent.resolveTable(names, nameMatcher, path, resolved, extensionList);
   }
 
+  /**
+   * Resolves a Schema, given a list of strings representing the path to said schema.
+   * The result will be stored in the Resolved object. In the case that we fail to resolve the
+   * schema, the Resolved object may contain one or more partial resolves, which can be used to
+   * throw a more detailed error message.
+   *
+   *
+   * @param names List of sub-schema names that path to form the Schema path
+   * @param nameMatcher NameMatcher to use for comparing schema names
+   * @param path Path object to store the resulting path if we correctly resolve.
+   * @param resolved the resolved object which stores possible schema resolutions
+   */
   @Override public void resolveSchema(List<String> names, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
     parent.resolveSchema(names, nameMatcher, path, resolved);

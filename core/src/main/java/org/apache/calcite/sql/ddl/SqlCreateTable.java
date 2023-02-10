@@ -16,7 +16,6 @@
  */
 package org.apache.calcite.sql.ddl;
 
-import org.apache.calcite.schema.Path;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -45,10 +44,9 @@ public class SqlCreateTable extends SqlCreate {
   public final @Nullable SqlNode query;
 
 
-  /* set during validation */
+  /* set during validation, null before that point */
   private @Nullable String outputTableName;
   private @Nullable Schema outputTableSchema;
-
   private @Nullable List<String> outputTableSchemaPath;
 
   private static final SqlOperator OPERATOR =
@@ -97,7 +95,8 @@ public class SqlCreateTable extends SqlCreate {
   }
 
   /**
-   * Used during validation, outputTableName is null before validation.
+   * Called once during validation to set the relevant fields. OutputTableName, outputTableSchema,
+   * outputTableSchemaPath are all null before validation.
    */
   public void setValidationInformation(String outputTableName, Schema schema, List<String> path) {
     this.outputTableName = outputTableName;

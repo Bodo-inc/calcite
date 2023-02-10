@@ -21,7 +21,6 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
-import org.apache.calcite.schema.Path;
 import org.apache.calcite.schema.Schema;
 
 import java.util.List;
@@ -38,7 +37,7 @@ public class LogicalTableCreate extends TableCreate {
   private final boolean isReplace;
 
   /**
-   * Creates a <code>SingleRel</code>.
+   * Creates a LogicaltableCreate Node.
    *
    * @param cluster Cluster this relational expression belongs to
    * @param traits the traits
@@ -68,7 +67,9 @@ public class LogicalTableCreate extends TableCreate {
 
   @Override public RelWriter explainTerms(RelWriter pw) {
     return super.explainTerms(pw)
-        .item("TableName", this.tableName).item("Target Schema", this.schemaPath);
+        .item("TableName", this.tableName)
+        .item("Target Schema", this.schemaPath)
+        .item("IsReplace", this.isReplace);
   }
 
   public Schema getSchema() {
@@ -92,6 +93,8 @@ public class LogicalTableCreate extends TableCreate {
         this.isReplace, this.schemaPath);
   }
 
-  public List<String> getSchemaPath() { return schemaPath; }
+  public List<String> getSchemaPath() {
+    return schemaPath;
+  }
 
 }

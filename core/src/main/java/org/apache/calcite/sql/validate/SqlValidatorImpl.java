@@ -19,7 +19,6 @@ package org.apache.calcite.sql.validate;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Functions;
-import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.prepare.Prepare;
@@ -36,7 +35,9 @@ import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
-import org.apache.calcite.schema.*;
+import org.apache.calcite.schema.ColumnStrategy;
+import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -1257,8 +1258,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case ORDER_BY:
     case TABLESAMPLE:
       return getNamespace(((SqlCall) node).operand(0));
-//    case CREATE_TABLE:
-//      return getNamespace(((SqlCall) node).operand(2));
     default:
       return namespaces.get(node);
     }
@@ -2905,19 +2904,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           false
       );
       SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
-      DdlNamespace createTableNs = new DdlNamespace(createTable, childNs, parentScope);
+      DdlNamespace createTableNs = new DdlNamespace(createTable, childNs);
       registerNamespace(usingScope, null, createTableNs, forceNullable);
 
     } else {
       throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
     }
-    //      SqlValidatorScope parentScope,
-    //      @Nullable SqlValidatorScope usingScope,
-    //      SqlNode node,
-    //      SqlNode enclosingNode,f
-    //      @Nullable String alias,
-    //      boolean forceNullable
-    //      boolean checkUpdate
   }
 
   /**
@@ -5506,34 +5498,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw new RuntimeException("TODO!");
     }
 
-    // NOTE:
-    // RelOptSchema contains multiple calcite schema objects.
-    // RelOptSchema is closer to what we would consider a Catalog, IE a collection of schemas.
-
-
-//    Should this use this.catalogReader.getSchemaPaths() instead?
-//    for (int i = 0; i < names.size() - 1; i++) {
-//      //TODO: should this be case sensitive?
-//      curSchema = curSchema.getSubSchema(names.get(i), false);
-//    }
-
-//    Path path = Schemas.path(this.catalogReader.getRootSchema(), tmp.path.stepNames());
     createTable.setValidationInformation(Util.last(names), resolvedSchema, tmp.path.stepNames());
 
-//    private static @Nullable Table resolveTable(
-//    SqlIdentifier identifier, SqlValidatorScope scope) {
-//      SqlQualified fullyQualified = scope.fullyQualify(identifier);
-//      assert fullyQualified.namespace != null : "namespace must not be null in " + fullyQualified;
-//      SqlValidatorTable sqlValidatorTable =
-//          fullyQualified.namespace.getTable();
-//      if (sqlValidatorTable != null) {
-//        return sqlValidatorTable.table();
-//      }
-//      return null;
-//    }
-
-
-    System.out.println("TODO!");
   }
 
   @Override public void validateMerge(SqlMerge call) {
@@ -7007,8 +6973,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   /**
    * Namespace for DDL statements (Data Definition Language, such as create [Or replace] Table).
-   * Defers most typing queries to the underlying
-   * Query that constructs the table.
+   * Currently defers everything to the child query's namespace. This will likely need to be
+   * extended in the future to handle table definitions which are not defined as the result of
+   * an query.
    *
    * Note: this does not extend DmlNamespace because DmlNamespace
    * requires there to be an existing target table, which is not necessarily true for DDL
@@ -7017,30 +6984,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   public static class DdlNamespace implements SqlValidatorNamespace {
     private final SqlCreate node;
     private final SqlValidatorNamespace childQueryNamespace;
-    private final SqlValidatorScope parentScope;
-
-//    private final SqlValidatorNamespace ns;
-//
-//    protected DmlNamespace(SqlValidatorImpl validator, SqlNode id,
-//        SqlNode enclosingNode, SqlValidatorScope parentScope) {
-//      switch (id.getKind()) {
-//      case TABLE_IDENTIFIER_WITH_ID:
-//      case TABLE_REF_WITH_ID:
-//        ns = new TableIdentifierWithIDNamespace(validator, id, enclosingNode, parentScope);
-//        break;
-//      default:
-//        ns = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
-//      }
-//    }
 
 
-    DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace,
-        SqlValidatorScope parentScope) {
+    DdlNamespace(SqlCreate node, SqlValidatorNamespace childQueryNamespace) {
       requireNonNull(childQueryNamespace, "childQueryNamespace");
       requireNonNull(node, "node");
       this.node = node;
       this.childQueryNamespace = childQueryNamespace;
-      this.parentScope = parentScope;
     }
 
 
@@ -7093,8 +7043,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param type the type to set
      */
     @Override public void setType(final RelDataType type) {
-      //I think this should be a no-op? The type of the create statement should entirely
-      //depend on the underlying query.
+      childQueryNamespace.setType(type);
     }
 
     /**
@@ -7217,8 +7166,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * completed.</p>
      */
     @Override public SqlValidatorNamespace resolve() {
-      //TODO: Keaton: this should probably resolve to a tableNamespace?
-
       return this;
     }
 
