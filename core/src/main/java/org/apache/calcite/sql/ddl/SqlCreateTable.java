@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.ddl;
 
+import org.apache.calcite.schema.Path;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -44,8 +45,11 @@ public class SqlCreateTable extends SqlCreate {
   public final @Nullable SqlNode query;
 
 
+  /* set during validation */
   private @Nullable String outputTableName;
   private @Nullable Schema outputTableSchema;
+
+  private @Nullable List<String> outputTableSchemaPath;
 
   private static final SqlOperator OPERATOR =
       new SqlSpecialOperator("CREATE TABLE", SqlKind.CREATE_TABLE);
@@ -95,22 +99,23 @@ public class SqlCreateTable extends SqlCreate {
   /**
    * Used during validation, outputTableName is null before validation.
    */
-  public void setOutputTableName(String outputTableName) {
+  public void setValidationInformation(String outputTableName, Schema schema, List<String> path) {
     this.outputTableName = outputTableName;
-  }
-
-  /**
-   * Used during validation, outputTableName is null before validation.
-   */
-  public void setOutputTableSchema(Schema schema) {
     this.outputTableSchema = schema;
+    this.outputTableSchemaPath = path;
   }
 
-  public Schema getOutputTableSchema() {
+  public @Nullable Schema getOutputTableSchema() {
     return outputTableSchema;
   }
 
-  public String getOutputTableName() {
+  public @Nullable List<String> getOutputTableSchemaPath() {
+    return outputTableSchemaPath;
+  }
+
+  public @Nullable String getOutputTableName() {
     return outputTableName;
   }
+
+
 }

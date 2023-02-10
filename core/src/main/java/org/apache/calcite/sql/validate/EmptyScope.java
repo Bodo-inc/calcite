@@ -158,6 +158,10 @@ class EmptyScope implements SqlValidatorScope {
           // we'd want to throw an error?
           // It seems like we would always return the first match from
           // validator.catalogReader.getSchemaPaths(). Is this the correct behavior?
+          // TODO: I think this should be fine, based on the fact that MERGE INTO
+          // correctly identifies the correct schema. Therefore, I think the ordering
+          // of the schemas is fine, and this is ok? This is definitly a point I'm not certain of,
+          // and should probably get clarification from either Alice or Nick.
           return;
         }
       }
@@ -168,6 +172,7 @@ class EmptyScope implements SqlValidatorScope {
     if (resolves.isEmpty()) {
       resolves.addAll(imperfectResolves);
     }
+
   }
 
   private void resolveSchema(final CalciteSchema rootSchema, List<String> names,

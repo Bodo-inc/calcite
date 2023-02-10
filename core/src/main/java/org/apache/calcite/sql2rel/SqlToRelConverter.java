@@ -4413,8 +4413,11 @@ public class SqlToRelConverter {
     RelRoot relRoot = convertQueryRecursive(call.query, false, null);
 
     return LogicalTableCreate.create(
-        relRoot.rel, call.getOutputTableSchema(), call.getOutputTableName(),
-        call.getReplace(), call.ifNotExists);
+        relRoot.rel,
+        requireNonNull(call.getOutputTableSchema()),
+        requireNonNull(call.getOutputTableName()),
+        call.getReplace(),
+        requireNonNull(call.getOutputTableSchemaPath()));
   }
 
   private RelNode convertUpdate(SqlUpdate call) {

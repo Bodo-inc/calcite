@@ -21,6 +21,7 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
+import org.apache.calcite.schema.Path;
 import org.apache.calcite.schema.Schema;
 
 import java.util.List;
@@ -31,9 +32,10 @@ import java.util.List;
 public class LogicalTableCreate extends TableCreate {
 
   private final Schema schema;
+
+  private final List<String> schemaPath;
   private final String tableName;
   private final boolean isReplace;
-  private final boolean ifNotExists;
 
   /**
    * Creates a <code>SingleRel</code>.
@@ -44,29 +46,29 @@ public class LogicalTableCreate extends TableCreate {
    */
   protected LogicalTableCreate(final RelOptCluster cluster, final RelTraitSet traits,
       final RelNode input, final Schema schema, final String tableName,
-      final boolean isReplace, final boolean ifNotExists) {
+      final boolean isReplace, final List<String> path) {
     super(cluster, traits, input);
     this.schema = schema;
     this.tableName = tableName;
     this.isReplace = isReplace;
-    this.ifNotExists = ifNotExists;
+    this.schemaPath = path;
   }
 
   /** Creates a LogicalTableModify. */
   public static LogicalTableCreate create(final RelNode input,
       final Schema schema, final String tableName,
-      final boolean isReplace, final boolean ifNotExists) {
+      final boolean isReplace, final List<String> path) {
 
 
     final RelOptCluster cluster = input.getCluster();
     final RelTraitSet traitSet = cluster.traitSetOf(Convention.NONE);
     return new LogicalTableCreate(cluster, traitSet, input, schema, tableName,
-        isReplace, ifNotExists);
+        isReplace, path);
   }
 
   @Override public RelWriter explainTerms(RelWriter pw) {
     return super.explainTerms(pw)
-        .item("TableName", this.tableName).item("Schema", this.schema);
+        .item("TableName", this.tableName).item("Target Schema", this.schemaPath);
   }
 
   public Schema getSchema() {
@@ -75,10 +77,6 @@ public class LogicalTableCreate extends TableCreate {
 
   public String getTableName() {
     return tableName;
-  }
-
-  public boolean getIfNotExists() {
-    return ifNotExists;
   }
 
   public boolean isReplace() {
@@ -91,9 +89,9 @@ public class LogicalTableCreate extends TableCreate {
     assert inputs.size() == 1;
     return new LogicalTableCreate(
         getCluster(), traitSet, inputs.get(0), this.schema, this.tableName,
-        this.isReplace, this.ifNotExists);
+        this.isReplace, this.schemaPath);
   }
 
-
+  public List<String> getSchemaPath() { return schemaPath; }
 
 }

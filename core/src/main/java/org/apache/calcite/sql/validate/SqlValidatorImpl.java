@@ -19,6 +19,7 @@ package org.apache.calcite.sql.validate;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Functions;
+import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.prepare.Prepare;
@@ -35,9 +36,7 @@ import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
-import org.apache.calcite.schema.ColumnStrategy;
-import org.apache.calcite.schema.Schema;
-import org.apache.calcite.schema.Table;
+import org.apache.calcite.schema.*;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -5443,6 +5442,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   @Override public void validateCreateTable(SqlCreateTable createTable) {
 
+
+    // Issue: If both "IF NOT EXISTS" and "OR REPLACE", are specified,
+    // Snowflake throws the error: "IF NOT EXISTS and OR REPLACE are incompatible."
+    // I'm not sure if this is true in other dialects, but I'm going to treat it
+    // as such.
+
+    if (createTable.ifNotExists && createTable.getReplace()) {
+      throw new RuntimeException("TODO");
+    }
+
+
     //scope of the select should be the scope of the overall schema
     //TODO: do I need a namespace for create table? I don't think I do, but merge
     //has one. It might be an invariant that every node has a namespace?
@@ -5492,15 +5502,23 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
               + " in {}" + resolvedSchema.toString());
     }
 
+    if (!resolvedSchema.isMutable()) {
+      throw new RuntimeException("TODO!");
+    }
+
+    // NOTE:
+    // RelOptSchema contains multiple calcite schema objects.
+    // RelOptSchema is closer to what we would consider a Catalog, IE a collection of schemas.
+
 
 //    Should this use this.catalogReader.getSchemaPaths() instead?
 //    for (int i = 0; i < names.size() - 1; i++) {
-//      //TODO: should this be case sensative?
+//      //TODO: should this be case sensitive?
 //      curSchema = curSchema.getSubSchema(names.get(i), false);
 //    }
 
-    createTable.setOutputTableName(Util.last(names));
-    createTable.setOutputTableSchema(resolvedSchema);
+//    Path path = Schemas.path(this.catalogReader.getRootSchema(), tmp.path.stepNames());
+    createTable.setValidationInformation(Util.last(names), resolvedSchema, tmp.path.stepNames());
 
 //    private static @Nullable Table resolveTable(
 //    SqlIdentifier identifier, SqlValidatorScope scope) {
