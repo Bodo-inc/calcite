@@ -4406,11 +4406,13 @@ public class SqlToRelConverter {
 
   private RelNode convertCreateTable(SqlCreateTable call) {
 
-    RelRoot relRoot = convertQueryRecursive(call.query, false, null);
+    // NOTE: We currently require a SqlCreateTable to have a query in valiation,
+    // so the call to requireNonNull is valid here
+    RelRoot relRoot = convertQueryRecursive(requireNonNull(call.query), false, null);
 
     return LogicalTableCreate.create(
         relRoot.rel,
-        // These should be set in validation
+        // all these fields should be set in validation
         requireNonNull(call.getOutputTableSchema()),
         requireNonNull(call.getOutputTableName()),
         // Failing if already exists is the default in SF

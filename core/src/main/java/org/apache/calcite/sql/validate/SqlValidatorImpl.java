@@ -5452,7 +5452,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
     }
 
-    final SqlValidatorScope queryScope = scopes.get(queryNode);
+    final SqlValidatorScope queryScope = requireNonNull(scopes.get(queryNode));
     //Note, this can either a row expression or a query expression with an optional ORDER BY
     if (queryNode instanceof SqlSelect) {
       final SqlSelect sqlSelect = (SqlSelect) queryNode;
@@ -7138,8 +7138,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return This namespace cast to desired type
      * @throws ClassCastException if no such interface is available
      */
-    @Override public <T> T unwrap(final Class<T> clazz) {
-      return null;
+    @Override public <T extends Object> T unwrap(final Class<T> clazz) {
+      return clazz.cast(this);
     }
 
     /**

@@ -20,16 +20,11 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.SingleRel;
-import org.apache.calcite.rel.type.RelDataType;
-
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 /**
  * Abstract class for Table Creation statements.
  */
 public abstract class TableCreate extends SingleRel {
-
-  private @MonotonicNonNull RelDataType inputRowType;
 
   /**
    * Creates a <code>SingleRel</code>.
