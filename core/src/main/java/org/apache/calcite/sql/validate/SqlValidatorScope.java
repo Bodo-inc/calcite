@@ -224,15 +224,6 @@ public interface SqlValidatorScope {
       Resolved resolved);
 
 
-//  /**
-//   *
-//   * @param names Name of table. qualification level TODO
-//   * @param nameMatcher Name matcher
-//   * @param path List of names that we have traversed through so far
-//   */
-//  void resolveSchema(List<String> names, SqlNameMatcher nameMatcher, Path path,
-//      Resolved resolved, List<RelDataTypeField> extensionCols);
-
   /** Converts the type of an expression to nullable, if the context
    * warrants it. */
   RelDataType nullifyType(SqlNode node, RelDataType type);

@@ -404,7 +404,6 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
   }
 
   public void rewriteRel(LogicalTableCreate rel) {
-    //TODO: extend this
     LogicalTableCreate newRel =
         LogicalTableCreate.create(
             getNewForOldRel(rel.getInput()),

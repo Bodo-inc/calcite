@@ -862,7 +862,6 @@ public interface CalciteResource {
   @BaseMessage("Table ''{0}'' already exists")
   ExInst<SqlValidatorException> tableExists(String name);
 
-  // CREATE TABLE currently requires an "AS query"
   @BaseMessage("CreateTable statements currently require an 'AS query'")
   ExInst<SqlValidatorException> createTableRequiresAsQuery();
 

@@ -65,7 +65,6 @@ class SchemaNamespace extends AbstractNamespace {
   }
 
   public Schema getSchema() {
-    System.out.println("TODO!");
 
     CalciteSchema curSchema = validator.catalogReader.getRootSchema();
     for (String name: names) {

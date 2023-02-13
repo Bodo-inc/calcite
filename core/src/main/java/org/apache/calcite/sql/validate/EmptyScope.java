@@ -140,9 +140,11 @@ class EmptyScope implements SqlValidatorScope {
     final List<Resolve> resolves = ((ResolvedImpl) resolved).resolves;
 
 
-    //Note: names omits the table name, we only have the full
 
     // Look in the default schema, then default catalog, then root schema.
+    // NOTE: at this point, we return the first find, where the order that we check is based
+    // on validator.catalogReader.getSchemaPaths(). This is what is done in resolveTable,
+    // therefore, I believe that this should identify the correct schema.
     for (List<String> schemaPath : validator.catalogReader.getSchemaPaths()) {
       resolveSchema(validator.catalogReader.getRootSchema(), names, schemaPath,
           nameMatcher, path, resolved);
@@ -152,15 +154,6 @@ class EmptyScope implements SqlValidatorScope {
           // There is a full match. Return it as the only match.
           ((ResolvedImpl) resolved).clear();
           resolves.add(resolve);
-          //NOTE: at this point, we just return the find. This is what is done in resolveTable
-          // Is this valid? We could have multiple matching schemas, right? In which case,
-          // we'd want to throw an error?
-          // It seems like we would always return the first match from
-          // validator.catalogReader.getSchemaPaths(). Is this the correct behavior?
-          // TODO: I think this should be fine, based on the fact that MERGE INTO
-          // correctly identifies the correct schema. Therefore, I think the ordering
-          // of the schemas is fine, and this is ok? This is definitly a point I'm not certain of,
-          // and should probably get clarification from either Alice or Nick.
           return;
         }
       }
@@ -215,10 +208,9 @@ class EmptyScope implements SqlValidatorScope {
       }
     }
 
-    //Return if we've iterate through all the names in the identifier
+    //Return if we've iterated through all the names in the identifier
     if (namespace != null) {
       resolved.found(namespace, false, null, path, remainingNames);
-      return;
     }
 
   }

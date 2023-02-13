@@ -2881,19 +2881,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       boolean forceNullable) {
     //TODO: I'll likely need some sort of call to
     // validateFeature()
-    // to confirm that the sql dialect we're validating for supports CREATE_TABLE.
-    // For now, leaving this blank
-    System.out.println("TODO");
-    List<SqlNode> operandList = createTable.getOperandList();
-    //should have three values, name, columnList, query
-    // (query can be null, in the case that we're just doing a table definition with no data.
-    // For now, only supporting the case where we have a query)
+    // to confirm that the sql dialect we're validating for even supports CREATE_TABLE.
 
-    assert operandList.size() == 3;
-    //scope of the select should be the scope of the overall schema
-    //TODO: do I need a namespace for create table? I don't think I do, but merge
-    //has one. It might be an invariant that every node has a namespace?
-    final SqlNode queryNode = operandList.get(2);
+    final SqlNode queryNode = createTable.query;
+
+    // NOTE: query can be null, in the case that we're just doing a table definition with no data.
+    // For now, only supporting the case where we have a query
     if (queryNode != null) {
       registerQuery(
           parentScope, //Should this be createTableNs?
@@ -2903,7 +2896,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           null,
           false
       );
-      SqlValidatorNamespace childNs = getNamespaceOrThrow(operandList.get(2));
+      SqlValidatorNamespace childNs = getNamespaceOrThrow(queryNode);
       DdlNamespace createTableNs = new DdlNamespace(createTable, childNs);
       registerNamespace(usingScope, null, createTableNs, forceNullable);
 
