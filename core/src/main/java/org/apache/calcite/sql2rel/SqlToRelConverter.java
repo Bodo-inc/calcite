@@ -4406,16 +4406,15 @@ public class SqlToRelConverter {
 
   private RelNode convertCreateTable(SqlCreateTable call) {
 
-//    LogicalTableModify
-//    return LogicalTableModify.create(LogicalTableModify)
-//    RelOptTable targetTable = getTargetTable(call);
-
     RelRoot relRoot = convertQueryRecursive(call.query, false, null);
 
     return LogicalTableCreate.create(
         relRoot.rel,
+        // These should be set in validation
         requireNonNull(call.getOutputTableSchema()),
         requireNonNull(call.getOutputTableName()),
+        // Failing if already exists is the default in SF
+        // TODO: support a dialect dependent default if/when merging to upstream Calcite
         call.getReplace(),
         requireNonNull(call.getOutputTableSchemaPath()));
   }

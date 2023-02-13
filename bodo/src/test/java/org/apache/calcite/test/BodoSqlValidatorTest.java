@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Module for validator tests that require the Bodo Parser.
  */
-public class BodoSqlValidatorTestCase extends SqlValidatorTestCase {
+public class BodoSqlValidatorTest extends SqlValidatorTestCase {
   public static final SqlValidatorFixture FIXTURE =
       new SqlValidatorFixture(SqlValidatorTester.DEFAULT,
           SqlTestFactory.INSTANCE.withParserConfig(
@@ -40,6 +40,40 @@ public class BodoSqlValidatorTestCase extends SqlValidatorTestCase {
   @Test void testMultipleSameAsPass() {
     sql("select 1 as again,2 as \"again\", 3 as AGAiN from (values (true))")
         .ok();
+  }
+
+  @Test void testCreateTableReplaceAndIfNotExists() {
+    // Checks that we throw a reasonable error in the case that we specify both
+    // REPLACE and IF NOT EXISTS
+    final String sql =
+        "^CREATE OR REPLACE TABLE IF NOT EXISTS out_test AS select 1, 2, 3 from emp^";
+    sql(sql).fails(
+        "Create Table statements cannot contain both 'OR REPLACE' and 'IF NOT EXISTS'");
+  }
+
+  @Test void testCreateTableUnsupportedClause() {
+    // Checks that we throw a reasonable error in the case that we specify both
+    // REPLACE and IF NOT EXISTS
+    final String sql =
+        "^CREATE OR REPLACE TABLE IF NOT EXISTS out_test AS select 1, 2, 3 from emp^";
+    sql(sql).fails(
+        "Create Table statements cannot contain both 'OR REPLACE' and 'IF NOT EXISTS'");
+  }
+
+  @Test void testCreateTableUnsupportedVolatile() {
+    //Tests certain clauses that parse, but are currently unsupported (throw errors in validation)
+
+    // Volatile is supported in SF, so we may get to it soonish
+    final String q1 = "^CREATE VOLATILE TABLE out_test AS select 1, 2, 3 from emp^";
+    sql(q1).fails("Create Table statements with 'VOLATILE' not supported");
+  }
+  @Test void testCreateTableUnsupportedMultiset() {
+    //Tests certain clauses that parse, but are currently unsupported (throw errors in validation)
+
+    // MULTISET/SET is not supported in SF, so we may get to it eventually
+    final String q2 = "^CREATE MULTISET TABLE out_test AS select 1, 2, 3 from emp^";
+    sql(q2).fails("Create Table statements with 'MULTISET' not supported");
+
   }
 
 }

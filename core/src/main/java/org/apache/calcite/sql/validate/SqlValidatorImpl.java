@@ -5434,14 +5434,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   @Override public void validateCreateTable(SqlCreateTable createTable) {
 
-
     // Issue: If both "IF NOT EXISTS" and "OR REPLACE", are specified,
     // Snowflake throws the error: "IF NOT EXISTS and OR REPLACE are incompatible."
-    // I'm not sure if this is true in other dialects, but I'm going to treat it
-    // as such.
+    // I'm not sure if this is true in other dialects, but I'm going to assume
+    // it is
 
     if (createTable.ifNotExists && createTable.getReplace()) {
-      throw new RuntimeException("TODO");
+      throw newValidationError(createTable, RESOURCE.createTableInvalidSyntax());
     }
 
 

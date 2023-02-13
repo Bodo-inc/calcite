@@ -52,17 +52,17 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testCreateTableIfNotExists() {
-    // Tests create table with
-    final String sql = "CREATE TABLE out_test IF NOT EXISTS AS select * from emp";
+    // Tests create table with IF NOT exists specified
+    final String sql = "CREATE TABLE IF NOT EXISTS out_test AS select * from emp";
     sql(sql).ok();
   }
 
 
   @Test void testCreateOrReplaceTable() {
-    // Tests create table with
-    final String sql = "CREATE OR REPLACE TABLE out_test IF NOT EXISTS AS\n"
-        + "select deptno, empname, empno from emp";
-
+    // Tests create table with Replace specified
+    final String sql = "CREATE OR REPLACE TABLE out_test AS\n"
+        + "select dept.deptno, emp.empno\n"
+        + " from emp join dept on emp.deptno = dept.deptno";
     sql(sql).ok();
   }
 

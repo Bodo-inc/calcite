@@ -22,6 +22,10 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
+
+import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Parse tree for {@code CREATE TABLE} statement, with extensions for particular
@@ -41,6 +45,27 @@ public class SqlBabelCreateTable extends SqlCreateTable {
     super(pos, replace, ifNotExists, name, columnList, query);
     this.tableCollectionType = tableCollectionType;
     this.volatile_ = volatile_;
+  }
+
+  @Override public void validate(final SqlValidator validator, final SqlValidatorScope scope) {
+    // Validate the clauses that are specific to Babel, and then pass it to the superclass
+    if (this.volatile_) {
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("VOLATILE"));
+    }
+
+    switch (this.tableCollectionType) {
+    case SET:
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("SET"));
+    case MULTISET:
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("MULTISET"));
+    default:
+      //do nothing
+    }
+
+    super.validate(validator, scope);
   }
 
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {

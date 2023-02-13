@@ -866,6 +866,12 @@ public interface CalciteResource {
   @BaseMessage("CreateTable statements currently require an 'AS query'")
   ExInst<SqlValidatorException> createTableRequiresAsQuery();
 
+  @BaseMessage("Create Table statements cannot contain both ''OR REPLACE'' and ''IF NOT EXISTS''")
+  ExInst<SqlValidatorException> createTableInvalidSyntax();
+
+  @BaseMessage("Create Table statements with ''{0}'' not supported")
+  ExInst<SqlValidatorException> createTableUnsupportedClause(String clauseName);
+
   // If CREATE TABLE does not have "AS query", there must be a column list
   @BaseMessage("Missing column list")
   ExInst<SqlValidatorException> createTableRequiresColumnList();
