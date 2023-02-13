@@ -48,7 +48,8 @@ public class SqlBabelCreateTable extends SqlCreateTable {
   }
 
   @Override public void validate(final SqlValidator validator, final SqlValidatorScope scope) {
-    // Validate the clauses that are specific to Babel, and then pass it to the superclass
+    // Validate the clauses that are specific to Babel's create table statement,
+    // and then defers to the superclass for the rest
     if (this.volatile_) {
       throw validator.newValidationError(
           this, RESOURCE.createTableUnsupportedClause("VOLATILE"));

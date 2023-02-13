@@ -76,4 +76,19 @@ public class BodoSqlValidatorTest extends SqlValidatorTestCase {
 
   }
 
+
+  @Test void testCreateTableSchemaError() {
+    // Tests that we throw a reasonable error in the event that we can/t
+    final String query = "CREATE TABLE non_existent_schema.further_non_existent.out_test\n"
+        + "AS select 1, 2, 3 from emp";
+    sql(query).fails("TODO");
+  }
+
+  @Test void testCreateTableSchemaError2() {
+    // Tests that we throw a reasonable error in the event that we can/t
+    final String query = "CREATE TABLE non_existent_schema.further_non_existent.out_test\n"
+        + "AS select 1, 2, 3 from emp";
+    sql(query).fails("TODO");
+  }
+
 }
