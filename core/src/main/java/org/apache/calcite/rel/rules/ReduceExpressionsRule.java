@@ -1087,7 +1087,9 @@ public abstract class ReduceExpressionsRule<C extends ReduceExpressionsRule.Conf
     }
 
     @Override public Void visitSubQuery(RexSubQuery subQuery) {
-      analyzeCall(subQuery, Constancy.REDUCIBLE_CONSTANT);
+      // subqueries are never reducible
+      // must be expanded by another planner rule to something else
+      analyzeCall(subQuery, Constancy.IRREDUCIBLE_CONSTANT);
       return null;
     }
 
