@@ -1320,8 +1320,11 @@ public class SqlToRelConverter {
                 );
 
 
-        // NOTE1: JoinRelType is set to LEFT for the other sub queries that are handled via
-        // joining. I'm not certain why JoinRelType is set to LEFT. To my understanding,
+        // NOTE1: JoinRelType is set to LEFT for the scalar sub queries that are handled via
+        // joining. (see lines 1494 to 1531, the SELECT/SCALAR_SUBQUERRY cases in
+        // substituteSubQuery)
+        // I'm not certain why JoinRelType is set to LEFT in these cases.
+        // To my understanding,
         // any of them should be equally valid, since the join condition of the resulting
         // join is TRUE, it'll be equivalent to a cross join anyway. However, I'm going
         // to set it to INNER since that seems like the most correct thing to do in this
@@ -3390,14 +3393,14 @@ public class SqlToRelConverter {
 
 
     /**
-     * Below is the code needed to handle replacing sub querries in the "ON" clause.
      *
-     * By default, for a blackboard in the "ON" condition, we have no root, but two inputs.
+     * By default, for a blackboard handling the "ON" condition of a join,
+     * we have no root, but two inputs.
      *
      * When converting sub queries, we sometimes temporarily set the root of the blackboard
-     * to the right rel in order to handle joining the sub-querry.
+     * to the right rel in order to handle joining the sub-query.
      *
-     * This can cause issues, specifically for the IN clause, as we need
+     * This can cause issues, specifically for an IN sub-query, as we need
      * to convert the LHS of the IN expression in the scope of the overall join, which requires
      * the inputs/root to be set to the original join inputs + empty root.
      *
