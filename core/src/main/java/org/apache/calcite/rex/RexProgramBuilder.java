@@ -897,6 +897,11 @@ public class RexProgramBuilder {
       return registerInternal(expr, false);
     }
 
+    @Override public RexNode visitSubQuery(RexSubQuery subQuery) {
+      final RexNode expr = super.visitSubQuery(subQuery);
+      return registerInternal(expr, false);
+    }
+
     @Override public RexNode visitOver(RexOver over) {
       final RexNode expr = super.visitOver(over);
       return registerInternal(expr, false);
