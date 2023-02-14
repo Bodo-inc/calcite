@@ -96,7 +96,7 @@ public interface CalciteResource {
   ExInst<CalciteException> illegalFromEmpty();
 
   @BaseMessage("Invalid Trim Syntax. We support TRIM([BOTH/TRAILING/LEADING] trimchars from Y ) and TRIM(X [, trimchars])")
-  ExInst<CalciteException> GenericTrimError();
+  ExInst<CalciteException> genericTrimError();
 
   @BaseMessage("ROW expression encountered in illegal context")
   ExInst<CalciteException> illegalRowExpression();

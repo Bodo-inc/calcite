@@ -6312,7 +6312,7 @@ SqlNode BuiltinFunctionCall() :
                     // We require a preceding expression and no BOTH/TRAILING/LEADING flag
                     if (e == null || flag != null) {
                         throw SqlUtil.newContextException(s.end(this),
-                                                RESOURCE.GenericTrimError());
+                                                RESOURCE.genericTrimError());
                     }
                     trimChars = Expression(ExprContext.ACCEPT_SUB_QUERY);
                 }
@@ -6321,7 +6321,7 @@ SqlNode BuiltinFunctionCall() :
             // Check for empty TRIM()
             if (e == null) {
                 throw SqlUtil.newContextException(s.end(this),
-                                                  RESOURCE.GenericTrimError());
+                                                  RESOURCE.genericTrimError());
             }
             if (flag == null) {
                 flag = SqlTrimFunction.Flag.BOTH.symbol(SqlParserPos.ZERO);
