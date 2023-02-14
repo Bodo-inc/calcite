@@ -146,7 +146,7 @@ class EmptyScope implements SqlValidatorScope {
     // on validator.catalogReader.getSchemaPaths(). This is what is done in resolveTable,
     // therefore, I believe that this should identify the correct schema.
     for (List<String> schemaPath : validator.catalogReader.getSchemaPaths()) {
-      resolveSchema(validator.catalogReader.getRootSchema(), names, schemaPath,
+      resolveSchemaInternal(validator.catalogReader.getRootSchema(), names, schemaPath,
           nameMatcher, path, resolved);
       for (Resolve resolve : resolves) {
         //Should have nothing remaining if we have a full match
@@ -167,7 +167,7 @@ class EmptyScope implements SqlValidatorScope {
 
   }
 
-  private void resolveSchema(final CalciteSchema rootSchema, List<String> names,
+  private void resolveSchemaInternal(final CalciteSchema rootSchema, List<String> names,
       List<String> schemaNames, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
 

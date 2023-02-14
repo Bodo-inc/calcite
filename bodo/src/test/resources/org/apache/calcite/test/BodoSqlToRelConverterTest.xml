@@ -19,7 +19,7 @@
   <TestCase name="testCreateOrReplaceTable">
     <Resource name="plan">
       <![CDATA[
-LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[SALES]], IsReplace=[true])
+LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[CUSTOMER]], IsReplace=[true])
   LogicalProject(DEPTNO=[$9], EMPNO=[$0])
     LogicalJoin(condition=[=($7, $9)], joinType=[inner])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])

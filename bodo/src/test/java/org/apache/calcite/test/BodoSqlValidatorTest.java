@@ -20,6 +20,7 @@ import org.apache.calcite.sql.parser.StringAndPos;
 import org.apache.calcite.sql.parser.bodo.SqlBodoParserImpl;
 import org.apache.calcite.sql.test.SqlTestFactory;
 import org.apache.calcite.sql.test.SqlValidatorTester;
+import org.apache.calcite.test.catalog.MockCatalogReaderExtended;
 
 import org.junit.jupiter.api.Test;
 
@@ -60,6 +61,20 @@ public class BodoSqlValidatorTest extends SqlValidatorTestCase {
         "Create Table statements cannot contain both 'OR REPLACE' and 'IF NOT EXISTS'");
   }
 
+  @Test void testCreateTableExplicitName() {
+    // Checks that we can handle explicitly specifying the full name
+    final String sql =
+        "^CREATE OR REPLACE TABLE SALES.out_test AS select 1, 2, 3 from emp^";
+    sql(sql).equals("");
+  }
+
+  @Test void testCreateTableExplicitNameNonDefaultSchema() {
+    // Checks that we can handle explicitly specifying the full name
+    final String sql =
+        "^CREATE OR REPLACE TABLE CUSTOMER.out_test AS select 1, 2, 3 from emp^";
+    sql(sql).equals("");
+  }
+
   @Test void testCreateTableUnsupportedVolatile() {
     //Tests certain clauses that parse, but are currently unsupported (throw errors in validation)
 
@@ -78,17 +93,21 @@ public class BodoSqlValidatorTest extends SqlValidatorTestCase {
 
 
   @Test void testCreateTableSchemaError() {
-    // Tests that we throw a reasonable error in the event that we can/t
+    // Tests that we throw a reasonable error in the event that we can't find
+    // the relevant schema
     final String query = "CREATE TABLE non_existent_schema.further_non_existent.out_test\n"
         + "AS select 1, 2, 3 from emp";
-    sql(query).fails("TODO");
+    sql(query).fails(
+        "Unable to find schema NON_EXISTENT_SCHEMA\\.FURTHER_NON_EXISTENT in \\[SALES\\]");
   }
 
   @Test void testCreateTableSchemaError2() {
-    // Tests that we throw a reasonable error in the event that we can/t
-    final String query = "CREATE TABLE non_existent_schema.further_non_existent.out_test\n"
+    // Tests that, when not using the default schema,
+    // the error message throws the best match we have, as opposed to an arbitrary one.
+    final String query = "CREATE TABLE CUSTOMER.non_existent_schema.further_non_existent.out_test\n"
         + "AS select 1, 2, 3 from emp";
-    sql(query).fails("TODO");
+    sql(query).withCatalogReader(MockCatalogReaderExtended::create).fails(
+        "Unable to find schema NON_EXISTENT_SCHEMA\\.FURTHER_NON_EXISTENT in \\[CUSTOMER\\]");
   }
 
 }

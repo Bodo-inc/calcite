@@ -5473,24 +5473,36 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         resolved
     );
 
+
+    SqlValidatorScope.Resolve bestResolve;
     if (resolved.count() != 1) {
-      throw new RuntimeException("TODO");
+      //If we have multiple resolutions, they're all invalid,
+      //but we want to pick the closest resolution to throw the best error.
+      bestResolve = resolved.resolves.get(0);
+      for (int i = 1; i < resolved.count(); i++) {
+        SqlValidatorScope.Resolve curResolve = resolved.resolves.get(i);
+        if (curResolve.remainingNames.size() < bestResolve.remainingNames.size()) {
+          bestResolve = curResolve;
+        }
+      }
+    } else {
+      bestResolve = resolved.only();
     }
 
-    SqlValidatorScope.Resolve tmp = resolved.only();
-    Schema resolvedSchema = ((SchemaNamespace) tmp.namespace).getSchema();
-    if (!tmp.remainingNames.isEmpty()) {
+    Schema resolvedSchema = ((SchemaNamespace) bestResolve.namespace).getSchema();
+    if (!bestResolve.remainingNames.isEmpty()) {
       throw new RuntimeException(
           "Unable to find schema "
-              + String.join(".", tmp.remainingNames)
-              + " in {}" + resolvedSchema.toString());
+              + String.join(".", bestResolve.remainingNames)
+              + " in " + bestResolve.path);
     }
 
     if (!resolvedSchema.isMutable()) {
-      throw new RuntimeException("TODO!");
+      throw new RuntimeException("Error: Schema " + bestResolve.path + " is not mutable.");
     }
 
-    createTable.setValidationInformation(Util.last(names), resolvedSchema, tmp.path.stepNames());
+    createTable.setValidationInformation(Util.last(names),
+        resolvedSchema, bestResolve.path.stepNames());
 
   }
 

@@ -60,10 +60,10 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
 
   @Test void testCreateOrReplaceTable() {
     // Tests create table with Replace specified
-    final String sql = "CREATE OR REPLACE TABLE out_test AS\n"
+    final String sql = "CREATE OR REPLACE TABLE CUSTOMER.out_test AS\n"
         + "select dept.deptno, emp.empno\n"
         + " from emp join dept on emp.deptno = dept.deptno";
-    sql(sql).ok();
+    sql(sql).withExtendedTester().ok();
   }
 
 
