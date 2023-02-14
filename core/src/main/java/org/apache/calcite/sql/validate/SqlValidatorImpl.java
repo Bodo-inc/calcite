@@ -5437,15 +5437,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
 
-    //scope of the select should be the scope of the overall schema
-    //TODO: do I need a namespace for create table? I don't think I do, but merge
-    //has one. It might be an invariant that every node has a namespace?
     final SqlNode queryNode = createTable.query;
     if (queryNode == null) {
       throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
     }
 
     final SqlValidatorScope queryScope = requireNonNull(scopes.get(queryNode));
+
     //Note, this can either a row expression or a query expression with an optional ORDER BY
     if (queryNode instanceof SqlSelect) {
       final SqlSelect sqlSelect = (SqlSelect) queryNode;

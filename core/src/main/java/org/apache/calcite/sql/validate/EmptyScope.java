@@ -144,7 +144,8 @@ class EmptyScope implements SqlValidatorScope {
     // Look in the default schema, then default catalog, then root schema.
     // NOTE: at this point, we return the first find, where the order that we check is based
     // on validator.catalogReader.getSchemaPaths(). This is what is done in resolveTable,
-    // therefore, I believe that this should identify the correct schema.
+    // therefore, I believe that this should identify the default/primary schema, in the case that
+    // we have an non-fully qualified identifier
     for (List<String> schemaPath : validator.catalogReader.getSchemaPaths()) {
       resolveSchemaInternal(validator.catalogReader.getRootSchema(), names, schemaPath,
           nameMatcher, path, resolved);
