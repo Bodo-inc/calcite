@@ -28,8 +28,6 @@ data: {
     # Example: "org.apache.calcite.sql.*", "java.util.List".
     imports: [
       "org.apache.calcite.sql.SqlCreate",
-      "org.apache.calcite.sql.babel.SqlBabelCreateTable",
-      "org.apache.calcite.sql.babel.TableCollectionType",
       "org.apache.calcite.sql.ddl.SqlDdlNodes",
     ]
 
@@ -61,7 +59,6 @@ data: {
     # Each must accept arguments "(SqlParserPos pos, boolean replace)".
     # Example: "SqlCreateForeignSchema".
     createStatementParserMethods: [
-      "SqlCreateTable"
     ]
 
     # Binary operators tokens.

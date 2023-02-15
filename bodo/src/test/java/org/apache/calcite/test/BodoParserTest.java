@@ -22,7 +22,6 @@ import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserFixture;
 import org.apache.calcite.sql.parser.SqlParserTest;
 import org.apache.calcite.sql.parser.StringAndPos;
-import org.apache.calcite.sql.parser.babel.SqlBabelParserImpl;
 import org.apache.calcite.sql.parser.bodo.SqlBodoParserImpl;
 import org.apache.calcite.tools.Hoist;
 
@@ -177,7 +176,7 @@ public class BodoParserTest extends SqlParserTest {
         Hoist.create(Hoist.config()
             .withParserConfig(
                 dialect.configureParser(SqlParser.config())
-                    .withParserFactory(SqlBabelParserImpl::new)))
+                    .withParserFactory(SqlBodoParserImpl::new)))
             .hoist(sql);
 
     // Simple toString converts each variable to '?N'

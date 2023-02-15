@@ -24,7 +24,6 @@ plugins {
 
 dependencies {
     api(project(":core"))
-    api(project(":babel"))
     api("org.apache.calcite.avatica:avatica-core")
 
     implementation("com.google.guava:guava")
