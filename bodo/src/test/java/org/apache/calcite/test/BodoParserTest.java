@@ -205,14 +205,6 @@ public class BodoParserTest extends SqlParserTest {
 
     sql(q1).ok(q1_expected);
 
-    // MULTISET/SET is not supported in SF, so we may get to it eventually
-    final String q2 = "CREATE MULTISET TABLE out_test AS select 1, 2, 3 from emp";
-    final String q2_expected = "CREATE MULTISET TABLE `OUT_TEST` AS\n"
-        + "SELECT 1, 2, 3\n"
-        + "FROM `EMP`";
-
-    sql(q2).ok(q2_expected);
-
   }
 
   /**

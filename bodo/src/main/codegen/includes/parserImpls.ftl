@@ -18,7 +18,7 @@
 boolean IfNotExistsOpt() :
 {
 }
-    {
+{
     <IF> <NOT> <EXISTS> { return true; }
     |
     { return false; }
@@ -41,14 +41,14 @@ SqlNodeList ExtendColumnList() :
 }
 {
     <LPAREN> { s = span(); }
-        ColumnWithType(list)
-        (
-            <COMMA> ColumnWithType(list)
-        )*
-        <RPAREN> {
-    return new SqlNodeList(list, s.end(this));
+    ColumnWithType(list)
+    (
+        <COMMA> ColumnWithType(list)
+    )*
+    <RPAREN> {
+        return new SqlNodeList(list, s.end(this));
+    }
 }
-
 
 void ColumnWithType(List<SqlNode> list) :
 {
@@ -61,13 +61,14 @@ void ColumnWithType(List<SqlNode> list) :
     id = CompoundIdentifier()
     type = DataType()
     [
-    <NOT> <NULL> {
-    nullable = false;
+        <NOT> <NULL> {
+            nullable = false;
+        }
+    ]
+    {
+        list.add(SqlDdlNodes.column(s.add(id).end(this), id,
+            type.withNullable(nullable), null, null));
     }
-        ]
-        {
-    list.add(SqlDdlNodes.column(s.add(id).end(this), id,
-    type.withNullable(nullable), null, null));
 }
 
 SqlCreate SqlCreateTable(Span s, boolean replace) :
@@ -94,7 +95,9 @@ SqlCreate SqlCreateTable(Span s, boolean replace) :
         { query = null; }
     )
     {
-return new SqlBodoCreateTable(s.end(this), replace, volatile_, ifNotExists, id, columnList, query);
+        return new SqlBodoCreateTable(s.end(this), replace, volatile_,
+            ifNotExists, id, columnList, query);
+    }
 }
 
 

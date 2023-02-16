@@ -28,7 +28,7 @@ data: {
     # Example: "org.apache.calcite.sql.*", "java.util.List".
     imports: [
       "org.apache.calcite.sql.SqlCreate",
-      "org.apache.calcite.sql.babel.SqlBodoCreateTable",
+      "org.apache.calcite.sql.bodo.SqlBodoCreateTable",
       "org.apache.calcite.sql.ddl.SqlDdlNodes",
     ]
 

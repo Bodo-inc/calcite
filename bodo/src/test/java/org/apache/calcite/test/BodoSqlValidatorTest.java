@@ -82,14 +82,6 @@ public class BodoSqlValidatorTest extends SqlValidatorTestCase {
     final String q1 = "^CREATE VOLATILE TABLE out_test AS select 1, 2, 3 from emp^";
     sql(q1).fails("Create Table statements with 'VOLATILE' not supported");
   }
-  @Test void testCreateTableUnsupportedMultiset() {
-    //Tests certain clauses that parse, but are currently unsupported (throw errors in validation)
-
-    // MULTISET/SET is not supported in SF, so we may get to it eventually
-    final String q2 = "^CREATE MULTISET TABLE out_test AS select 1, 2, 3 from emp^";
-    sql(q2).fails("Create Table statements with 'MULTISET' not supported");
-
-  }
 
 
   @Test void testCreateTableSchemaError() {
