@@ -194,6 +194,7 @@ public class BodoParserTest extends SqlParserTest {
     assertThat(hoisted.substitute(SqlParserTest::varToStr), is(expected2));
   }
 
+
   @Test void testCreateTable() {
     //Tests certain clauses that parse, but are currently unsupported (throw errors in validation)
 
@@ -206,6 +207,7 @@ public class BodoParserTest extends SqlParserTest {
     sql(q1).ok(q1_expected);
 
   }
+
 
   /**
    * Bodo's parser's global {@code LOOKAHEAD} is larger than the core

@@ -15,6 +15,7 @@
 // limitations under the License.
 -->
 
+
 boolean IfNotExistsOpt() :
 {
 }
@@ -99,6 +100,7 @@ SqlCreate SqlCreateTable(Span s, boolean replace) :
             ifNotExists, id, columnList, query);
     }
 }
+
 
 
 
