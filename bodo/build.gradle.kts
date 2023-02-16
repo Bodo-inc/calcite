@@ -68,9 +68,6 @@ val javaCCMain by tasks.registering(org.apache.calcite.buildtools.javacc.JavaCCT
         it.output.asFileTree.matching { include("**/Parser.jj") }
     }
     inputFile.from(parserFile)
-    // IDK why this happens, but setting the package name to org.apache.calcite.sql.parser.bodo
-    // prevents me from importing org.apache.calcite.sql.parser.bodo in the parser/SqlToRel tests
-    // Setting it to an arbitrary string does not
     packageName.set("org.apache.calcite.sql.parser.bodo")
 }
 
