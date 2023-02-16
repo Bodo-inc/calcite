@@ -16,8 +16,6 @@
  */
 package org.apache.calcite.sql;
 
-import com.google.common.collect.ImmutableList;
-
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
