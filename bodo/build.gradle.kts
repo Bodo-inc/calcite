@@ -54,8 +54,10 @@ val javaCCMain by tasks.registering(org.apache.calcite.buildtools.javacc.JavaCCT
     // 3. The stuff that we've copied may assume a global lookahead of 2
     //
     //
-    // We have not yet seen any parsing issues with the copied parser code, but that doesn't
-    // mean it doesn't exist, so I'm going to leave this we determine the original
+    // We have not yet seen any parsing issues with the copied parser code in the core parser,
+    // but that doesn't
+    // mean it doesn't exist, so I'm going to set this to a lookahead of 2 as a safety measure
+    // until we determine the original
     // reason Babel requires a 2 token lookahead by default.
     // This may make parsing slightly slower,
     // but I expect this to be negligible since the time spent in Calcite/BodoSQL
