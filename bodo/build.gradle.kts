@@ -46,6 +46,21 @@ val fmppMain by tasks.registering(org.apache.calcite.buildtools.fmpp.FmppTask::c
 
 val javaCCMain by tasks.registering(org.apache.calcite.buildtools.javacc.JavaCCTask::class) {
     dependsOn(fmppMain)
+    // NOTE: This sets the global lookahead of the parser to 2 for Bodo.
+    // I'm copying this into the Bodo parser because:
+    // 1. We have already hard copied a lot of parser code from Babel into the core parser
+    //    (and may continue to)
+    // 2. Babel requires a global lookahead of 2
+    // 3. The stuff that we've copied may assume a global lookahead of 2
+    //
+    //
+    // We have not yet seen any parsing issues with the copied parser code, but that doesn't
+    // mean it doesn't exist, so I'm going to leave this we determine the original
+    // reason Babel requires a 2 token lookahead by default.
+    // This may make parsing slightly slower,
+    // but I expect this to be negligible since the time spent in Calcite/BodoSQL
+    // is still very small relative to the spent compiling in Bodo.
+    //
     lookAhead.set(2)
     val parserFile = fmppMain.map {
         it.output.asFileTree.matching { include("**/Parser.jj") }

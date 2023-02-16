@@ -39,11 +39,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * Tests the Bodo SQL parser. This parser is currently an offshoot of the babel parser,
- * that allows us to extend the parser to suit our own purposes.
+ * Tests the Bodo SQL parser. We use a separate parser to
+ * allow us to reduce the amount of changes needed to extend the parser.
  *
- * Currently, this only contains tests equivalent to Babel, but this can and should
- * be extended in the future.
  */
 public class BodoParserTest extends SqlParserTest {
 
@@ -85,14 +83,14 @@ public class BodoParserTest extends SqlParserTest {
 
 
   /**
-   * This is a failure test making sure the LOOKAHEAD for WHEN clause is 2 in Babel, where
+   * This is a failure test making sure the LOOKAHEAD for WHEN clause is 2 in BODO, where
    * in core parser this number is 1.
    *
    * @see SqlParserTest#testCaseExpression()
    * @see <a href="https://issues.apache.org/jira/browse/CALCITE-2847">[CALCITE-2847]
    * Optimize global LOOKAHEAD for SQL parsers</a>
    */
-  @Test void testCaseExpressionBabel() {
+  @Test void testCaseExpressionBodo() {
     sql("case x when 2, 4 then 3 ^when^ then 5 else 4 end")
         .fails("(?s)Encountered \"when then\" at .*");
   }
@@ -165,7 +163,7 @@ public class BodoParserTest extends SqlParserTest {
   /** Similar to {@link #testHoist()} but using custom parser. */
   @Test void testHoistMySql() {
     // SQL contains back-ticks, which require MySQL's quoting,
-    // and DATEADD, which requires Babel.
+    // and DATEADD, which requires Babel/Bodo.
     final String sql = "select 1 as x,\n"
         + "  'ab' || 'c' as y\n"
         + "from `my emp` /* comment with 'quoted string'? */ as e\n"
@@ -197,9 +195,9 @@ public class BodoParserTest extends SqlParserTest {
   }
 
   /**
-   * Babel parser's global {@code LOOKAHEAD} is larger than the core
+   * Bodo's parser's global {@code LOOKAHEAD} is larger than the core
    * parser's. This causes different parse error message between these two
-   * parsers. Here we define a looser error checker for Babel, so that we can
+   * parsers. Here we define a looser error checker for Bodo, so that we can
    * reuse failure testing codes from {@link SqlParserTest}.
    *
    * <p>If a test case is written in this file -- that is, not inherited -- it
@@ -208,14 +206,14 @@ public class BodoParserTest extends SqlParserTest {
   public static class BodoTesterImpl extends TesterImpl {
     @Override protected void checkEx(String expectedMsgPattern,
         StringAndPos sap, @Nullable Throwable thrown) {
-      if (thrown != null && thrownByBabelTest(thrown)) {
+      if (thrown != null && thrownByBodoTest(thrown)) {
         super.checkEx(expectedMsgPattern, sap, thrown);
       } else {
         checkExNotNull(sap, thrown);
       }
     }
 
-    private boolean thrownByBabelTest(Throwable ex) {
+    private boolean thrownByBodoTest(Throwable ex) {
       Throwable rootCause = Throwables.getRootCause(ex);
       StackTraceElement[] stackTrace = rootCause.getStackTrace();
       for (StackTraceElement stackTraceElement : stackTrace) {

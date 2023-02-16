@@ -16,6 +16,6 @@
  */
 
 /**
- * Parse tree for SQL extensions used by the Babel parser.
+ * Parse tree for SQL extensions used by the Bodo parser.
  */
 package org.apache.calcite.sql.bodo;
