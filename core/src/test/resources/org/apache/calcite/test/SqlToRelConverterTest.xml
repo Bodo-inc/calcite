@@ -258,9 +258,9 @@ LogicalProject(X=[$0], X2=[+($0, 10)], X3=[/(+($0, 10), 2)], X4=[*(/(+($0, 10), 
   <TestCase name="testAliasChainIntoWhereOnClauses">
     <Resource name="plan">
       <![CDATA[
-LogicalProject(X=[$2], X2=[+($2, 10)], X3=[/(+($2, 10), 2)], X4=[*(/(+($2, 10), 2), 3)])
-  LogicalFilter(condition=[>(*(/(+($2, 10), 2), 3), 10)])
-    LogicalProject(DEPTNO=[$0], NAME=[$1], EMPNO=[$2], ENAME=[$3], JOB=[$4], MGR=[$5], HIREDATE=[$6], SAL=[$7], COMM=[$8], DEPTNO0=[$9], SLACKER=[$10])
+LogicalProject(X=[$0], X2=[$1], X3=[$2], X4=[$3])
+  LogicalFilter(condition=[>($3, 10)])
+    LogicalProject(X=[$2], X2=[+($2, 10)], X3=[/(+($2, 10), 2)], X4=[*(/(+($2, 10), 2), 3)], DEPTNO=[$0], NAME=[$1], EMPNO=[$2], ENAME=[$3], JOB=[$4], MGR=[$5], HIREDATE=[$6], SAL=[$7], COMM=[$8], DEPTNO0=[$9], SLACKER=[$10])
       LogicalJoin(condition=[=($11, $0)], joinType=[inner])
         LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
         LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], $f9=[*(/(+($0, 10), 2), 3)])

@@ -1506,6 +1506,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       rewriteMerge(call);
       break;
     }
+    case SELECT: {
+      SqlSelect call = (SqlSelect) node;
+      // Generate a new inner select.
+      node = call.rewriteSqlSelectIfOnlyWhere();
+      break;
+    }
     default:
       break;
     }
