@@ -35,7 +35,6 @@ data: {
     # not a reserved keyword, add it to the 'nonReservedKeywords' section.
     keywords: [
       "IF",
-      "VOLATILE",
     ]
 
     # List of non-reserved keywords to add;
