@@ -1509,7 +1509,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case SELECT: {
       SqlSelect call = (SqlSelect) node;
       // Generate a new inner select.
-      node = call.rewriteSqlSelectIfOnlyWhere();
+      node = call.rewriteSqlSelectIfWhereAlias();
       break;
     }
     default:

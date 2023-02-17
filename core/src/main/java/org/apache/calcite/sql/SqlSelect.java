@@ -22,13 +22,19 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.ImmutableNullableList;
 
+import com.google.common.collect.ImmutableList;
+
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.Pure;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -292,15 +298,91 @@ public class SqlSelect extends SqlCall {
     return getModifierNode(targetKeyWord) != null;
   }
 
-  public SqlSelect rewriteSqlSelectIfOnlyWhere() {
-    if (!keywordList.isEmpty() || where == null || groupBy != null || having != null || qualify != null || !windowDecls.isEmpty() || orderBy != null || offset != null || fetch != null) {
+  /**
+   * Rewrite a select statement with a where condition if the where
+   * condition depends on the columns in the select list. This writes
+   * the code to use two select statements.
+   *
+   * For example Select A + 1 as X from table where X > 3
+   * becomes Select TEMP_COLUMN0 FROM (Select A + 1 as TEMP_COLUMN0) where TEMP_COLUMN0 > 3
+   *
+   * We only do this replacement if we detect that the where may reference an alias generated
+   * by the select statment. This approach simplifies code but is not required for correctness.
+   * If this fails then the alias will be inlined as a fallback in validation.
+   *
+   * @return The new top level select
+   */
+  public SqlSelect rewriteSqlSelectIfWhereAlias() {
+    // Right now to make sure everything executes in order we require
+    // a select statement only contain a where
+    if (!keywordList.isEmpty() || where == null || groupBy != null
+        || having != null || qualify != null || !windowDecls.isEmpty()
+        || orderBy != null || offset != null || fetch != null) {
       // Only perform the rewrite if we just have a where.
       return this;
     }
-    // Generate an inner select without the where we need to update
-    // the inner select to include any column in the from.
+    // Create a set of Alias names that could be referenced by a where
+    Set<ImmutableList<String>> possibleAliases = new HashSet<>();
+    // Iterate through the select statements and check for any aliases that
+    // may be used in the where.
+    for (int i = 0; i < selectList.size(); i++) {
+      SqlNode selectVal = selectList.get(i);
+      if (selectVal instanceof SqlBasicCall && selectVal.getKind() == SqlKind.AS) {
+        SqlBasicCall innerAlias = (SqlBasicCall) selectVal;
+        // Check if the alias is unnecessary. If so skip the transformation.
+        List<SqlNode> operands = innerAlias.getOperandList();
+        SqlIdentifier aliasIdentifier = (SqlIdentifier) operands.get(operands.size() - 1);
+        if (operands.size() == 2 && (operands.get(0) instanceof SqlIdentifier
+            || operands.get(0) instanceof SqlLiteral)) {
+          // No need to replace if the alias is a simple column
+          // rename or a simple name for a literal.
+          continue;
+        }
+        possibleAliases.add(aliasIdentifier.names);
+      }
+    }
+
+    // If we don't have any aliases we won't need this rewrite
+    if (possibleAliases.isEmpty()) {
+      return this;
+    }
+    // Check if the Where clause uses this alias anywhere. If so
+    // we need to replace.
+    ArrayDeque<SqlNode> nodeQueue = new ArrayDeque<>();
+    nodeQueue.add(where);
+    boolean needsReplacement = false;
+    while (!nodeQueue.isEmpty()) {
+      SqlNode node = nodeQueue.pop();
+      if (node instanceof SqlCall) {
+        SqlCall callNode = (SqlCall) node;
+        List<@Nullable SqlNode> operands = callNode.getOperandList();
+        for (@Nullable SqlNode operand: operands) {
+          if (operand != null) {
+            nodeQueue.add(operand);
+          }
+        }
+      } else if (node instanceof SqlIdentifier) {
+        SqlIdentifier identifier = (SqlIdentifier) node;
+        if (possibleAliases.contains(identifier.names)) {
+          needsReplacement = true;
+          break;
+        }
+      }
+    }
+    // We didn't find any aliases that need replacement
+    // we don't need to rewrite this Node.
+    if (!needsReplacement) {
+      return this;
+    }
+
+    // The rewrite is requires so we need to generate new Select statements from the
+    // new node lists. Generate an inner select without the where we need to update
+    // the inner select to include any column in the FROM.
     List<@Nullable SqlNode> innerNodes = new ArrayList<>();
     List<@Nullable SqlNode> outerNodes = new ArrayList<>();
+
+    // Also generate what the new select statements
+    // would be at this time.
     for (int i = 0; i < selectList.size(); i++) {
       SqlNode selectVal = selectList.get(i);
       SqlIdentifier aliasIdentifier;
@@ -308,27 +390,33 @@ public class SqlSelect extends SqlCall {
       if (selectVal instanceof SqlBasicCall && selectVal.getKind() == SqlKind.AS) {
         // We have found an alias
         innerAlias = (SqlBasicCall) selectVal;
-        aliasIdentifier = (SqlIdentifier) (innerAlias).getOperandList().get(innerAlias.operandCount() - 1);
+        aliasIdentifier = (SqlIdentifier) innerAlias.getOperandList()
+            .get(innerAlias.operandCount() - 1);
       } else {
         // We need to generate a new alias with an internal name.
         // TODO: Check this for uniqueness???
-        aliasIdentifier = new SqlIdentifier(String.format("$TEMP_COLUMN%d", i), selectVal.getParserPosition());
+        aliasIdentifier = new SqlIdentifier(
+            String.format(Locale.ROOT,
+            "$TEMP_COLUMN%d", i), selectVal.getParserPosition());
         List<SqlNode> aliasNodes = Arrays.asList(new SqlNode[]{selectVal, aliasIdentifier});
-        innerAlias = new SqlBasicCall(SqlStdOperatorTable.AS, aliasNodes, selectVal.getParserPosition());
+        innerAlias = new SqlBasicCall(SqlStdOperatorTable.AS, aliasNodes,
+            selectVal.getParserPosition());
       }
       innerNodes.add(innerAlias);
-      // The outerNode just selects the Alias if one exists
       outerNodes.add(aliasIdentifier);
     }
-    // Add the *
+    // Add the * in case the where references any inner values
     innerNodes.add(SqlIdentifier.STAR);
     SqlNodeList innerSelectList = new SqlNodeList(innerNodes, selectList.getParserPosition());
-    SqlNode innerSelect = new SqlSelect(this.getParserPosition(), this.keywordList, innerSelectList, from, null, groupBy, having, qualify, windowDecls, orderBy, offset, fetch, hints);
+    SqlNode innerSelect = new SqlSelect(this.getParserPosition(), this.keywordList, innerSelectList,
+        from, null, groupBy, having, qualify, windowDecls, orderBy, offset, fetch, hints);
     // Generate the outer select list
     // TODO: Fix column pruning
-    SqlNodeList outerSelectList = new SqlNodeList(outerNodes, selectList.getParserPosition());;
+    SqlNodeList outerSelectList = new SqlNodeList(outerNodes, selectList.getParserPosition());
     // Generate a new outer select list
-    SqlSelect newSelect = new SqlSelect(this.getParserPosition(), null, outerSelectList, innerSelect, where, null, null, null, null, null, null, null, null);
+    SqlSelect newSelect = new SqlSelect(this.getParserPosition(), null, outerSelectList,
+        innerSelect, where, null, null, null, null, null,
+        null, null, null);
     return newSelect;
   }
 }
