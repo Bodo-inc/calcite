@@ -127,7 +127,7 @@ class EmptyScope implements SqlValidatorScope {
       imperfectResolves.addAll(resolves);
     }
     // If there were no matches in the last round, restore those found in
-    // previous rounds
+    // previous rounds something arbitrary
     if (resolves.isEmpty()) {
       resolves.addAll(imperfectResolves);
     }
