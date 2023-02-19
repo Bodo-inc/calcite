@@ -386,12 +386,17 @@ public class SqlSelect extends SqlCall {
     for (int i = 0; i < selectList.size(); i++) {
       SqlNode selectVal = selectList.get(i);
       SqlIdentifier aliasIdentifier;
-      SqlBasicCall innerAlias;
+      SqlNode innerVal;
       if (selectVal instanceof SqlBasicCall && selectVal.getKind() == SqlKind.AS) {
         // We have found an alias
-        innerAlias = (SqlBasicCall) selectVal;
+        innerVal = selectVal;
+        SqlBasicCall innerAlias = (SqlBasicCall) selectVal;
         aliasIdentifier = (SqlIdentifier) innerAlias.getOperandList()
             .get(innerAlias.operandCount() - 1);
+      } else if (selectVal instanceof SqlIdentifier) {
+        // If we have just found an identifier we don't want to generate an alias.
+        innerVal = selectVal;
+        aliasIdentifier = (SqlIdentifier) selectVal;
       } else {
         // We need to generate a new alias with an internal name.
         // TODO: Check this for uniqueness???
@@ -399,10 +404,10 @@ public class SqlSelect extends SqlCall {
             String.format(Locale.ROOT,
             "$TEMP_COLUMN%d", i), selectVal.getParserPosition());
         List<SqlNode> aliasNodes = Arrays.asList(new SqlNode[]{selectVal, aliasIdentifier});
-        innerAlias = new SqlBasicCall(SqlStdOperatorTable.AS, aliasNodes,
+        innerVal = new SqlBasicCall(SqlStdOperatorTable.AS, aliasNodes,
             selectVal.getParserPosition());
       }
-      innerNodes.add(innerAlias);
+      innerNodes.add(innerVal);
       outerNodes.add(aliasIdentifier);
     }
     // Add the * in case the where references any inner values
