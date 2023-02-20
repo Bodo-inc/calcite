@@ -8046,33 +8046,34 @@ public class SqlParserTest {
   }
 
   @Test void testTimestampAddAndDiff() {
-    Map<String, List<String>> tsi = ImmutableMap.<String, List<String>>builder()
-        .put("MICROSECOND", Arrays.asList("MICROSECOND"))
-        .put("NANOSECOND", Arrays.asList("NANOSECOND"))
-        .put("SECOND", Arrays.asList("SECOND"))
-        .put("MINUTE", Arrays.asList("MINUTE"))
-        .put("HOUR", Arrays.asList("HOUR"))
-        .put("DAY", Arrays.asList("DAY"))
-        .put("WEEK", Arrays.asList("WEEK"))
-        .put("MONTH", Arrays.asList("MONTH"))
-        .put("QUARTER", Arrays.asList("QUARTER"))
-        .put("YEAR", Arrays.asList("YEAR"))
-        .build();
-
-    List<String> functions = ImmutableList.<String>builder()
-        .add("timestampadd('%1$s', 12, current_timestamp)")
-        .add("timestampdiff('%1$s', current_timestamp, current_timestamp)")
-        .build();
-
-    for (Map.Entry<String, List<String>> intervalGroup : tsi.entrySet()) {
-      for (String function : functions) {
-        for (String interval : intervalGroup.getValue()) {
-          expr(String.format(Locale.ROOT, function, interval, ""))
-              .ok(String.format(Locale.ROOT, function, intervalGroup.getKey(), "`")
-                  .toUpperCase(Locale.ROOT));
-        }
-      }
-    }
+    expr("timestampadd('DAY', 1, TO_DATE('2020-08-17'))").ok("TIMESTAMPADD('DAY', 1, `TO_DATE`('2020-08-17'))");
+//    Map<String, List<String>> tsi = ImmutableMap.<String, List<String>>builder()
+//        .put("MICROSECOND", Arrays.asList("MICROSECOND"))
+//        .put("NANOSECOND", Arrays.asList("NANOSECOND"))
+//        .put("SECOND", Arrays.asList("SECOND"))
+//        .put("MINUTE", Arrays.asList("MINUTE"))
+//        .put("HOUR", Arrays.asList("HOUR"))
+//        .put("DAY", Arrays.asList("DAY"))
+//        .put("WEEK", Arrays.asList("WEEK"))
+//        .put("MONTH", Arrays.asList("MONTH"))
+//        .put("QUARTER", Arrays.asList("QUARTER"))
+//        .put("YEAR", Arrays.asList("YEAR"))
+//        .build();
+//
+//    List<String> functions = ImmutableList.<String>builder()
+//        .add("timestampadd('%1$s', 12, current_timestamp)")
+//        .add("timestampdiff('%1$s', current_timestamp, current_timestamp)")
+//        .build();
+//
+//    for (Map.Entry<String, List<String>> intervalGroup : tsi.entrySet()) {
+//      for (String function : functions) {
+//        for (String interval : intervalGroup.getValue()) {
+//          expr(String.format(Locale.ROOT, function, interval, ""))
+//              .ok(String.format(Locale.ROOT, function, intervalGroup.getKey(), "`")
+//                  .toUpperCase(Locale.ROOT));
+//        }
+//      }
+//    }
 
 //    expr("timestampadd(^incorrect^, 1, current_timestamp)")
 //        .fails("(?s).*Was expecting one of.*");

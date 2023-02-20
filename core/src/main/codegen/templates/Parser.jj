@@ -6872,7 +6872,6 @@ SqlCall TimestampAddFunctionCall() :
     List<SqlNode> args;
     SqlNode e;
     final Span s;
-    TimeUnit interval;
     SqlNode node;
 }
 {
