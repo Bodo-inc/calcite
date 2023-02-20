@@ -349,14 +349,14 @@ public class SqlSelect extends SqlCall {
     // Check if the Where clause uses this alias anywhere. If so
     // we need to replace.
     ArrayDeque<SqlNode> nodeQueue = new ArrayDeque<>();
-    nodeQueue.add(where);
+    nodeQueue.add(requireNonNull(where, "where"));
     boolean needsReplacement = false;
     while (!nodeQueue.isEmpty()) {
       SqlNode node = nodeQueue.pop();
       if (node instanceof SqlCall) {
         SqlCall callNode = (SqlCall) node;
-        List<@Nullable SqlNode> operands = callNode.getOperandList();
-        for (@Nullable SqlNode operand: operands) {
+        List<SqlNode> operands = callNode.getOperandList();
+        for (SqlNode operand: operands) {
           if (operand != null) {
             nodeQueue.add(operand);
           }
@@ -375,7 +375,7 @@ public class SqlSelect extends SqlCall {
       return this;
     }
 
-    // The rewrite is requires so we need to generate new Select statements from the
+    // The rewrite is required, so we need to generate new Select statements from the
     // new node lists. Generate an inner select without the where we need to update
     // the inner select to include any column in the FROM.
     List<@Nullable SqlNode> innerNodes = new ArrayList<>();
