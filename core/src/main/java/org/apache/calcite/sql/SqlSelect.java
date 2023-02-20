@@ -303,11 +303,13 @@ public class SqlSelect extends SqlCall {
    * condition depends on the columns in the select list. This writes
    * the code to use two select statements.
    *
-   * For example Select A + 1 as X from table where X > 3
-   * becomes Select TEMP_COLUMN0 FROM (Select A + 1 as TEMP_COLUMN0) where TEMP_COLUMN0 > 3
+   * For example <code>Select A + 1 as X from table where X > 3</code>
+   * becomes
+   * <code>Select TEMP_COLUMN0 FROM (Select A + 1 as TEMP_COLUMN0)</code>
+   * <code>where TEMP_COLUMN0 > 3</code>
    *
    * We only do this replacement if we detect that the where may reference an alias generated
-   * by the select statment. This approach simplifies code but is not required for correctness.
+   * by the select statement. This approach simplifies code but is not required for correctness.
    * If this fails then the alias will be inlined as a fallback in validation.
    *
    * @return The new top level select
