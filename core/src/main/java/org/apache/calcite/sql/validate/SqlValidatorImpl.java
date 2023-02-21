@@ -2882,6 +2882,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     //TODO: I'll likely need some sort of call to
     // validateFeature()
     // to confirm that the sql dialect we're validating for even supports CREATE_TABLE.
+    // This will be done as followup: https://bodo.atlassian.net/browse/BE-4429
 
     final SqlNode queryNode = createTable.query;
 
@@ -5431,6 +5432,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Snowflake throws the error: "IF NOT EXISTS and OR REPLACE are incompatible."
     // I'm not sure if this is true in other dialects, but I'm going to assume
     // it is
+    // If it isn't it will be handled as a followup issue:
+    // https://bodo.atlassian.net/browse/BE-4429
 
     if (createTable.ifNotExists && createTable.getReplace()) {
       throw newValidationError(createTable, RESOURCE.createTableInvalidSyntax());

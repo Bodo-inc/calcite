@@ -52,15 +52,6 @@ public class BodoSqlValidatorTest extends SqlValidatorTestCase {
         "Create Table statements cannot contain both 'OR REPLACE' and 'IF NOT EXISTS'");
   }
 
-  @Test void testCreateTableUnsupportedClause() {
-    // Checks that we throw a reasonable error in the case that we specify both
-    // REPLACE and IF NOT EXISTS
-    final String sql =
-        "^CREATE OR REPLACE TABLE IF NOT EXISTS out_test AS select 1, 2, 3 from emp^";
-    sql(sql).fails(
-        "Create Table statements cannot contain both 'OR REPLACE' and 'IF NOT EXISTS'");
-  }
-
   @Test void testCreateTableExplicitName() {
     // Checks that we can handle explicitly specifying the full name
     final String sql =

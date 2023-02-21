@@ -29,25 +29,28 @@ import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Parse tree for {@code CREATE TABLE} statement, with extensions for particular
- * SQL dialects supported by Babel.
+ * SQL dialects supported by Bodo.
  */
 public class SqlBodoCreateTable extends SqlCreateTable {
-  // CHECKSTYLE: IGNORE 2; can't use 'volatile' because it is a Java keyword
-  // but checkstyle does not like trailing '_'.
-  private final boolean volatile_;
 
-  /** Creates a SqlBabelCreateTable. */
+  // CHECKSTYLE: IGNORE 2; can't use 'volatile' because it is a Java keyword
+  // but checkstyle does not like trailing or preceding '_'
+  private final boolean _volatile;
+
+  /** Creates a SqlBodoCreateTable. */
   public SqlBodoCreateTable(SqlParserPos pos, boolean replace, boolean volatile_,
       boolean ifNotExists, SqlIdentifier name, SqlNodeList columnList,
       SqlNode query) {
     super(pos, replace, ifNotExists, name, columnList, query);
-    this.volatile_ = volatile_;
+    this._volatile = volatile_;
   }
 
   @Override public void validate(final SqlValidator validator, final SqlValidatorScope scope) {
     // Validate the clauses that are specific to Bodo's create table statement,
-    // and then defers to the superclass for the rest
-    if (this.volatile_) {
+    // and then defers to the superclass for the rest.
+    // Currently, we do not support volatile/temporary tables due to the fact that bodo doesn't
+    // keep track of session information.
+    if (this._volatile) {
       throw validator.newValidationError(
           this, RESOURCE.createTableUnsupportedClause("VOLATILE"));
     }
@@ -57,7 +60,7 @@ public class SqlBodoCreateTable extends SqlCreateTable {
 
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     writer.keyword("CREATE");
-    if (volatile_) {
+    if (_volatile) {
       writer.keyword("VOLATILE");
     }
     writer.keyword("TABLE");
