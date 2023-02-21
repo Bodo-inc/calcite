@@ -317,7 +317,7 @@ public class DruidAdapterIT {
     // infrastructure issues as the other failing test.
     final String sql = "select cast(\"__time\" as timestamp) as \"time\"\n"
         + "from \"wikipedia\"\n"
-        + "where \"time\" < '2015-10-12 00:00:00 UTC'";
+        + "where \"__time\" < '2015-10-12 00:00:00 UTC'";
     final String explain = "PLAN=EnumerableInterpreter\n"
         + "  DruidQuery(table=[[wiki, wikipedia]],"
         + " intervals=[[1900-01-01T00:00:00.000Z/2015-10-12T00:00:00.000Z]], "
