@@ -328,8 +328,8 @@ public class DruidAdapterIT {
         + "'virtualColumns':[{'type':'expression','name':'vc','expression':";
     sql(sql, WIKI_AUTO2)
         .limit(2)
-        .returnsUnordered("__time=2015-09-12 00:46:58",
-            "__time=2015-09-12 00:47:00")
+        .returnsUnordered("time=2015-09-12 00:46:58",
+            "time=2015-09-12 00:47:00")
         .explainContains(explain)
         .queryContains(new DruidChecker(druidQuery));
   }
