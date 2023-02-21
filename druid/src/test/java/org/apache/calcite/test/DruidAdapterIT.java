@@ -313,7 +313,8 @@ public class DruidAdapterIT {
    * UTC</a>. */
   @Test void testFilterTime() {
     // Bodo change: Avoid the testing __time usage. I can't test druid locally
-    // so I just updated this test.
+    // so I just updated this test. Fundamentally this seems to be the same
+    // infrastructure issues as the other failing test.
     final String sql = "select cast(\"__time\" as timestamp) as \"time\"\n"
         + "from \"wikipedia\"\n"
         + "where \"time\" < '2015-10-12 00:00:00 UTC'";
