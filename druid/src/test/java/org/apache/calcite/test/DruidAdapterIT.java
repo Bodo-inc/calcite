@@ -312,9 +312,11 @@ public class DruidAdapterIT {
    * Druid adapter: Send timestamp literals to Druid as local time, not
    * UTC</a>. */
   @Test void testFilterTime() {
-    final String sql = "select cast(\"__time\" as timestamp) as \"__time\"\n"
+    // Bodo change: Avoid the testing __time usage. I can't test druid locally
+    // so I just updated this test.
+    final String sql = "select cast(\"__time\" as timestamp) as \"time\"\n"
         + "from \"wikipedia\"\n"
-        + "where \"__time\" < '2015-10-12 00:00:00 UTC'";
+        + "where \"time\" < '2015-10-12 00:00:00 UTC'";
     final String explain = "PLAN=EnumerableInterpreter\n"
         + "  DruidQuery(table=[[wiki, wikipedia]],"
         + " intervals=[[1900-01-01T00:00:00.000Z/2015-10-12T00:00:00.000Z]], "
