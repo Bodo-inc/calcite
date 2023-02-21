@@ -303,10 +303,12 @@ public class SqlSelect extends SqlCall {
    * condition depends on the columns in the select list. This writes
    * the code to use two select statements.
    *
-   * For example <code>Select A + 1 as X from table where X > 3</code>
+   * For example <code>Select A + 1 as X from table where X &gt; 3</code>
    * becomes
-   * <code>Select TEMP_COLUMN0 FROM (Select A + 1 as TEMP_COLUMN0)</code>
-   * <code>where TEMP_COLUMN0 > 3</code>
+   * Select X
+   *  FROM
+   *    (Select A + 1 as X)
+   * where X &gt; 3
    *
    * We only do this replacement if we detect that the where may reference an alias generated
    * by the select statement. This approach simplifies code but is not required for correctness.
@@ -323,6 +325,10 @@ public class SqlSelect extends SqlCall {
       // Only perform the rewrite if we just have a where.
       return this;
     }
+    // Create a set of identifiers that we are keeping. If we have an alias
+    // that matches an identifier then we cannot safely convert this query into
+    // two selects
+    Set<ImmutableList<String>> keptIdentifiers = new HashSet<>();
     // Create a set of Alias names that could be referenced by a where
     Set<ImmutableList<String>> possibleAliases = new HashSet<>();
     // Iterate through the select statements and check for any aliases that
@@ -334,6 +340,12 @@ public class SqlSelect extends SqlCall {
         // Check if the alias is unnecessary. If so skip the transformation.
         List<SqlNode> operands = innerAlias.getOperandList();
         SqlIdentifier aliasIdentifier = (SqlIdentifier) operands.get(operands.size() - 1);
+        if (keptIdentifiers.contains(aliasIdentifier.names)) {
+          // We cannot safely perform this transformation as we may have a name conflict.
+          // We don't need to populate all identifiers first because this would fail to
+          // validate.
+          return this;
+        }
         if (operands.size() == 2 && (operands.get(0) instanceof SqlIdentifier
             || operands.get(0) instanceof SqlLiteral)) {
           // No need to replace if the alias is a simple column
@@ -341,6 +353,8 @@ public class SqlSelect extends SqlCall {
           continue;
         }
         possibleAliases.add(aliasIdentifier.names);
+      } else if (selectVal instanceof SqlIdentifier) {
+        keptIdentifiers.add(((SqlIdentifier) selectVal).names);
       }
     }
 
@@ -404,7 +418,7 @@ public class SqlSelect extends SqlCall {
         // TODO: Check this for uniqueness???
         aliasIdentifier = new SqlIdentifier(
             String.format(Locale.ROOT,
-            "$TEMP_COLUMN%d", i), selectVal.getParserPosition());
+            "$BODO_INTERNAL_TEMP_COLUMN%d", i), selectVal.getParserPosition());
         List<SqlNode> aliasNodes = Arrays.asList(new SqlNode[]{selectVal, aliasIdentifier});
         innerVal = new SqlBasicCall(SqlStdOperatorTable.AS, aliasNodes,
             selectVal.getParserPosition());
@@ -418,7 +432,6 @@ public class SqlSelect extends SqlCall {
     SqlNode innerSelect = new SqlSelect(this.getParserPosition(), this.keywordList, innerSelectList,
         from, null, groupBy, having, qualify, windowDecls, orderBy, offset, fetch, hints);
     // Generate the outer select list
-    // TODO: Fix column pruning
     SqlNodeList outerSelectList = new SqlNodeList(outerNodes, selectList.getParserPosition());
     // Generate a new outer select list
     SqlSelect newSelect = new SqlSelect(this.getParserPosition(), null, outerSelectList,
