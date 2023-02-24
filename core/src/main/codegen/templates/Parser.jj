@@ -8759,9 +8759,9 @@ MORE :
     < IDENTIFIER: <LETTER_EXCLUDING_DOLLAR> (<LETTER>|<DIGIT>)* >
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID> TOKEN :
 {
-    < AT_PARAM_IDENTIFIER: "@" (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
+    < AT_PARAM_IDENTIFIER: <AT_SYMBOL> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
     | < DOLLAR_PARAM_IDENTIFIER: <DOLLAR> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
 }
 
