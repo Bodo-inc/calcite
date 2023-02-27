@@ -7871,14 +7871,14 @@ public class SqlParserTest {
         .ok("@q");
     expr("$Z")
         .ok("$Z");
-//    expr("a > @Q")
-//        .ok("(`A` > @Q)");
-//    expr("a + @Q")
-//        .ok("(`A` + @Q)");
-//    expr("@Q + $Todo")
-//        .ok("(@Q + $Todo)");
-//    expr("1 <=> @WeWon")
-//        .ok("(1 <=> @WeWon)");
+    expr("a > @Q")
+        .ok("(`A` > @Q)");
+    expr("a + @Q")
+        .ok("(`A` + @Q)");
+    expr("@Q + $Todo")
+        .ok("(@Q + $Todo)");
+    expr("1 <=> @WeWon")
+        .ok("(1 <=> @WeWon)");
   }
 
   @Test void testNamedParameterWhere() {
