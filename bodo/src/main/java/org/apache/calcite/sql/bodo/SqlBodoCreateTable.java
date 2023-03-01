@@ -27,8 +27,6 @@ import org.apache.calcite.sql.validate.SqlValidatorScope;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.List;
-
 import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
