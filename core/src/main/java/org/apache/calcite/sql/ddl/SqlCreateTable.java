@@ -103,10 +103,12 @@ public class SqlCreateTable extends SqlCreate {
       }
       writer.endList(frame);
     }
-    if (query != null) {
+    //Required to appease the Calcite null checker
+    SqlNode queryNode = query;
+    if (queryNode != null) {
       writer.keyword("AS");
       writer.newlineAndIndent();
-      query.unparse(writer, 0, 0);
+      queryNode.unparse(writer, 0, 0);
     }
   }
 
@@ -124,7 +126,7 @@ public class SqlCreateTable extends SqlCreate {
     this.outputTableSchemaPath = path;
   }
 
-  public @Nullable SqlIdentifier getName() {
+  public SqlIdentifier getName() {
     return name;
   }
 
@@ -143,7 +145,7 @@ public class SqlCreateTable extends SqlCreate {
     return outputTableSchemaPath;
   }
 
-  public String getOutputTableName() {
+  public @Nullable String getOutputTableName() {
     return outputTableName;
   }
 

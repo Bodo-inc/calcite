@@ -89,7 +89,4 @@ public class SqlBodoCreateTable extends SqlCreateTable {
     }
   }
 
-  @Override public List<SqlNode> getOperandList() {
-    return super.getOperandList();
-  }
 }
