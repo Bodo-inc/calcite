@@ -30,10 +30,10 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.Locale;
 
-import static java.util.Objects.requireNonNull;
-
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
 import static org.apache.calcite.util.Static.RESOURCE;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * The <code>TIMESTAMPADD</code> function, which adds an interval to a
