@@ -5951,10 +5951,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
 
   @Test void testNonAggregateHavingReference() {
-    // You can refer to a table ('e1') in the parent scope of a query in
-    // the from clause.
-    //
-    // Note: Oracle10g does not allow this query.
+    // see testWhereReference
     sql("select * from emp as e1 having exists (\n"
         + "  select * from emp as e2,\n"
         + "    (select * from dept having dept.deptno = e1.deptno))").ok();
@@ -8588,10 +8585,10 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 //        .fails("Expression 'DEPTNO' is not being grouped")
 //        .withConformance(SqlConformanceEnum.LENIENT)
 //        .fails("Expression 'DEPTNO' is not being grouped");
-//    sql("SELECT DISTINCT * from emp").ok();
+
+    sql("SELECT DISTINCT * from emp").ok();
     sql("SELECT DISTINCT ^*^ from emp GROUP BY deptno")
         .fails("Expression 'EMP\\.EMPNO' is not being grouped");
-
     // similar validation for SELECT DISTINCT and GROUP BY
     sql("SELECT deptno FROM emp GROUP BY deptno ORDER BY deptno, ^empno^")
         .fails("Expression 'EMPNO' is not being grouped");
