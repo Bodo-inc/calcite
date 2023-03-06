@@ -690,7 +690,7 @@ public class SqlToRelConverter {
     // we have a non-aggregate select.
     SqlNode whereClause = select.getWhere();
     SqlNode havingClause = select.getHaving();
-    if (havingClause != null && !validator.isAggregate(select)) {
+    if (havingClause != null && !validator().isAggregate(select)) {
       if (whereClause != null) {
         //If we have a where clause, AND the two together (this is the expected behavior in SF)
         //Note that we've already validated the WHERE clause. Since we've validated both of the
