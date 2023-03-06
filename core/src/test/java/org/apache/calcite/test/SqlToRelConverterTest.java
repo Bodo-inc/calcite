@@ -695,6 +695,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     fixture.withSql(sql).ok();
   }
 
+  @Test void testHavingNonAggregate() {
+    // tests that we can have a having clause in the case that we have no aggregates in the select
+    final String sql = "select empno from emp having empno > 10";
+    sql(sql).ok();
+  }
+
   @Test void testQualifyWithAlias() {
     // test qualify on a simple clause, that contains an alias
     final String sql = "select empno, ROW_NUMBER() over (PARTITION BY deptno ORDER BY sal)\n"
