@@ -5493,7 +5493,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // In order to be sufficiently general to the input of Create table,
     // We have to validate this expression in the overall scope of the create table node,
     // Since the associated query node
-    // doesn't necessarily have to be a select (notably, validaSelect doesn't work if the query has
+    // doesn't necessarily have to be a select (notably, validateSelect doesn't work if the query has
     // any 'with' clauses)
     // Note that we also can't use validateScopedExpression, as this can rewrite the sqlNode
     // via a call to performUnconditionalRewrites, which should have already been done by the time
