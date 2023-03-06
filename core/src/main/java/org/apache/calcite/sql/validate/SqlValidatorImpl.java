@@ -5486,20 +5486,22 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
     }
 
-    //Note, this can either a row expression or a query expression with an optional ORDER BY
-    //We're not currently handling the row expression case.
+    // Note, this can either a row expression or a query expression with an optional ORDER BY
+    // We're not currently handling the row expression case.
+    // This may or may not be within the scope of what we want
+    // to support by relese: (https://bodo.atlassian.net/browse/BE-4478)
 
     SqlValidatorScope createTableScope = this.getCreateTableScope(createTable);
-    // In order to be sufficiently general to the input of Create table,
-    // We have to validate this expression in the overall scope of the create table node,
-    // Since the associated query node
-    // doesn't necessarily have to be a select (notably, validateSelect doesn't work if the query has
-    // any 'with' clauses)
-    // Note that we also can't use validateScopedExpression, as this can rewrite the sqlNode
-    // via a call to performUnconditionalRewrites, which should have already been done by the time
-    // that we reach this points, and calling performUnconditionalRewrites twice is likely invalid.
+    // we have to validate in the overall scope of the create table node in order to be
+    // sufficiently general to the input of "create table as", since the associated query node
+    // (in relation to the Create Table node) may not be a selectScope or any one type of scope
+
+    // Note that we don't use validateScopedExpression, since validateScopedExpression only does
+    // some additional rewriting before calling node.validate(), and the rewriting should already
+    // have occurred by the time we reach this point.
     queryNode.validate(this, createTableScope);
-    // (Note: for create table LIKE (WIP) if queryNode is identifier, we may need additional work to
+    // (Note: for create table LIKE (https://bodo.atlassian.net/browse/BE-3989) if
+    // queryNode is identifier, we may need additional work to
     // properly validate)
 
 
