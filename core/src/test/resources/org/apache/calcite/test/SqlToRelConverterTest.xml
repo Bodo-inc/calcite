@@ -2720,15 +2720,6 @@ LogicalProject(EXPR$0=[$0])
       <![CDATA[select sum(sal + sal) from emp having sum(sal) > 10]]>
     </Resource>
   </TestCase>
-  <TestCase name="testHavingAndWhereNonAggregate">
-    <Resource name="plan">
-      <![CDATA[
-LogicalProject(EMPNO=[$0])
-  LogicalFilter(condition=[AND(<($0, 20), >($0, 10))])
-    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-]]>
-    </Resource>
-  </TestCase>
   <TestCase name="testHavingAggrFunctionIn">
     <Resource name="sql">
       <![CDATA[select deptno
@@ -2745,6 +2736,18 @@ LogicalProject(DEPTNO=[$0])
       LogicalProject(DEPTNO=[$7], $f1=[CASE(SEARCH($7, Sarg[1, 2]), 0, 1)], $f2=[CASE(SEARCH($7, Sarg[3, 4]), 0, 1)])
         LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testHavingAndWhereNonAggregate">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EMPNO=[$0])
+  LogicalFilter(condition=[AND(<($0, 20), >($0, 10))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select empno from emp WHERE empno < 20 having empno > 10]]>
     </Resource>
   </TestCase>
   <TestCase name="testHavingInSubQueryWithAggrFunction">
@@ -2781,6 +2784,9 @@ LogicalProject(EMPNO=[$0])
   LogicalFilter(condition=[>($0, 10)])
     LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select empno from emp having empno > 10]]>
     </Resource>
   </TestCase>
   <TestCase name="testHopTable">
@@ -6061,6 +6067,12 @@ LogicalProject(SAL=[$5])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])
       LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
 ]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select empno from emp as e
+join dept as d using (deptno)
+having e.sal in (
+  select e2.sal from emp as e2 having e2.deptno > e.deptno)]]>
     </Resource>
   </TestCase>
   <TestCase name="testNotCaseInMoreClause">

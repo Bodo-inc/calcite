@@ -4701,61 +4701,57 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // If we have an HAVING clause, the select scope can either be an aggregating scope,
     // or a non-aggregate scope, with both having different validation paths.
     if (isAggregate(select)) {
-      // In the case that we're handling an aggregate select,
-      // HAVING is validated in the scope after groups have been created.
-      // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
-      // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
-      // clause is illegal.
-
-      final AggregatingScope havingScope =
-          (AggregatingScope) getSelectScope(select);
-      if (config.conformance().isHavingAlias()) {
-        SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(having, havingScope, select,
-            ExtendedExpanderExprType.havingExpr);
-        if (having != newExpr) {
-          having = newExpr;
-          select.setHaving(newExpr);
-        }
-      }
-      havingScope.checkAggregateExpr(having, true);
-      // Need to validate the having expression before inferring unknown types, so that any aliases
-      // can be resolved before qualification occurs
-      // TODO: push this change into calcite
-      having.validate(this, havingScope);
-      // having must be a boolean expression
-      inferUnknownTypes(
-          booleanType,
-          havingScope,
-          having);
-      final RelDataType type = deriveType(havingScope, having);
-      if (!SqlTypeUtil.inBooleanFamily(type)) {
-        throw newValidationError(having, RESOURCE.havingMustBeBoolean());
-      }
+      validateAggregateHavingClause(select, having);
     } else {
-      // In the case that we're handling a non-aggregate select,
-      // HAVING is semantically equivalent to a WHERE expression
-      final SqlValidatorScope havingScope = getSelectScope(select);
-      SqlNode expandedHaving = expandWithAlias(having, havingScope, select,
-          ExtendedExpanderExprType.whereExpr);
-      validateWhereOrOnOrNonAggregateHaving(havingScope, expandedHaving, "HAVING");
-      // Re-write the having as a part of the WHERE clause now.
-      // We do this here, since we've already verified the having and/or thrown
-      // an error in the case that it's invalid, and we no longer need to know that this value was
-      // originally from the having clause, and it simplifies the SqlToRel conversion step
-      SqlNode whereClause = select.getWhere();
-      if (whereClause != null) {
-        //If we have a where clause AND the two together (this is the expected behavior in SF)
-        //Note that we've already validated the WHERE clause. Since we've validated both of the
-        //individual clauses, we don't need to do any additional
-        //validation of the AND of the two expressions.
-        expandedHaving = SqlStdOperatorTable.AND.createCall(
-            SqlNodeList.of(whereClause, expandedHaving));
-      }
-      select.setWhere(expandedHaving);
-      select.setHaving(null);
+      validateNonAggregateHavingClause(select, having);
     }
 
   }
+
+  protected void validateAggregateHavingClause(SqlSelect select, SqlNode having) {
+    // In the case that we're handling an aggregate select,
+    // HAVING is validated in the scope after groups have been created.
+    // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
+    // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
+    // clause is illegal.
+
+    final AggregatingScope havingScope =
+        (AggregatingScope) getSelectScope(select);
+    if (config.conformance().isHavingAlias()) {
+      SqlNode newExpr = expandGroupByOrHavingOrQualifyExpr(having, havingScope, select,
+          ExtendedExpanderExprType.havingExpr);
+      if (having != newExpr) {
+        having = newExpr;
+        select.setHaving(newExpr);
+      }
+    }
+    havingScope.checkAggregateExpr(having, true);
+    // Need to validate the having expression before inferring unknown types, so that any aliases
+    // can be resolved before qualification occurs
+    // TODO: push this change into calcite
+    having.validate(this, havingScope);
+    // having must be a boolean expression
+    inferUnknownTypes(
+        booleanType,
+        havingScope,
+        having);
+    final RelDataType type = deriveType(havingScope, having);
+    if (!SqlTypeUtil.inBooleanFamily(type)) {
+      throw newValidationError(having, RESOURCE.havingMustBeBoolean());
+    }
+  }
+
+  protected void validateNonAggregateHavingClause(SqlSelect select, SqlNode having) {
+    // In the case that we're handling a non-aggregate select,
+    // HAVING is semantically equivalent to a WHERE expression
+
+    final SqlValidatorScope havingScope = getSelectScope(select);
+    SqlNode expandedHaving = expandWithAlias(having, havingScope, select,
+        ExtendedExpanderExprType.whereExpr);
+    validateWhereOrOnOrNonAggregateHaving(havingScope, expandedHaving, "HAVING");
+    select.setHaving(expandedHaving);
+  }
+
   protected void validateQualifyClause(SqlSelect select) {
     SqlNode qualify = select.getQualify();
     if (qualify == null) {
