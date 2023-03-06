@@ -1509,8 +1509,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       rewriteMerge(call);
       break;
     }
-    case SELECT:
-      System.out.println("TODO");
     default:
       break;
     }
@@ -3415,14 +3413,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (node != null) {
       return node;
     }
-//    Bodo change: we allow having in non-aggregate clauses
-//    NOTE: snowflake disallows having both a "having" and "where" clause in a non-aggregate
-//    expression (Syntax error: unexpected 'where'.)
 
-//    node = select.getHaving();
-//    if (node != null) {
-//      return node;
-//    }
+    // Bodo change: we allow having in non-aggregate clauses. (where it is equivalent to a
+    // WHERE clause).
+    // Note that we still require the having to behave as normal in the
+    // case that we encounter an aggregate in the having clause itself
+    node = select.getHaving();
+    if (node != null && aggFinder.findAgg(node) != null) {
+      return node;
+    }
+
     return getAgg(select);
   }
 
@@ -3773,7 +3773,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       condition = getCondition(join);
 
 
-      validateWhereOrOn(joinScope, condition, "ON");
+      validateWhereOrOnOrNonAggregateHaving(joinScope, condition, "ON");
       checkRollUp(null, join, condition, joinScope, "ON");
       break;
     case USING:
@@ -3981,15 +3981,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       validateFrom(select.getFrom(), fromType, fromScope);
     }
 
-    //Bodo change:
-    //In the case that we have a non-aggregate select, we cannot have both a having and where clause
-
-    if (!isAggregate(select)) {
-      if ((select.getWhere() != null) && (select.getHaving() != null)) {
-        //TODO: Add better error.
-        throw newValidationError(select, null);
-      }
-    }
 
     validateWhereClause(select);
     validateGroupClause(select);
@@ -4681,10 +4672,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlNode expandedWhere = expandWithAlias(where, whereScope, select,
         ExtendedExpanderExprType.whereExpr);
     select.setWhere(expandedWhere);
-    validateWhereOrOn(whereScope, expandedWhere, "WHERE");
+    validateWhereOrOnOrNonAggregateHaving(whereScope, expandedWhere, "WHERE");
   }
 
-  protected void validateWhereOrOn(
+  protected void validateWhereOrOnOrNonAggregateHaving(
       SqlValidatorScope scope,
       SqlNode condition,
       String clause) {
@@ -4741,10 +4732,24 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     } else {
       // In the non-aggregate case HAVING is semantically equivalent to a WHERE expression
       final SqlValidatorScope havingScope = getSelectScope(select);
-      final SqlNode expandedWhere = expandWithAlias(having, havingScope, select,
+      SqlNode expandedHaving = expandWithAlias(having, havingScope, select,
           ExtendedExpanderExprType.whereExpr);
-      select.setWhere(expandedWhere);
-      validateWhereOrOn(havingScope, expandedWhere, "HAVING");
+      validateWhereOrOnOrNonAggregateHaving(havingScope, expandedHaving, "HAVING");
+      // Re-write the having as a part of the WHERE clause now.
+      // We do this here, since we've already verified the having and/or thrown
+      // an error in the case that it's invalid, and we no longer need to know that this value was
+      // originally from the having clause, and it simplifies the SqlToRel conversion step
+      SqlNode whereClause = select.getWhere();
+      if (whereClause != null) {
+        //If we have a where clause AND the two together (this is the expected behavior in SF)
+        //Note that we've already validated the WHERE clause. Since we've validated both of the
+        //individual clauses, we don't need to do any additional
+        //validation of the AND of the two expressions.
+        expandedHaving = SqlStdOperatorTable.AND.createCall(
+            SqlNodeList.of(whereClause, expandedHaving));
+      }
+      select.setWhere(expandedHaving);
+      select.setHaving(null);
     }
 
   }

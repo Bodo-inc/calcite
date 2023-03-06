@@ -5949,6 +5949,17 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "    (select * from dept where dept.deptno = e1.deptno))").ok();
   }
 
+
+  @Test void testNonAggregateHavingReference() {
+    // You can refer to a table ('e1') in the parent scope of a query in
+    // the from clause.
+    //
+    // Note: Oracle10g does not allow this query.
+    sql("select * from emp as e1 having exists (\n"
+        + "  select * from emp as e2,\n"
+        + "    (select * from dept having dept.deptno = e1.deptno))").ok();
+  }
+
   @Test void testUnionNameResolution() {
     sql("select * from emp as e1 where exists (\n"
         + "  select * from emp as e2,\n"
@@ -6427,6 +6438,24 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING ^sal^ > 10")
         .fails("Expression 'SAL' is not being grouped");
   }
+
+  @Test void testNonAggregateHaving() {
+    sql("select * from emp having ^sal^")
+        .fails("HAVING clause must be a condition");
+  }
+
+  @Test void testNonAggregateHavingAndWhere() {
+    sql("select * from emp WHERE ^sal^ having sal > 10")
+        .fails("WHERE clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having ^sal^")
+        .fails("HAVING clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having sal < 20")
+        .ok();
+  }
+
+
 
   @Test void testHavingBetween() {
     // FRG-115: having clause with between not working
@@ -8548,15 +8577,18 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING deptno > 55").ok();
     sql("SELECT DISTINCT deptno, 33 FROM emp\n"
         + "GROUP BY deptno HAVING deptno > 55").ok();
-    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
-    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
-    sql("SELECT DISTINCT * from emp").ok();
+
+    //Bodo change: since HAVING is now equivalent to WHERE in non-aggregate selects,
+    //these statements are now valid.
+//    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+//    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+//    sql("SELECT DISTINCT * from emp").ok();
     sql("SELECT DISTINCT ^*^ from emp GROUP BY deptno")
         .fails("Expression 'EMP\\.EMPNO' is not being grouped");
 

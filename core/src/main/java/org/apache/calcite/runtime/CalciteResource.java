@@ -395,6 +395,9 @@ public interface CalciteResource {
   @BaseMessage("HAVING clause must be a condition")
   ExInst<SqlValidatorException> havingMustBeBoolean();
 
+  @BaseMessage("A non-aggregate SELECT statement cannot have both a HAVING and WHERE clause")
+  ExInst<SqlValidatorException> havingAndWhereNotAllowedInNonAggregate();
+
   @BaseMessage("QUALIFY clause must be a boolean condition")
   ExInst<SqlValidatorException> qualifyMustBeBoolean();
 
