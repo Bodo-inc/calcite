@@ -4693,10 +4693,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   protected void validateHavingClause(SqlSelect select) {
-    // HAVING is validated in the scope after groups have been created.
-    // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
-    // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
-    // clause is illegal.
     SqlNode having = select.getHaving();
     if (having == null) {
       return;
@@ -4705,6 +4701,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // If we have an HAVING clause, the select scope can either be an aggregating scope,
     // or a non-aggregate scope, with both having different validation paths.
     if (isAggregate(select)) {
+      // In the case that we're handling an aggregate select,
+      // HAVING is validated in the scope after groups have been created.
+      // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
+      // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
+      // clause is illegal.
+
       final AggregatingScope havingScope =
           (AggregatingScope) getSelectScope(select);
       if (config.conformance().isHavingAlias()) {
@@ -4730,7 +4732,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         throw newValidationError(having, RESOURCE.havingMustBeBoolean());
       }
     } else {
-      // In the non-aggregate case HAVING is semantically equivalent to a WHERE expression
+      // In the case that we're handling a non-aggregate select,
+      // HAVING is semantically equivalent to a WHERE expression
       final SqlValidatorScope havingScope = getSelectScope(select);
       SqlNode expandedHaving = expandWithAlias(having, havingScope, select,
           ExtendedExpanderExprType.whereExpr);
