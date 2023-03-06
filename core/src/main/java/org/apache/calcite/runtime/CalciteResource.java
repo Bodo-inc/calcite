@@ -394,8 +394,7 @@ public interface CalciteResource {
 
   @BaseMessage("HAVING clause must be a condition")
   ExInst<SqlValidatorException> havingMustBeBoolean();
-
-
+  
   @BaseMessage("QUALIFY clause must be a boolean condition")
   ExInst<SqlValidatorException> qualifyMustBeBoolean();
 
