@@ -111,4 +111,21 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
         "on value.value = dept2.value";
     sql(sql).ok();
   }
+
+  @Test void testCreateTableOrderBy() {
+    //Test an error found while doing a test run on tpch Q2
+    final String sql = "CREATE TABLE keaton_testing AS (" +
+        "with part_two as (\n" +
+        "        select 'foo' as p_partkey from (VALUES (1, 2, 3))\n" +
+        "    )\n" +
+        "    select\n" +
+        "                       p_partkey\n" +
+        "                     from\n" +
+        "                       part_two\n" +
+        "                     order by\n" +
+        "                       p_partkey" +
+        ")";
+    sql(sql).ok();
+  }
+
 }
