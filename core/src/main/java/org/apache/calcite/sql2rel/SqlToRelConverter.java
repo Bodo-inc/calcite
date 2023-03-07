@@ -2323,6 +2323,17 @@ public class SqlToRelConverter {
                 tableSampleSpec.isRepeatable(),
                 tableSampleSpec.getRepeatableSeed());
         bb.setRoot(new Sample(cluster, bb.root(), params), false);
+      } else if (sampleSpec instanceof SqlSampleSpec.SqlTableSampleRowLimitSpec) {
+        SqlSampleSpec.SqlTableSampleRowLimitSpec tableSampleRowLimitSpec =
+            (SqlSampleSpec.SqlTableSampleRowLimitSpec) sampleSpec;
+        convertFrom(bb, operands.get(0));
+        RelOptSamplingParameters params =
+            new RelOptSamplingParameters(
+                tableSampleRowLimitSpec.isBernoulli(),
+                tableSampleRowLimitSpec.numberOfRows(),
+                tableSampleRowLimitSpec.isRepeatable(),
+                tableSampleRowLimitSpec.getRepeatableSeed());
+        bb.setRoot(new Sample(cluster, bb.root(), params), false);
       } else {
         throw new AssertionError("unknown TABLESAMPLE type: " + sampleSpec);
       }

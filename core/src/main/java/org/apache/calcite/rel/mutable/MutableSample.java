@@ -57,7 +57,9 @@ public class MutableSample extends MutableSingleRel {
     return buf.append("Sample(mode: ")
         .append(params.isBernoulli() ? "bernoulli" : "system")
         .append("rate")
-        .append(params.getSamplingPercentage())
+        .append(params.isPercentage() ? params.getSamplingPercentage() : "-")
+        .append("rows")
+        .append(params.isPercentage() ? "-" : params.getNumberOfRows())
         .append("repeatableSeed")
         .append(params.isRepeatable() ? params.getRepeatableSeed() : "-")
         .append(")");

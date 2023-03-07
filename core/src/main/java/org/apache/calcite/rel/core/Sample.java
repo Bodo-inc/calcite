@@ -58,12 +58,24 @@ public class Sample extends SingleRel {
   private static RelOptSamplingParameters getSamplingParameters(
       RelInput input) {
     String mode = input.getString("mode");
-    float percentage = input.getFloat("rate");
+    Object percentage = input.get("rate");
+    Object numberOfRows = input.get("rows");
     Object repeatableSeed = input.get("repeatableSeed");
     boolean repeatable = repeatableSeed instanceof Number;
-    return new RelOptSamplingParameters(
-        "bernoulli".equals(mode), percentage, repeatable,
-        repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
+
+    if (percentage instanceof Number) {
+      return new RelOptSamplingParameters(
+          "bernoulli".equals(mode),
+          ((Number) percentage).floatValue(),
+          repeatable,
+          repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
+    } else {
+      return new RelOptSamplingParameters(
+          "bernoulli".equals(mode),
+          ((Number) numberOfRows).intValue(),
+          repeatable,
+          repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
+    }
   }
 
   @Override public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
@@ -81,7 +93,10 @@ public class Sample extends SingleRel {
   @Override public RelWriter explainTerms(RelWriter pw) {
     return super.explainTerms(pw)
         .item("mode", params.isBernoulli() ? "bernoulli" : "system")
-        .item("rate", params.getSamplingPercentage())
+        .item("rate",
+            params.isPercentage() ? params.getSamplingPercentage() : "-")
+        .item("rows",
+            params.isPercentage() ? "-" : params.getNumberOfRows())
         .item("repeatableSeed",
             params.isRepeatable() ? params.getRepeatableSeed() : "-");
   }
