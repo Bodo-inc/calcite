@@ -3449,6 +3449,11 @@ public class SqlToRelConverter {
 
         old_right_rel_count = cur_right_rel_count;
 
+        // NOTE: we know for a fact that whenever handling scalar sub queries, the output will
+        // be a RexRangeRef with an input of 1 (It's commented in the original code in
+        // convertExpression). Therefore, this should be stable for all scalar sub queries.
+        // However, this will need to be revisited if/when we get around to handling all of
+        // possible conditions (see https://bodo.atlassian.net/browse/BE-4307)
         RexNode oldNodeExpr = node.expr;
         if (oldNodeExpr instanceof RexRangeRef) {
           // Because the blackboard that we pass to substituteSubQuery has no
