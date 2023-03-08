@@ -4464,9 +4464,29 @@ public class SqlToRelConverter {
     // are not needed. Specifically, if we have a select that is not the topmost query, and the
     // order doesn't impact the select in any way, it will be omitted (see removeSortInSubQuery).
     //
-    // Ideally, we would like to set this to false, since we don't want to bother sorting the table
-    // if we're just going to write it back (note: there may be some specific case
+    // For example:
+    // SELECT * FROM (SELECT * FROM table ORDER BY column)
+    //
+    // In this case, the order by can be omitted, since it doesn't impact the query in any way.
+    //
+    // Example 2:
+    // SELECT * FROM (SELECT * FROM table) ORDER BY column
+    //
+    // In this case, the order by can't be omitted. The order by is present in the "top level" node,
+    // IE, the data will be returned to the user, and the user will expect the results of the
+    // query to be ordered.
+    //
+    // Ideally, when converting the sub query of the create table statement,
+    // we would like to set the flag that indicates if the statement is "top level" to be false.
+    // We don't want to bother sorting the table since we're not going to maintain that sort
+    // when writing it back (note: there may be some specific case
     // that we want to write as partitioned and sorting would be ideal, but that's a followup).
+    //
+    // IE:
+    // CREATE TABLE ouput_table AS SELECT * from input_table order by foo
+    // --is equivalent to--
+    // CREATE TABLE ouput_table AS SELECT * from input_table
+    //
     // There may also be other, similar optimizations that are performed in the case that we know
     // the current query isn't the topmost query.
     //

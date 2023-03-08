@@ -2911,7 +2911,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Store the scope of the create table node itself.
     // This will be used later during validation to resolve table aliases and/or
     // the associated sub query.
-    // Since the create table node is always the topmost node, I believe that the usingScope
+    // Since the create table node is always the topmost node, the usingScope
     // should always be null, but better to be overly defensive.
     scopes.put(createTable, (usingScope != null) ? usingScope : parentScope);
   }

@@ -113,9 +113,12 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testCreateTableOrderBy() {
-    // Tests an error specific to CREATE TABLE with "WITH" and "ORDER BY" clauses
-    // found while doing a test run on tpch Q2
-    final String sql = "CREATE TABLE keaton_testing AS ("
+    // Tests an error specific to CREATE TABLE with "WITH" and "ORDER BY" clauses during
+    // SqlToRelConversion. The converter was previously optimizing out the sort node,
+    // but its parent process expected the conversion collation to exist, which lead
+    // to an assertion error.
+
+    final String sql = "CREATE TABLE testing_output AS ("
         +
         "with part_two as (\n"
         +
@@ -140,10 +143,11 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testOrderByNoCreateTable() {
-    // Tests an error specific to CREATE TABLE with "WITH" and "ORDER BY" clauses
-    // Adding this test in the case that we come back to this:
-    // https://bodo.atlassian.net/browse/BE-4483,
-    // so that we don't accidentally break the existing create-table path
+    // Tests that the default path for a query with "WITH" and "ORDER BY" clauses still works.
+    // This test should not be necessary at this time, but it may be useful in
+    // the case that we attempt to resolve the "WITH"/"ORDER BY" clause issue in a more performant
+    // way:
+    // https://bodo.atlassian.net/browse/BE-4483
     final String sql =
         "with part_two as (\n"
         +

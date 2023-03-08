@@ -47,7 +47,7 @@ LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[SALES]], IsReplace=[fal
   <TestCase name="testCreateTableOrderBy">
     <Resource name="plan">
       <![CDATA[
-LogicalTableCreate(TableName=[KEATON_TESTING], Target Schema=[[SALES]], IsReplace=[false])
+LogicalTableCreate(TableName=[TESTING_OUTPUT], Target Schema=[[SALES]], IsReplace=[false])
   LogicalSort(sort0=[$0], dir0=[ASC])
     LogicalProject(P_PARTKEY=[$0])
       LogicalValues(tuples=[[{ 'foo' }]])
