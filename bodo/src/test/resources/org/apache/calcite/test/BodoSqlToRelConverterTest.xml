@@ -44,6 +44,16 @@ LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[SALES]], IsReplace=[fal
       <![CDATA[CREATE TABLE IF NOT EXISTS out_test AS select * from emp]]>
     </Resource>
   </TestCase>
+  <TestCase name="testCreateTableOrderBy">
+    <Resource name="plan">
+      <![CDATA[
+LogicalTableCreate(TableName=[KEATON_TESTING], Target Schema=[[SALES]], IsReplace=[false])
+  LogicalSort(sort0=[$0], dir0=[ASC])
+    LogicalProject(P_PARTKEY=[$0])
+      LogicalValues(tuples=[[{ 'foo' }]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testCreateTableRewrite">
     <Resource name="plan">
       <![CDATA[
@@ -86,6 +96,15 @@ with temporaryTable as (select * from dept limit 10),
 temporaryTable2 as (select * from dept limit 10)
 SELECT * from temporaryTable join temporaryTable2
 on temporaryTable.deptno = temporaryTable2.deptno]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testOrderByNoCreateTable">
+    <Resource name="plan">
+      <![CDATA[
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(P_PARTKEY=[$0])
+    LogicalValues(tuples=[[{ 'foo' }]])
+]]>
     </Resource>
   </TestCase>
   <TestCase name="testValueUnreserved">

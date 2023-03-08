@@ -113,18 +113,55 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testCreateTableOrderBy() {
-    //Test an error found while doing a test run on tpch Q2
-    final String sql = "CREATE TABLE keaton_testing AS (" +
-        "with part_two as (\n" +
-        "        select 'foo' as p_partkey from (VALUES (1, 2, 3))\n" +
-        "    )\n" +
-        "    select\n" +
-        "                       p_partkey\n" +
-        "                     from\n" +
-        "                       part_two\n" +
-        "                     order by\n" +
-        "                       p_partkey" +
+    // Tests an error specific to CREATE TABLE with "WITH" and "ORDER BY" clauses
+    // found while doing a test run on tpch Q2
+    final String sql = "CREATE TABLE keaton_testing AS ("
+        +
+        "with part_two as (\n"
+        +
+        "        select 'foo' as p_partkey from (VALUES (1, 2, 3))\n"
+        +
+        "    )\n"
+        +
+        "    select\n"
+        +
+        "                       p_partkey\n"
+        +
+        "                     from\n"
+        +
+        "                       part_two\n"
+        +
+        "                     order by\n"
+        +
+        "                       p_partkey"
+        +
         ")";
+    sql(sql).ok();
+  }
+
+  @Test void testOrderByNoCreateTable() {
+    // Tests an error specific to CREATE TABLE with "WITH" and "ORDER BY" clauses
+    // Adding this test in the case that we come back to this:
+    // https://bodo.atlassian.net/browse/BE-4483,
+    // so that we don't accidentally break the existing create-table path
+    final String sql =
+        "with part_two as (\n"
+        +
+        "        select 'foo' as p_partkey from (VALUES (1, 2, 3))\n"
+        +
+        "    )\n"
+        +
+        "    select\n"
+        +
+        "                       p_partkey\n"
+        +
+        "                     from\n"
+        +
+        "                       part_two\n"
+        +
+        "                     order by\n"
+        +
+        "                       p_partkey";
     sql(sql).ok();
   }
 

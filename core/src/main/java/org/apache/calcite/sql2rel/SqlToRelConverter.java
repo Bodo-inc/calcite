@@ -4457,9 +4457,29 @@ public class SqlToRelConverter {
 
   private RelNode convertCreateTable(SqlCreateTable call) {
 
-    // NOTE: We currently require a SqlCreateTable to have a query in valiation,
+    // NOTE: We currently require a SqlCreateTable to have a query in validation,
     // so the call to requireNonNull is valid here
-    RelRoot relRoot = convertQueryRecursive(requireNonNull(call.getQuery()), false, null);
+    //
+    // NOTE2: Calcite convertQueryRecursive will omit sorts in the logicalPlan when they
+    // are not needed. Specifically, if we have a select that is not the topmost query, and the
+    // order doesn't impact the select in any way, it will be omitted (see removeSortInSubQuery).
+    //
+    // Ideally, we would like to set this to false, since we don't want to bother sorting the table
+    // if we're just going to write it back (note: there may be some specific case
+    // that we want to write as partitioned and sorting would be ideal, but that's a followup).
+    // There may also be other, similar optimizations that are performed in the case that we know
+    // the current query isn't the topmost query.
+    //
+    // HOWEVER, specifically in the case that we have a WITH clause and the final select contains
+    // an ORDER BY clause, we'll encounter an issue where convertQueryRecursive will expect to
+    // have an order collation, but it won't be present if top=False, as it will be omitted for the
+    // above reasons.
+    // (My guess is that someone made an implicit assumption that WITH would always be the topmost
+    // node, which isn't true for CREATE TABLE).
+    // There may also be other issues if TOP=False, this requires more investigation. For now,
+    // to ensure correctness, I'm just going to set TOP=True here.
+    // followup is here: https://bodo.atlassian.net/browse/BE-4483
+    RelRoot relRoot = convertQueryRecursive(requireNonNull(call.getQuery()), true, null);
 
     return LogicalTableCreate.create(
         relRoot.rel,
