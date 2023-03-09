@@ -5489,7 +5489,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Note, this can either a row expression or a query expression with an optional ORDER BY
     // We're not currently handling the row expression case.
     // This may or may not be within the scope of what we want
-    // to support by relese: (https://bodo.atlassian.net/browse/BE-4478)
+    // to support by release: (https://bodo.atlassian.net/browse/BE-4478)
 
     SqlValidatorScope createTableScope = this.getCreateTableScope(createTable);
     // we have to validate in the overall scope of the create table node in order to be
