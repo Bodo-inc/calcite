@@ -54,7 +54,7 @@ public class RelOptSamplingParameters {
       int repeatableSeed) {
     this.isBernoulli = isBernoulli;
     this.isPercentage = false;
-    this.samplingPercentage = -1.0;
+    this.samplingPercentage = -1.0f;
     this.numberOfRows = numberOfRows;
     this.isRepeatable = isRepeatable;
     this.repeatableSeed = repeatableSeed;
@@ -96,7 +96,7 @@ public class RelOptSamplingParameters {
    * if a sampling percentage was not configured.
    */
   public float getSamplingPercentage() {
-    return isPercentage ? samplingPercentage : -1.0;
+    return isPercentage ? samplingPercentage : -1.0f;
   }
 
   /**

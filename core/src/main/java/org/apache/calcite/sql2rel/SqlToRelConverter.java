@@ -2442,7 +2442,7 @@ public class SqlToRelConverter {
         RelOptSamplingParameters params =
             new RelOptSamplingParameters(
                 tableSampleRowLimitSpec.isBernoulli(),
-                tableSampleRowLimitSpec.numberOfRows(),
+                tableSampleRowLimitSpec.getNumberOfRows().intValue(),
                 tableSampleRowLimitSpec.isRepeatable(),
                 tableSampleRowLimitSpec.getRepeatableSeed());
         bb.setRoot(new Sample(cluster, bb.root(), params), false);

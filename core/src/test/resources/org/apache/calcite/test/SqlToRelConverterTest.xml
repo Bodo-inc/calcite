@@ -7690,7 +7690,7 @@ LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$
       <![CDATA[
 LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
   LogicalFilter(condition=[>($0, 5)])
-    Sample(mode=[bernoulli], rate=[0.5], repeatableSeed=[-])
+    Sample(mode=[bernoulli], rate=[0.5], rows=[-], repeatableSeed=[-])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -7707,10 +7707,10 @@ where empno > 5]]>
       <![CDATA[
 LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], DEPTNO0=[$9], NAME=[$10])
   LogicalFilter(condition=[>($0, 5)])
-    Sample(mode=[bernoulli], rate=[0.5], repeatableSeed=[99])
+    Sample(mode=[bernoulli], rate=[0.5], rows=[-], repeatableSeed=[99])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], DEPTNO0=[$9], NAME=[$10])
         LogicalJoin(condition=[=($7, $9)], joinType=[inner])
-          Sample(mode=[bernoulli], rate=[0.1], repeatableSeed=[1])
+          Sample(mode=[bernoulli], rate=[0.1], rows=[-], repeatableSeed=[1])
             LogicalTableScan(table=[[CATALOG, SALES, EMP]])
           LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
 ]]>
@@ -7743,7 +7743,7 @@ LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$
       <![CDATA[
 LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
   LogicalFilter(condition=[>($0, 5)])
-    Sample(mode=[system], rate=[0.5], repeatableSeed=[-])
+    Sample(mode=[system], rate=[0.5], rows=[-], repeatableSeed=[-])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -7760,10 +7760,10 @@ where empno > 5]]>
       <![CDATA[
 LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], DEPTNO0=[$9], NAME=[$10])
   LogicalFilter(condition=[>($0, 5)])
-    Sample(mode=[system], rate=[0.5], repeatableSeed=[99])
+    Sample(mode=[system], rate=[0.5], rows=[-], repeatableSeed=[99])
       LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], DEPTNO0=[$9], NAME=[$10])
         LogicalJoin(condition=[=($7, $9)], joinType=[inner])
-          Sample(mode=[system], rate=[0.1], repeatableSeed=[1])
+          Sample(mode=[system], rate=[0.1], rows=[-], repeatableSeed=[1])
             LogicalTableScan(table=[[CATALOG, SALES, EMP]])
           LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
 ]]>
