@@ -66,13 +66,13 @@ public class Sample extends SingleRel {
     if (percentage instanceof Number) {
       return new RelOptSamplingParameters(
           "bernoulli".equals(mode),
-          ((Number) percentage).floatValue(),
+          percentage != null ? ((Number) percentage).floatValue() : -1.0f,
           repeatable,
           repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
     } else {
       return new RelOptSamplingParameters(
           "bernoulli".equals(mode),
-          ((Number) numberOfRows).intValue(),
+          numberOfRows != null ? ((Number) numberOfRows).intValue() : -1,
           repeatable,
           repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
     }
