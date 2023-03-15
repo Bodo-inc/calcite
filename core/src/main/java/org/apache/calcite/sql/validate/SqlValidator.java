@@ -45,6 +45,7 @@ import org.apache.calcite.sql.SqlUpdate;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.type.SqlTypeCoercionRule;
 import org.apache.calcite.sql.validate.implicit.TypeCoercion;
 import org.apache.calcite.sql.validate.implicit.TypeCoercionFactory;
@@ -274,6 +275,14 @@ public interface SqlValidator {
    * @param merge MERGE statement
    */
   void validateMerge(SqlMerge merge);
+
+
+  /**
+   * Validates a CREATE TABLE statement.
+   *
+   * @param createTable CREATE TABLE statement
+   */
+  void validateCreateTable(SqlCreateTable createTable);
 
   /**
    * Validates a data type expression.
@@ -645,6 +654,16 @@ public interface SqlValidator {
    * @return naming scope for ORDER BY clause
    */
   SqlValidatorScope getOrderScope(SqlSelect select);
+
+  /**
+   * Returns the scope of the Create Table statement, IE,
+   * the scope that should be used when converting the create table
+   * sub query/table reference.
+   *
+   * @param createTable CREATE TABLE statement
+   * @return scope used for the sub query/table reference.
+   */
+  SqlValidatorScope getCreateTableScope(SqlCreateTable createTable);
 
   /**
    * Returns a scope match recognize clause.

@@ -22,6 +22,12 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Parse tree for {@code CREATE TABLE} statement, with extensions for particular
@@ -43,6 +49,28 @@ public class SqlBabelCreateTable extends SqlCreateTable {
     this.volatile_ = volatile_;
   }
 
+  @Override public void validate(final SqlValidator validator, final SqlValidatorScope scope) {
+    // Validate the clauses that are specific to Babel's create table statement,
+    // and then defers to the superclass for the rest
+    if (this.volatile_) {
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("VOLATILE"));
+    }
+
+    switch (this.tableCollectionType) {
+    case SET:
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("SET"));
+    case MULTISET:
+      throw validator.newValidationError(
+          this, RESOURCE.createTableUnsupportedClause("MULTISET"));
+    default:
+      //do nothing
+    }
+
+    super.validate(validator, scope);
+  }
+
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     writer.keyword("CREATE");
     switch (tableCollectionType) {
@@ -62,7 +90,9 @@ public class SqlBabelCreateTable extends SqlCreateTable {
     if (ifNotExists) {
       writer.keyword("IF NOT EXISTS");
     }
-    name.unparse(writer, leftPrec, rightPrec);
+
+    this.getName().unparse(writer, leftPrec, rightPrec);
+    @Nullable SqlNodeList columnList = getcolumnList();
     if (columnList != null) {
       SqlWriter.Frame frame = writer.startList("(", ")");
       for (SqlNode c : columnList) {
@@ -71,6 +101,7 @@ public class SqlBabelCreateTable extends SqlCreateTable {
       }
       writer.endList(frame);
     }
+    SqlNode query = getQuery();
     if (query != null) {
       writer.keyword("AS");
       writer.newlineAndIndent();

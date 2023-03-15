@@ -3656,17 +3656,20 @@ SqlWithItem WithItem() :
 }
 
 /**
- * Parses either a row expression, a leaf query expression, or
- * a parenthesized expression of any kind.
- */
+* Parses either a row expression, a leaf query expression, or
+* a parenthesized expression of any kind.
+*/
 SqlNode LeafQueryOrExpr(ExprContext exprContext) :
 {
-    SqlNode e;
+SqlNode e;
 }
 {
-    e = Expression(exprContext) { return e; }
-|
+    // Bodo Change: since values is now an unreserved keyword, we need to try and parse
+    // The LeafQuery first, otherwise we'll go down the expression path when trying to parse
+    // tableConstructor (IE: (VALUES (1,2), (3,4)))
     e = LeafQuery(exprContext) { return e; }
+    |
+    e = Expression(exprContext) { return e; }
 }
 
 /**
@@ -5261,9 +5264,17 @@ SqlNamedParam NamedParam() :
 {
     final String name;
     final SqlParserPos pos;
+    boolean prefixIsDollar = false;
 }
 {
-    <PARAM_IDENTIFIER>
+
+    (
+            <AT_PARAM_IDENTIFIER>
+        |
+            <DOLLAR_PARAM_IDENTIFIER> {
+                prefixIsDollar = true;
+            }
+    )
     (
       {
         name = pythonUnquotedIdentifier();
@@ -5271,7 +5282,7 @@ SqlNamedParam NamedParam() :
       }
     )
     {
-      return new SqlNamedParam(name, getPos());
+      return new SqlNamedParam(name, prefixIsDollar, getPos());
     }
 }
 
@@ -6172,12 +6183,21 @@ SqlNode BuiltinFunctionCall() :
         // Expression(ExprContext.ACCEPT_SUB_QUERY), but that doesn't work
         // because it matches the other kind of IN.
         e = AtomicRowExpression() { args = startList(e); }
-        <IN>
-        e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
-        [
-            <FROM>
-            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
-        ]
+        (
+            <IN>
+            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
+            [
+                <FROM>
+                e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
+            ]
+        |
+            <COMMA>
+            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
+            [
+                <COMMA>
+                e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
+            ]
+        )
         <RPAREN> {
             return SqlStdOperatorTable.POSITION.createCall(s.end(this), args);
         }
@@ -6271,56 +6291,64 @@ SqlNode BuiltinFunctionCall() :
             s = span();
         }
         <LPAREN>
+        /**
+        * We want to accept:
+        * [BOTH/TRAILING/LEADING] X from Y (trimChars = X, exp = Y)
+        * X (exp = X)
+        * X, Y (Equivalent to trimChars=Y, exp=X)
+        * NOTE: SqlStdOperatorTable.TRIM expects values in the order trimchars, exp
+        */
         [
-            LOOKAHEAD(2)
-            [
-                <BOTH> {
-                    s.add(this);
-                    flag = SqlTrimFunction.Flag.BOTH.symbol(getPos());
-                }
-            |
-                <TRAILING> {
-                    s.add(this);
-                    flag = SqlTrimFunction.Flag.TRAILING.symbol(getPos());
-                }
-            |
-                <LEADING> {
-                    s.add(this);
-                    flag = SqlTrimFunction.Flag.LEADING.symbol(getPos());
-                }
-            ]
-            [ trimChars = Expression(ExprContext.ACCEPT_SUB_QUERY) ]
-            (
+            <BOTH> {
+                s.add(this);
+                flag = SqlTrimFunction.Flag.BOTH.symbol(getPos());
+            }
+        |
+            <TRAILING> {
+                s.add(this);
+                flag = SqlTrimFunction.Flag.TRAILING.symbol(getPos());
+            }
+        |
+            <LEADING> {
+                s.add(this);
+                flag = SqlTrimFunction.Flag.LEADING.symbol(getPos());
+            }
+        ]
+        // Distinguishing the "[x] FROM y" syntax at this point would require expensive and potentially
+        // tricky syntactic lookahead. So instead, we opt to manually throw contextExceptions
+        [ e = Expression(ExprContext.ACCEPT_SUB_QUERY) ]
+        [
                 <FROM> {
-                    if (null == flag && null == trimChars) {
+                    if (null == flag && null == e) {
                         throw SqlUtil.newContextException(getPos(),
                             RESOURCE.illegalFromEmpty());
                     }
+                    // Need to reinterpret e as the trimChars
+                    trimChars = e;
+                    e = Expression(ExprContext.ACCEPT_SUB_QUERY);
                 }
             |
-                <RPAREN> {
-                    // This is to handle the case of TRIM(x)
-                    // (FRG-191).
-                    if (flag == null) {
-                        flag = SqlTrimFunction.Flag.BOTH.symbol(SqlParserPos.ZERO);
+                <COMMA> {
+                    // We require a preceding expression and no BOTH/TRAILING/LEADING flag
+                    if (e == null || flag != null) {
+                        throw SqlUtil.newContextException(s.end(this),
+                                                RESOURCE.genericTrimError());
                     }
-                    args = startList(flag);
-                    args.add(null); // no trim chars
-                    args.add(trimChars); // reinterpret trimChars as source
-                    return SqlStdOperatorTable.TRIM.createCall(s.end(this),
-                        args);
+                    trimChars = Expression(ExprContext.ACCEPT_SUB_QUERY);
                 }
-            )
         ]
-        e = Expression(ExprContext.ACCEPT_SUB_QUERY) {
+        <RPAREN> {
+            // Check for empty TRIM()
+            if (e == null) {
+                throw SqlUtil.newContextException(s.end(this),
+                                                  RESOURCE.genericTrimError());
+            }
             if (flag == null) {
                 flag = SqlTrimFunction.Flag.BOTH.symbol(SqlParserPos.ZERO);
             }
             args = startList(flag);
             args.add(trimChars);
             args.add(e);
-        }
-        <RPAREN> {
             return SqlStdOperatorTable.TRIM.createCall(s.end(this), args);
         }
     |
@@ -6867,9 +6895,15 @@ SqlCall TimestampAddFunctionCall() :
 {
     <TIMESTAMPADD> { s = span(); }
     <LPAREN>
-    interval = TimestampInterval() {
-        args = startList(SqlLiteral.createSymbol(interval, getPos()));
-    }
+    (
+        e = StringLiteral() {
+            args = startList(e);
+        }
+    |
+        interval = TimestampInterval() {
+            args = startList(SqlLiteral.createSymbol(interval, getPos()));
+        }
+    )
     <COMMA>
     e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
     <COMMA>
@@ -6894,9 +6928,15 @@ SqlCall TimestampDiffFunctionCall() :
 {
     <TIMESTAMPDIFF> { s = span(); }
     <LPAREN>
-    interval = TimestampInterval() {
-        args = startList(SqlLiteral.createSymbol(interval, getPos()));
-    }
+    (
+        e = StringLiteral() {
+            args = startList(e);
+        }
+    |
+        interval = TimestampInterval() {
+            args = startList(SqlLiteral.createSymbol(interval, getPos()));
+        }
+    )
     <COMMA>
     e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
     <COMMA>
@@ -8548,6 +8588,7 @@ void NonReservedKeyWord2of3() :
 |   < VERTICAL_BAR: "|" >
 |   < CARET: "^" >
 |   < DOLLAR: "$" >
+|   < AT_SYMBOL: "@" >
 |   < INFIX_CAST: "::" >
 <#list (parser.binaryOperatorsTokens!default.parser.binaryOperatorsTokens) as operator>
 |   ${operator}
@@ -8731,23 +8772,24 @@ MORE :
     // Per BigQuery: "Project IDs must contain 6-63 lowercase letters, digits,
     // or dashes. IDs must start with a letter and may not end with a dash."
     // We do not restrict length, or prevent identifiers from ending in a dash.
-    < HYPHENATED_IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>|"-")* > { popState(); }
+    < HYPHENATED_IDENTIFIER: <LETTER_EXCLUDING_DOLLAR> (<LETTER>|<DIGIT>|"-")* > { popState(); }
 }
 
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
-    < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+    < IDENTIFIER: <LETTER_EXCLUDING_DOLLAR> (<LETTER>|<DIGIT>)* >
 }
 
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
-    < PARAM_IDENTIFIER: "@" (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
+    < AT_PARAM_IDENTIFIER: <AT_SYMBOL> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
+    | < DOLLAR_PARAM_IDENTIFIER: <DOLLAR> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < COLLATION_ID:
-    (<LETTER>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
+    (<LETTER_EXCLUDING_DOLLAR>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
     "$"
     (<LETTER>|"_")+
     ("$" (<LETTER>|<DIGIT>|"_")+)?
@@ -8772,6 +8814,26 @@ MORE :
         "\uf900"-"\ufaff"
     ]
     >
+|
+    < #LETTER_EXCLUDING_DOLLAR:
+        [
+    // Bodo change, we dissalow identifiers begining with $ due to
+    // conflicts with Named parameters
+    //        "\u0024",
+            "\u0041"-"\u005a",
+            "\u005f",
+            "\u0061"-"\u007a",
+            "\u00c0"-"\u00d6",
+            "\u00d8"-"\u00f6",
+            "\u00f8"-"\u00ff",
+            "\u0100"-"\u1fff",
+            "\u3040"-"\u318f",
+            "\u3300"-"\u337f",
+            "\u3400"-"\u3d2d",
+            "\u4e00"-"\u9fff",
+            "\uf900"-"\ufaff"
+        ]
+        >
 |
     < #DIGIT:
     [

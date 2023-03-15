@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.ddl;
 
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -25,6 +26,8 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.ImmutableNullableList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -36,9 +39,18 @@ import java.util.Objects;
  * Parse tree for {@code CREATE TABLE} statement.
  */
 public class SqlCreateTable extends SqlCreate {
-  public final SqlIdentifier name;
-  public final @Nullable SqlNodeList columnList;
-  public final @Nullable SqlNode query;
+
+  // These values should only be changed by calls to setOperand,
+  // which should only be called during unconditional rewrite.
+  private SqlIdentifier name;
+  private @Nullable SqlNodeList columnList;
+  private @Nullable SqlNode query;
+
+
+  /* set during validation, null before that point */
+  private @Nullable String outputTableName;
+  private @Nullable Schema outputTableSchema;
+  private @Nullable List<String> outputTableSchemaPath;
 
   private static final SqlOperator OPERATOR =
       new SqlSpecialOperator("CREATE TABLE", SqlKind.CREATE_TABLE);
@@ -57,6 +69,25 @@ public class SqlCreateTable extends SqlCreate {
     return ImmutableNullableList.of(name, columnList, query);
   }
 
+  @SuppressWarnings("assignment.type.incompatible")
+  @Override public void setOperand(int i, @Nullable SqlNode operand) {
+    switch (i) {
+    case 0:
+      assert operand instanceof SqlIdentifier;
+      name = (SqlIdentifier) operand;
+      break;
+    case 1:
+      assert operand instanceof SqlNodeList;
+      columnList = (SqlNodeList) operand;
+      break;
+    case 2:
+      query = operand;
+      break;
+    default:
+      throw new AssertionError(i);
+    }
+  }
+
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     writer.keyword("CREATE");
     writer.keyword("TABLE");
@@ -72,10 +103,50 @@ public class SqlCreateTable extends SqlCreate {
       }
       writer.endList(frame);
     }
-    if (query != null) {
+    //Required to appease the Calcite null checker
+    SqlNode queryNode = query;
+    if (queryNode != null) {
       writer.keyword("AS");
       writer.newlineAndIndent();
-      query.unparse(writer, 0, 0);
+      queryNode.unparse(writer, 0, 0);
     }
   }
+
+  @Override public void validate(SqlValidator validator, SqlValidatorScope scope) {
+    validator.validateCreateTable(this);
+  }
+
+  /**
+   * Called once during validation to set the relevant fields. OutputTableName, outputTableSchema,
+   * outputTableSchemaPath are all null before validation.
+   */
+  public void setValidationInformation(String outputTableName, Schema schema, List<String> path) {
+    this.outputTableName = outputTableName;
+    this.outputTableSchema = schema;
+    this.outputTableSchemaPath = path;
+  }
+
+  public SqlIdentifier getName() {
+    return name;
+  }
+
+  public @Nullable SqlNodeList getcolumnList() {
+    return columnList;
+  }
+  public @Nullable SqlNode getQuery() {
+    return query;
+  }
+
+  public @Nullable Schema getOutputTableSchema() {
+    return outputTableSchema;
+  }
+
+  public @Nullable List<String> getOutputTableSchemaPath() {
+    return outputTableSchemaPath;
+  }
+
+  public @Nullable String getOutputTableName() {
+    return outputTableName;
+  }
+
 }

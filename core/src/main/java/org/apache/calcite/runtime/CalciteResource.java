@@ -95,6 +95,9 @@ public interface CalciteResource {
   @BaseMessage("''FROM'' without operands preceding it is illegal")
   ExInst<CalciteException> illegalFromEmpty();
 
+  @BaseMessage("Invalid Trim Syntax. We support TRIM([BOTH/TRAILING/LEADING] trimchars from Y ) and TRIM(X [, trimchars])")
+  ExInst<CalciteException> genericTrimError();
+
   @BaseMessage("ROW expression encountered in illegal context")
   ExInst<CalciteException> illegalRowExpression();
 
@@ -859,6 +862,15 @@ public interface CalciteResource {
   @BaseMessage("Table ''{0}'' already exists")
   ExInst<SqlValidatorException> tableExists(String name);
 
+  @BaseMessage("CreateTable statements currently require an 'AS query'")
+  ExInst<SqlValidatorException> createTableRequiresAsQuery();
+
+  @BaseMessage("Create Table statements cannot contain both ''OR REPLACE'' and ''IF NOT EXISTS''")
+  ExInst<SqlValidatorException> createTableInvalidSyntax();
+
+  @BaseMessage("Create Table statements with ''{0}'' not supported")
+  ExInst<SqlValidatorException> createTableUnsupportedClause(String clauseName);
+
   // If CREATE TABLE does not have "AS query", there must be a column list
   @BaseMessage("Missing column list")
   ExInst<SqlValidatorException> createTableRequiresColumnList();
@@ -1030,5 +1042,8 @@ public interface CalciteResource {
 
   @BaseMessage("Duplicate LIMIT: {0}")
   ExInst<CalciteException> duplicateLimit(String kind);
+
+  @BaseMessage("Invalid time unit input for {0}: {1}")
+  ExInst<SqlValidatorException> wrongTimeUnit(String fnName, String msg);
 
 }

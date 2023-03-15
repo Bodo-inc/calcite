@@ -882,7 +882,13 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("position(x'11' in x'100110')").ok();
     expr("position(x'11' in x'100110' FROM 10)").ok();
     expr("position(x'abcd' in x'')").ok();
+    expr("position('mouse','house')").ok();
+    expr("position(x'11', x'100110')").ok();
+    expr("position(x'11', x'100110', 10)").ok();
+    expr("position(x'abcd', x'')").ok();
     expr("position('mouse' in 'house')")
+        .columnType("INTEGER NOT NULL");
+    expr("position(x'11', x'100110', 10)")
         .columnType("INTEGER NOT NULL");
     wholeExpr("position(x'1234' in '110')")
         .fails("Parameters must be of the same type");
@@ -4151,9 +4157,9 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("timestampadd(SQL_TSI_WEEK, 2, cast(null as timestamp))")
         .columnType("TIMESTAMP(0)");
     expr("timestampdiff(SQL_TSI_WEEK, current_timestamp, current_timestamp)")
-        .columnType("INTEGER NOT NULL");
+        .columnType("BIGINT NOT NULL");
     expr("timestampdiff(SQL_TSI_WEEK, cast(null as timestamp), current_timestamp)")
-        .columnType("INTEGER");
+        .columnType("BIGINT");
 
     expr("timestampadd(^incorrect^, 1, current_timestamp)")
         .fails("(?s).*Was expecting one of.*");
@@ -4164,7 +4170,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
   @Test void testTimestampAddNullInterval() {
     expr("timestampadd(SQL_TSI_SECOND, cast(NULL AS INTEGER),"
         + " current_timestamp)")
-        .columnType("TIMESTAMP(0)");
+        .columnType("TIMESTAMP('UTC')");
     expr("timestampadd(SQL_TSI_DAY, cast(NULL AS INTEGER),"
         + " current_timestamp)")
         .columnType("TIMESTAMP('UTC')");
@@ -5943,6 +5949,14 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "    (select * from dept where dept.deptno = e1.deptno))").ok();
   }
 
+
+  @Test void testNonAggregateHavingReference() {
+    // see testWhereReference
+    sql("select * from emp as e1 having exists (\n"
+        + "  select * from emp as e2,\n"
+        + "    (select * from dept having dept.deptno = e1.deptno))").ok();
+  }
+
   @Test void testUnionNameResolution() {
     sql("select * from emp as e1 where exists (\n"
         + "  select * from emp as e2,\n"
@@ -6421,6 +6435,24 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING ^sal^ > 10")
         .fails("Expression 'SAL' is not being grouped");
   }
+
+  @Test void testNonAggregateHaving() {
+    sql("select * from emp having ^sal^")
+        .fails("HAVING clause must be a condition");
+  }
+
+  @Test void testNonAggregateHavingAndWhere() {
+    sql("select * from emp WHERE ^sal^ having sal > 10")
+        .fails("WHERE clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having ^sal^")
+        .fails("HAVING clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having sal < 20")
+        .ok();
+  }
+
+
 
   @Test void testHavingBetween() {
     // FRG-115: having clause with between not working
@@ -8542,18 +8574,21 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING deptno > 55").ok();
     sql("SELECT DISTINCT deptno, 33 FROM emp\n"
         + "GROUP BY deptno HAVING deptno > 55").ok();
-    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
-    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
+
+    //Bodo change: since HAVING is now equivalent to WHERE in non-aggregate selects,
+    //these statements are now valid.
+//    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+//    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+
     sql("SELECT DISTINCT * from emp").ok();
     sql("SELECT DISTINCT ^*^ from emp GROUP BY deptno")
         .fails("Expression 'EMP\\.EMPNO' is not being grouped");
-
     // similar validation for SELECT DISTINCT and GROUP BY
     sql("SELECT deptno FROM emp GROUP BY deptno ORDER BY deptno, ^empno^")
         .fails("Expression 'EMPNO' is not being grouped");
