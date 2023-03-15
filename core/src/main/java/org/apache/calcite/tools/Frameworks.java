@@ -41,6 +41,7 @@ import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.calcite.statistic.QuerySqlStatisticProvider;
+import org.apache.calcite.util.Util;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -48,7 +49,6 @@ import com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -134,14 +134,9 @@ public class Frameworks {
       final FrameworkConfig config) {
     return withPrepare(config,
         (cluster, relOptSchema, rootSchema, statement) -> {
-          List<SchemaPlus> defaults = config.getDefaultSchemas();
-          SchemaPlus initialSchema = rootSchema;
-          if (defaults.size() > 0) {
-            // TODO: Add support for multiple default schema.
-            initialSchema = defaults.get(0);
-          }
           final CalciteSchema schema =
-              CalciteSchema.from(initialSchema);
+              CalciteSchema.from(
+                  Util.first(config.getDefaultSchema(), rootSchema));
           return action.apply(cluster, relOptSchema, schema.root().plus());
         });
   }
@@ -237,7 +232,7 @@ public class Frameworks {
     private SqlParser.Config parserConfig;
     private SqlValidator.Config sqlValidatorConfig;
     private SqlToRelConverter.Config sqlToRelConverterConfig;
-    private List<SchemaPlus> defaultSchemas;
+    private @Nullable SchemaPlus defaultSchema;
     private @Nullable RexExecutor executor;
     private @Nullable RelOptCostFactory costFactory;
     private RelDataTypeSystem typeSystem;
@@ -257,7 +252,6 @@ public class Frameworks {
       typeSystem = RelDataTypeSystem.DEFAULT;
       evolveLattice = false;
       statisticProvider = QuerySqlStatisticProvider.SILENT_CACHING_INSTANCE;
-      defaultSchemas = new ArrayList<>();
     }
 
     /** Creates a ConfigBuilder, initializing from an existing config. */
@@ -270,7 +264,7 @@ public class Frameworks {
       parserConfig = config.getParserConfig();
       sqlValidatorConfig = config.getSqlValidatorConfig();
       sqlToRelConverterConfig = config.getSqlToRelConverterConfig();
-      defaultSchemas = config.getDefaultSchemas();
+      defaultSchema = config.getDefaultSchema();
       executor = config.getExecutor();
       costFactory = config.getCostFactory();
       typeSystem = config.getTypeSystem();
@@ -281,7 +275,7 @@ public class Frameworks {
     public FrameworkConfig build() {
       return new StdFrameworkConfig(context, convertletTable, operatorTable,
           programs, traitDefs, parserConfig, sqlValidatorConfig, sqlToRelConverterConfig,
-          defaultSchemas, costFactory, typeSystem, executor, evolveLattice,
+          defaultSchema, costFactory, typeSystem, executor, evolveLattice,
           statisticProvider, viewExpander);
     }
 
@@ -338,13 +332,7 @@ public class Frameworks {
     }
 
     public ConfigBuilder defaultSchema(SchemaPlus defaultSchema) {
-      this.defaultSchemas = new ArrayList<>();
-      this.defaultSchemas.add(defaultSchema);
-      return this;
-    }
-
-    public ConfigBuilder defaultSchemas(List<SchemaPlus> defaultSchemas) {
-      this.defaultSchemas = defaultSchemas;
+      this.defaultSchema = defaultSchema;
       return this;
     }
 
@@ -406,7 +394,7 @@ public class Frameworks {
     private final SqlParser.Config parserConfig;
     private final SqlValidator.Config sqlValidatorConfig;
     private final SqlToRelConverter.Config sqlToRelConverterConfig;
-    private final List<SchemaPlus> defaultSchemas;
+    private final @Nullable SchemaPlus defaultSchema;
     private final @Nullable RelOptCostFactory costFactory;
     private final RelDataTypeSystem typeSystem;
     private final @Nullable RexExecutor executor;
@@ -422,7 +410,7 @@ public class Frameworks {
         SqlParser.Config parserConfig,
         SqlValidator.Config sqlValidatorConfig,
         SqlToRelConverter.Config sqlToRelConverterConfig,
-        List<SchemaPlus> defaultSchemas,
+        @Nullable SchemaPlus defaultSchema,
         @Nullable RelOptCostFactory costFactory,
         RelDataTypeSystem typeSystem,
         @Nullable RexExecutor executor,
@@ -437,7 +425,7 @@ public class Frameworks {
       this.parserConfig = parserConfig;
       this.sqlValidatorConfig = sqlValidatorConfig;
       this.sqlToRelConverterConfig = sqlToRelConverterConfig;
-      this.defaultSchemas = defaultSchemas;
+      this.defaultSchema = defaultSchema;
       this.costFactory = costFactory;
       this.typeSystem = typeSystem;
       this.executor = executor;
@@ -458,8 +446,8 @@ public class Frameworks {
       return sqlToRelConverterConfig;
     }
 
-    @Override public List<SchemaPlus> getDefaultSchemas() {
-      return defaultSchemas;
+    @Override public @Nullable SchemaPlus getDefaultSchema() {
+      return defaultSchema;
     }
 
     @Override public @Nullable RexExecutor getExecutor() {

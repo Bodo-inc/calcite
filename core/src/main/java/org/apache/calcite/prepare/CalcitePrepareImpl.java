@@ -914,20 +914,14 @@ public class CalcitePrepareImpl implements CalcitePrepare {
     final CalcitePrepare.Context prepareContext =
         statement.createPrepareContext();
     final JavaTypeFactory typeFactory = prepareContext.getTypeFactory();
-    List<SchemaPlus> defaultSchemas = config.getDefaultSchemas();
-    List<List<String>> defaultSchemaPaths = new ArrayList<>();
-    CalciteSchema rootSchema = prepareContext.getRootSchema();
-    if (defaultSchemas.size() > 0) {
-      for (SchemaPlus defaultSchema: defaultSchemas) {
-        defaultSchemaPaths.add(CalciteSchema.from(defaultSchema).path(null));
-      }
-      // All of the defaults should share a common root schema.
-      rootSchema = CalciteSchema.from(defaultSchemas.get(0)).root();
-    }
+    SchemaPlus defaultSchema = config.getDefaultSchema();
+    final CalciteSchema schema =
+        defaultSchema != null
+            ? CalciteSchema.from(defaultSchema)
+            : prepareContext.getRootSchema();
     CalciteCatalogReader catalogReader =
-        new CalciteCatalogReader(rootSchema,
-            defaultSchemaPaths,
-            defaultSchemaPaths.size(),
+        new CalciteCatalogReader(schema.root(),
+            schema.path(null),
             typeFactory,
             prepareContext.config());
     final RexBuilder rexBuilder = new RexBuilder(typeFactory);

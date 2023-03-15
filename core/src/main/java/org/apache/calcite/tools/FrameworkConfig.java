@@ -34,8 +34,6 @@ import com.google.common.collect.ImmutableList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.List;
-
 /**
  * Interface that describes how to configure planning sessions generated
  * using the Frameworks tools.
@@ -62,7 +60,7 @@ public interface FrameworkConfig {
    * Returns the default schema that should be checked before looking at the
    * root schema.  Returns null to only consult the root schema.
    */
-  List<SchemaPlus> getDefaultSchemas();
+  @Nullable SchemaPlus getDefaultSchema();
 
   /**
    * Returns the executor used to evaluate constant expressions.
