@@ -2537,6 +2537,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       parentScope = tableScope;
     }
+
     SqlCall call;
     SqlNode operand;
     SqlNode newOperand;
@@ -2905,6 +2906,19 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             null,
             false
         );
+      } else {
+        // Modified version of the code found for identifiers in registering the namespace of a
+        // identifier in registerFrom.
+        final SqlValidatorNamespace newNs;
+        newNs = new IdentifierNamespace(
+            this, (SqlIdentifier) queryNode, null, enclosingNode, parentScope
+        );
+        //NOTE: arg0 can be null, if I don't want to register this scope as a child of the using
+        //scope. I'm not entirely certain if I want to rn.
+        // NOTE: usingScope should always be null.
+        // Arg1 is alias (which is always null)
+        registerNamespace(usingScope, null, newNs, forceNullable);
+
       }
 
       DdlNamespace createTableNs = new DdlNamespace(
@@ -5508,7 +5522,34 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // Note that we also can't use validateScopedExpression, as this can rewrite the sqlNode
     // via a call to performUnconditionalRewrites, which should have already been done by the time
     // that we reach this points, and calling performUnconditionalRewrites twice is likely invalid.
-    queryNode.validate(this, createTableScope);
+
+    if (!(queryNode instanceof SqlIdentifier)) {
+      queryNode.validate(this, createTableScope);
+    } else {
+      // Validate the namespace representation of the node, just in case the
+      // validation did not occur implicitly.
+//      getNamespaceOrThrow(node, scope).validate(targetRowType)
+
+//      queryNode.validate(this, createTableScope);
+//      getNamespaceOrThrow(queryNode, createTableScope);
+//
+      getNamespace(queryNode).validate(unknownType);
+
+//      getNamespaceOrThrow(node, scope).validate(targetRowType);
+//    }
+//
+//    protected void validateOver(SqlCall call, SqlValidatorScope scope) {
+//      throw new AssertionError("OVER unexpected in this context");
+//    }
+
+      final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
+      createTableScope.resolveTable(((SqlIdentifier) queryNode).names, catalogReader.nameMatcher(),
+          SqlValidatorScope.Path.EMPTY, resolved, new ArrayList<>());
+      if (resolved.count() != 1) {
+        throw newValidationError(queryNode, RESOURCE.tableNameNotFound(queryNode.toString()));
+      }
+    }
+
     // (Note: for create table LIKE (WIP) if queryNode is identifier, we may need additional work to
     // properly validate)
 

@@ -4466,7 +4466,34 @@ public class SqlToRelConverter {
       // which we use to convert this table
 
       final Blackboard bb = createBlackboard(this.validator.getCreateTableScope(call), null, false);
-      convertIdentifier(bb, (SqlIdentifier) createTableDef);
+//      final Blackboard bb2 = createBlackboard()
+
+//      final SqlValidatorNamespace targetNs = getNamespace(call);
+//      SqlValidatorNamespace namespace;
+//      if (targetNs.isWrapperFor(SqlValidatorImpl.DmlNamespace.class)) {
+//        namespace = targetNs.unwrap(SqlValidatorImpl.DmlNamespace.class);
+//      } else {
+//        namespace = targetNs.resolve();
+//      }
+//      RelOptTable table = SqlValidatorUtil.getRelOptTable(namespace, catalogReader, null, null);
+//      return requireNonNull(table, "no table found for " + call);
+
+//      case TABLE_REF:
+//        call = (SqlCall) from;
+//        convertIdentifier(bb, call.operand(0), null, call.operand(1));
+//        return;
+//
+//      case IDENTIFIER:
+//        convertIdentifier(bb, (SqlIdentifier) from, null, null);
+//        return;
+//
+//      case TABLE_IDENTIFIER_WITH_ID:
+//        convertTableIdentifierWithID(bb, (SqlTableIdentifierWithID) from, null, null);
+//        return;
+
+      //createTableDef.getKind() should be table_referene... why isn't it?
+      convertIdentifier(bb, (SqlIdentifier) createTableDef, null, null);
+//      convertIdentifier(bb, (SqlIdentifier) createTableDef);
       inputRel = bb.root();
     } else {
 
