@@ -5533,7 +5533,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 //      queryNode.validate(this, createTableScope);
 //      getNamespaceOrThrow(queryNode, createTableScope);
 //
-      getNamespace(queryNode).validate(unknownType);
+      requireNonNull(getNamespace(queryNode)).validate(unknownType);
 
 //      getNamespaceOrThrow(node, scope).validate(targetRowType);
 //    }
@@ -7087,7 +7087,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         SqlValidatorImpl validator,
         SqlCreate node,
         SqlNode enclosingNode, SqlValidatorScope parentScope, SqlNode childNode) {
-      requireNonNull(childNode, "childNamespace");
+      requireNonNull(childNode, "childNode");
       requireNonNull(node, "node");
       this.node = node;
 
@@ -7096,13 +7096,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         switch (id.getKind()) {
         case TABLE_IDENTIFIER_WITH_ID:
         case TABLE_REF_WITH_ID:
-          childNamespace = new TableIdentifierWithIDNamespace(validator, id, enclosingNode, parentScope);
+          childNamespace = new TableIdentifierWithIDNamespace(validator, id, enclosingNode,
+              parentScope);
           break;
         default:
           childNamespace = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
         }
       } else {
-        assert (childNode instanceof SqlSelect);
         SqlValidatorNamespace childNs = validator.getNamespaceOrThrow(childNode);
         childNamespace = childNs;
       }

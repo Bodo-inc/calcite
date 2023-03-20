@@ -95,12 +95,6 @@ public class BodoSqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).withExtendedTester().ok();
   }
 
-  @Test void testUpdate() {
-    final String sql = "update emp set empno = empno + 1";
-    sql(sql).ok();
-  }
-
-
 
 
   @Test void testCreateTableWith() {

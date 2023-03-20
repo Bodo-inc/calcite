@@ -4465,35 +4465,9 @@ public class SqlToRelConverter {
       //The scope of the createTableCall should always just be the catalog scope,
       // which we use to convert this table
 
-      final Blackboard bb = createBlackboard(this.validator.getCreateTableScope(call), null, false);
-//      final Blackboard bb2 = createBlackboard()
-
-//      final SqlValidatorNamespace targetNs = getNamespace(call);
-//      SqlValidatorNamespace namespace;
-//      if (targetNs.isWrapperFor(SqlValidatorImpl.DmlNamespace.class)) {
-//        namespace = targetNs.unwrap(SqlValidatorImpl.DmlNamespace.class);
-//      } else {
-//        namespace = targetNs.resolve();
-//      }
-//      RelOptTable table = SqlValidatorUtil.getRelOptTable(namespace, catalogReader, null, null);
-//      return requireNonNull(table, "no table found for " + call);
-
-//      case TABLE_REF:
-//        call = (SqlCall) from;
-//        convertIdentifier(bb, call.operand(0), null, call.operand(1));
-//        return;
-//
-//      case IDENTIFIER:
-//        convertIdentifier(bb, (SqlIdentifier) from, null, null);
-//        return;
-//
-//      case TABLE_IDENTIFIER_WITH_ID:
-//        convertTableIdentifierWithID(bb, (SqlTableIdentifierWithID) from, null, null);
-//        return;
-
-      //createTableDef.getKind() should be table_referene... why isn't it?
+      final Blackboard bb = createBlackboard(
+          requireNonNull(this.validator).getCreateTableScope(call), null, false);
       convertIdentifier(bb, (SqlIdentifier) createTableDef, null, null);
-//      convertIdentifier(bb, (SqlIdentifier) createTableDef);
       inputRel = bb.root();
     } else {
 
@@ -4509,7 +4483,8 @@ public class SqlToRelConverter {
       // Example 2:
       // SELECT * FROM (SELECT * FROM table) ORDER BY column
       //
-      // In this case, the order by can't be omitted. The order by is present in the "top level" node,
+      // In this case, the order by can't be omitted. The order by is present in the "top level"
+      // node,
       // IE, the data will be returned to the user, and the user will expect the results of the
       // query to be ordered.
       //
@@ -4525,7 +4500,8 @@ public class SqlToRelConverter {
       // This is valid, since we're not going to maintain that sort
       // when writing it back (note: there may be some specific case
       // that we want to write as partitioned and keeping the sorting would be ideal,
-      // but that's a followup). There may also be other, similar optimizations that are performed by
+      // but that's a followup). There may also be other, similar optimizations that are performed
+      // by
       // calcite in the case that we indicate the current query isn't the topmost query, which
       // we would like to take advantage of this.
       //
@@ -4544,9 +4520,11 @@ public class SqlToRelConverter {
       //
       // TLDR: We'd like to set top=False, to enable some optimizations on the plan,
       // but we run into a bug with calcite. For right now, we're just setting top=True,
-      // which is always correct, by may result in a less performant plan.
+      // which is always correct, but may result in a less performant plan.
 
-      RelRoot relRoot = convertQueryRecursive(requireNonNull(createTableDef), false, null);
+      RelRoot relRoot = convertQueryRecursive(
+          requireNonNull(createTableDef,
+          "createTableDef"), true, null);
       inputRel = relRoot.rel;
     }
 
