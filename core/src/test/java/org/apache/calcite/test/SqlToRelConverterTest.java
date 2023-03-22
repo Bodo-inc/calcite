@@ -3373,6 +3373,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql2).ok();
   }
 
+
+
   @Test void testMergeMatchedOnly() {
     //Tests a basic merge query with only an matched condition
     final String sql1 = "merge into empnullables as target\n"
@@ -3806,6 +3808,17 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql = "insert into empnullables_20 (empno, ename)\n"
         + "values (150, 'Fred')";
     sql(sql).ok();
+  }
+
+  @Test void testInsert2() {
+    //Tests a basic merge query with only an matched condition
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "     'eb001209-33d7-4d3f-bcaa-9dd6b8cf08b0' AS client_id\n"
+        + "FROM emp";
+
+    sql(sql1).ok();
   }
 
   @Test void testInsertModifiableView() {
