@@ -4471,6 +4471,8 @@ public class SqlToRelConverter {
       final RelCollation emptyCollation =
           cluster.traitSet().canonize(RelCollations.of());
 
+      //Create Table like creates a table with an identical schema, copies no rows.
+      //Therefore, we add a LIMIT 0 to the query.
       inputRel = LogicalSort.create(bb.root(), emptyCollation,
           null,
           relBuilder.getRexBuilder().makeLiteral(

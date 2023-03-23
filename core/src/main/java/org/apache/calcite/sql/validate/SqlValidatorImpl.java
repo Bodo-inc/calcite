@@ -2899,26 +2899,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         //In the case that the query is a select statement, we need to register it and
         // it's sub queries.
         registerQuery(
-            parentScope, //Should this be createTableNs?
-            usingScope, //Should be null?
+            parentScope,
+            usingScope,
             queryNode,
             enclosingNode,
             null,
             false
         );
       } else {
-        // Modified version of the code found for identifiers in registering the namespace of a
+        // Modified version of the code for registering the namespace of an
         // identifier in registerFrom.
         final SqlValidatorNamespace newNs;
         newNs = new IdentifierNamespace(
             this, (SqlIdentifier) queryNode, null, enclosingNode, parentScope
         );
-        //NOTE: arg0 can be null, if I don't want to register this scope as a child of the using
-        //scope. I'm not entirely certain if I want to rn.
-        // NOTE: usingScope should always be null.
-        // Arg1 is alias (which is always null)
         registerNamespace(usingScope, null, newNs, forceNullable);
-
       }
 
       DdlNamespace createTableNs = new DdlNamespace(
@@ -5526,21 +5521,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (!(queryNode instanceof SqlIdentifier)) {
       queryNode.validate(this, createTableScope);
     } else {
-      // Validate the namespace representation of the node, just in case the
-      // validation did not occur implicitly.
-//      getNamespaceOrThrow(node, scope).validate(targetRowType)
-
-//      queryNode.validate(this, createTableScope);
-//      getNamespaceOrThrow(queryNode, createTableScope);
-//
+      // Validate the namespace representation of the node,
+      // This is needed, as attempting to validate this identifier in the
+      // createTableScope will result in it being treated as a column identifier
+      // instead of a table.
       requireNonNull(getNamespace(queryNode)).validate(unknownType);
-
-//      getNamespaceOrThrow(node, scope).validate(targetRowType);
-//    }
-//
-//    protected void validateOver(SqlCall call, SqlValidatorScope scope) {
-//      throw new AssertionError("OVER unexpected in this context");
-//    }
 
       final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
       createTableScope.resolveTable(((SqlIdentifier) queryNode).names, catalogReader.nameMatcher(),
@@ -5549,9 +5534,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         throw newValidationError(queryNode, RESOURCE.tableNameNotFound(queryNode.toString()));
       }
     }
-
-    // (Note: for create table LIKE (WIP) if queryNode is identifier, we may need additional work to
-    // properly validate)
 
 
     final SqlIdentifier tableNameNode = createTable.getName();
@@ -7073,7 +7055,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * Namespace for DDL statements (Data Definition Language, such as create [Or replace] Table).
    * Currently, defers everything to the child query/table's namespace. This will likely need to be
    * extended in the future in order to handle the case where the output column type are
-   * explicitly defined in teh query.
+   * explicitly defined in the query.
    *
    * Note: this does not extend DmlNamespace because DmlNamespace
    * requires there to be an existing target table, which is not necessarily true for DDL

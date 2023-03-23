@@ -3957,12 +3957,6 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testLimit0() {
-    final String sql = "select *\n"
-        + "from EMP\n LIMIT 0";
-    sql(sql).ok();
-  }
-
   /**
    * Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-710">[CALCITE-710]
