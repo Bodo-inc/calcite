@@ -116,13 +116,7 @@ public class TypeCoercionImpl extends AbstractTypeCoercion {
     case WITH:
       SqlNode body = ((SqlWith) query).body;
       scope1 = validator.getOverScope(((SqlWith) query).body);
-      if (rowTypeCoercion(scope1, body, columnIndex, targetType)) {
-        System.out.println("TODO!");
-//        updateInferredColumnType(
-//            requireNonNull(scope, "scope"), query, columnIndex, targetType);
-        return true;
-      }
-      return false;
+      return rowTypeCoercion(scope1, body, columnIndex, targetType);
     case UNION:
     case INTERSECT:
     case EXCEPT:

@@ -5528,12 +5528,12 @@ public class SqlToRelConverter {
    * Converts a WITH sub-query into a relational expression.
    */
   public RelRoot convertWith(SqlWith with, boolean top) {
-    // In convertQuery, there are several paths which
-    // are certain checks which are relaxed when
+    // In convertQuery, there are several
+    // checks which are relaxed when
     // we are handling a DML statement.
     //
     // Therefore, we can't simply use ConvertQuery(),
-    // since this with statement may be nested udner a DML statement,
+    // since this WITH statement may be nested under a DML statement,
     // IE:
     // INSERT INTO  (...)
     // WITH ...
