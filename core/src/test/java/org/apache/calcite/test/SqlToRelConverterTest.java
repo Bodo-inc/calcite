@@ -3810,13 +3810,60 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testInsert2() {
-    //Tests a basic merge query with only an matched condition
+  @Test void testInsertWith() {
+    //Tests a basic INSERT query with a nested with condition
     final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
         + "WITH MAXDATE AS (SELECT MAX(empno) FROM emp)\n"
         + "SELECT 1 AS uuid,\n"
         + "     'eb001209-33d7-4d3f-bcaa-9dd6b8cf08b0' AS client_id\n"
         + "FROM emp";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithUsage() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually use the result of the WITH
+    //statement
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) as MAX_VAL FROM emp)\n"
+        + "SELECT MAX_VAL AS uuid,\n"
+        + "     'BOB' AS client_id\n"
+        + "FROM emp join MAXDATE on emp.empno = MAX_VAL";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithImplicitConversion() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually have some implicit conversion
+    //as a part of the query
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "      DATE '2022-02-01' AS client_id\n"
+        + "FROM emp";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithImplicitConversion2() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually have some implicit conversion
+    //as a part of the query, and we use the values found in the WITH statement
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) as MAX_VAL, DATE '2022-02-01' as date_val FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "      date_val AS client_id\n"
+        + "FROM emp join MAXDATE on emp.empno = MAX_VAL";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertImplicitConversion() {
+    //Tests a basic INSERT query with some implicit conversion
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "SELECT 1 AS uuid, DATE '2022-02-01' AS client_id";
 
     sql(sql1).ok();
   }
