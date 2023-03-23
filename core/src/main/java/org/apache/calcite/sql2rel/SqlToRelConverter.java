@@ -4468,7 +4468,15 @@ public class SqlToRelConverter {
       final Blackboard bb = createBlackboard(
           requireNonNull(this.validator).getCreateTableScope(call), null, false);
       convertIdentifier(bb, (SqlIdentifier) createTableDef, null, null);
-      inputRel = bb.root();
+      final RelCollation emptyCollation =
+          cluster.traitSet().canonize(RelCollations.of());
+
+      inputRel = LogicalSort.create(bb.root(), emptyCollation,
+          null,
+          relBuilder.getRexBuilder().makeLiteral(
+              0, typeFactory.createSqlType(SqlTypeName.BIGINT),
+              false));
+
     } else {
 
       // NOTE2: Calcite convertQueryRecursive will omit sorts in the logicalPlan when they

@@ -20,7 +20,8 @@
     <Resource name="plan">
       <![CDATA[
 LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[CUSTOMER]], IsReplace=[false])
-  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+  LogicalSort(fetch=[0:BIGINT])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
@@ -44,7 +45,8 @@ select dept.deptno, emp.empno
     <Resource name="plan">
       <![CDATA[
 LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[CUSTOMER]], IsReplace=[true])
-  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+  LogicalSort(fetch=[0:BIGINT])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
@@ -64,7 +66,8 @@ LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[SALES]], IsReplace=[fal
     <Resource name="plan">
       <![CDATA[
 LogicalTableCreate(TableName=[OUT_TEST], Target Schema=[[CUSTOMER]], IsReplace=[false])
-  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+  LogicalSort(fetch=[0:BIGINT])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
