@@ -2909,8 +2909,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       } else {
         // Modified version of the code for registering the namespace of an
         // identifier in registerFrom.
-        final SqlValidatorNamespace newNs;
-        newNs = new IdentifierNamespace(
+        final SqlValidatorNamespace newNs = new IdentifierNamespace(
             this, (SqlIdentifier) queryNode, null, enclosingNode, parentScope
         );
         registerNamespace(usingScope, null, newNs, forceNullable);
@@ -5505,8 +5504,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
     }
 
-    //Note, this can either a row expression or a query expression with an optional ORDER BY
-    //We're not currently handling the row expression case.
+    // Note, this can either a row expression or a query expression with an optional ORDER BY
+    // We're not currently handling the row expression case.
 
     SqlValidatorScope createTableScope = this.getCreateTableScope(createTable);
     // In order to be sufficiently general to the input of Create table,
