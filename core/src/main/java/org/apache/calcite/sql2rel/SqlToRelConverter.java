@@ -5528,7 +5528,34 @@ public class SqlToRelConverter {
    * Converts a WITH sub-query into a relational expression.
    */
   public RelRoot convertWith(SqlWith with, boolean top) {
-    return convertQuery(with.body, false, top);
+    // In convertQuery, there are several paths which
+    // are certain checks which are relaxed when
+    // we are handling a DML statement.
+    //
+    // Therefore, we can't simply use ConvertQuery(),
+    // since this with statement may be nested udner a DML statement,
+    // IE:
+    // INSERT INTO  (...)
+    // WITH ...
+
+
+    SqlNode query = with.body;
+
+    RelNode result = convertQueryRecursive(query, top, null).rel;
+    final RelDataType validatedRowType = validator().getValidatedNodeType(with);
+    List<RelHint> hints = new ArrayList<>();
+    if (query.getKind() == SqlKind.SELECT) {
+      final SqlSelect select = (SqlSelect) query;
+      if (select.hasHints()) {
+        hints = SqlUtil.getRelHint(hintStrategies, select.getHints());
+      }
+    }
+    // propagate the hints.
+    result = RelOptUtil.propagateRelHints(result, false);
+    return RelRoot.of(result, validatedRowType, query.getKind())
+        .withCollation(RelCollations.EMPTY)
+        .withHints(hints);
+
   }
 
   /**
