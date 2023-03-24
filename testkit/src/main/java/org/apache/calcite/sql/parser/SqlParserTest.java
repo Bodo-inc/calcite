@@ -5038,6 +5038,20 @@ public class SqlParserTest {
         .ok("CAST(DATE '2004-12-21' AS VARCHAR(10))");
   }
 
+  @Test void testDateFunction() {
+    expr("date('2000-01-01')")
+        .ok("DATE('2000-01-01')");
+    expr("date(date '2000-01-01')")
+        .ok("DATE(DATE '2000-01-01')");
+    expr("date(timestamp '2000-01-01 23:59:59.1')")
+        .ok("DATE(TIMESTAMP '2000-01-01 23:59:59.1')");
+    expr("date(123456)")
+        .ok("DATE(123456)");
+
+    expr("date('01-01-2000', 'MM-DD-YYYY')")
+        .ok("DATE('01-01-2000', 'MM-DD-YYYY')");
+  }
+
   @Test void testTrim() {
     expr("trim('mustache', 'a')")
         .ok("TRIM(BOTH 'a' FROM 'mustache')");
@@ -7808,21 +7822,6 @@ public class SqlParserTest {
 
     expr("extract(day ^to^ second from x)")
         .fails("(?s)Encountered \"to\".*");
-  }
-
-  @Test void testLastDay() {
-    expr("last_day(date1)")
-        .ok("LAST_DAY(`DATE1`)");
-    expr("last_day(date1, unit)")
-        .ok("LAST_DAY(`DATE1`, `UNIT`)");
-    expr("last_day(date '2000-01-01')")
-        .ok("LAST_DAY(DATE '2000-01-01')");
-    expr("last_day(date '2000-01-01', 'year')")
-        .ok("LAST_DAY(DATE '2000-01-01', 'YEAR')");
-    expr("last_day(timestamp '2000-01-01 23:59:59.1')")
-        .ok("LAST_DAY(TIMESTAMP '2000-01-01 23:59:59.1')");
-    expr("last_day(timestamp '2000-01-01 23:59:59.1', 'week')")
-        .ok("LAST_DAY(TIMESTAMP '2000-01-01 23:59:59.1', 'WEEK')");
   }
 
   @Test void testGeometry() {

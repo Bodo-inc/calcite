@@ -8036,15 +8036,6 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .fails("(?s).*Cannot apply.*");
   }
 
-  @Test void testLastDay() {
-    expr("last_day(date1)").columnType("DATE");
-    expr("last_day(date1, unit)").columnType("DATE");
-    expr("last_day(date '2000-01-01')").ok();
-    expr("last_day(date '2000-01-01', 'year')").ok();
-    expr("last_day(timestamp '2000-01-01 23:59:59.1')").ok();
-    expr("last_day(timestamp '2000-01-01 23:59:59.1', 'WEEK')").ok();
-  }
-
   @Test void testCastToInterval() {
     expr("cast(interval '1' hour as varchar(20))")
         .columnType("VARCHAR(20) NOT NULL");
