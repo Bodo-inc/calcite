@@ -851,8 +851,9 @@ public class SqlToRelConverter {
     RelNode rel = bb.root();
 
     final List<RelDataTypeField> fields = rel.getRowType().getFieldList();
+    assert 0 <= qualifyInsertionIdx
+        && qualifyInsertionIdx < fields.size() : "Invalid Qualify Insertion index";
     final RexNode filterVal = RexInputRef.of(qualifyInsertionIdx, fields);
-    //fields.size() - 1
 
     // I'm not entirely certain why we do this, but the normal path that handles WHERE does this,
     // So I'm going to leave it.
@@ -884,7 +885,9 @@ public class SqlToRelConverter {
     // we can just leave the column in, and it will likely be projected away at a later step
     final List<Pair<RexNode, String>> newProjects = new ArrayList<>();
     for (int i = 0; i < fields.size(); i++) {
-      if (i == qualifyInsertionIdx) continue;
+      if (i == qualifyInsertionIdx) {
+        continue;
+      }
       newProjects.add(RexInputRef.of2(i, fields));
     }
     final RelNode projectRel = LogicalProject.create(filterRelNode, ImmutableList.of(),
@@ -3583,8 +3586,6 @@ public class SqlToRelConverter {
    * @param bb            Scope within which to resolve identifiers
    * @param select        Query
    * @param orderExprList Additional expressions needed to implement ORDER BY
-   * @return If the select list contains a QUALIFY statement, the index in the
-   * select list where the QUALIFY clause. Otherwise, -1.
    */
   protected void convertAgg(
       Blackboard bb,
