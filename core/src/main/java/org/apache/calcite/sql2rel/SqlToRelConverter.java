@@ -3586,8 +3586,6 @@ public class SqlToRelConverter {
    * @param bb            Scope within which to resolve identifiers
    * @param select        Query
    * @param orderExprList Additional expressions needed to implement ORDER BY
-   * @return If the select list contains a QUALIFY statement, the index in the
-   * select list where the QUALIFY clause. Otherwise, -1.
    */
   protected void convertAgg(
       Blackboard bb,
