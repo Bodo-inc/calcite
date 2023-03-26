@@ -18,7 +18,7 @@ package org.apache.calcite.rel.core;
 
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptSamplingParameters;
+import org.apache.calcite.plan.RelOptSamplingRowLimitParameters;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelInput;
 import org.apache.calcite.rel.RelNode;
@@ -36,12 +36,12 @@ import java.util.List;
 public class Sample extends SingleRel {
   //~ Instance fields --------------------------------------------------------
 
-  private final RelOptSamplingParameters params;
+  private final RelOptSamplingRowLimitParameters params;
 
   //~ Constructors -----------------------------------------------------------
 
   public Sample(RelOptCluster cluster, RelNode child,
-      RelOptSamplingParameters params) {
+      RelOptSamplingRowLimitParameters params) {
     super(cluster, cluster.traitSetOf(Convention.NONE), child);
     this.params = params;
   }
@@ -55,7 +55,7 @@ public class Sample extends SingleRel {
 
   //~ Methods ----------------------------------------------------------------
 
-  private static RelOptSamplingParameters getSamplingParameters(
+  private static RelOptSamplingRowLimitParameters getSamplingParameters(
       RelInput input) {
     String mode = input.getString("mode");
     Object percentage = input.get("rate");
@@ -63,19 +63,31 @@ public class Sample extends SingleRel {
     Object repeatableSeed = input.get("repeatableSeed");
     boolean repeatable = repeatableSeed instanceof Number;
 
-    if (percentage instanceof Number) {
-      return new RelOptSamplingParameters(
-          "bernoulli".equals(mode),
-          percentage != null ? ((Number) percentage).floatValue() : -1.0f,
-          repeatable,
-          repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
-    } else {
-      return new RelOptSamplingParameters(
-          "bernoulli".equals(mode),
-          numberOfRows != null ? ((Number) numberOfRows).intValue() : -1,
-          repeatable,
-          repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0);
+    int seedInt = repeatable && repeatableSeed != null ? ((Number) repeatableSeed).intValue() : 0;
+
+    if (percentage != null && percentage instanceof Number) {
+      float percentageFloat = ((Number) percentage).floatValue();
+      if (percentageFloat != -1.0f) {
+        return new RelOptSamplingRowLimitParameters(
+            "bernoulli".equals(mode),
+            percentageFloat,
+            repeatable,
+            seedInt);
+      }
     }
+    if (numberOfRows != null && numberOfRows instanceof Number) {
+      int numberOfRowsInt = ((Number) numberOfRows).intValue();
+      if (numberOfRowsInt != -1) {
+        return new RelOptSamplingRowLimitParameters(
+            "bernoulli".equals(mode),
+            numberOfRowsInt,
+            repeatable,
+            seedInt);
+      }
+    }
+    throw new IllegalArgumentException("Cannot create sample node with "
+        + "percentage=" + percentage.toString() + " and numberOfRows="
+        + numberOfRows.toString());
   }
 
   @Override public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
@@ -86,7 +98,7 @@ public class Sample extends SingleRel {
   /**
    * Retrieve the sampling parameters for this Sample.
    */
-  public RelOptSamplingParameters getSamplingParameters() {
+  public RelOptSamplingRowLimitParameters getSamplingParameters() {
     return params;
   }
 

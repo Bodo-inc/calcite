@@ -17,28 +17,46 @@
 package org.apache.calcite.plan;
 
 /**
- * RelOptSamplingParameters represents the parameters necessary to produce a
- * sample of a relation.
+ * RelOptSamplingRowLimitParameters represents the parameters necessary to
+ * produce a sample of a relation.
  *
- * <p>It's parameters are derived from the SQL 2003 TABLESAMPLE clause.
+ * <p>Its parameters are derived from the SQL 2003 TABLESAMPLE clause, with
+ * additional support for sampling a fixed number of rows.
  */
-public class RelOptSamplingParameters {
+public class RelOptSamplingRowLimitParameters {
   //~ Instance fields --------------------------------------------------------
 
   private final boolean isBernoulli;
+  private final boolean isPercentage;
   private final float samplingPercentage;
+  private final int numberOfRows;
   private final boolean isRepeatable;
   private final int repeatableSeed;
 
   //~ Constructors -----------------------------------------------------------
 
-  public RelOptSamplingParameters(
+  public RelOptSamplingRowLimitParameters(
       boolean isBernoulli,
       float samplingPercentage,
       boolean isRepeatable,
       int repeatableSeed) {
     this.isBernoulli = isBernoulli;
+    this.isPercentage = true;
     this.samplingPercentage = samplingPercentage;
+    this.numberOfRows = -1;
+    this.isRepeatable = isRepeatable;
+    this.repeatableSeed = repeatableSeed;
+  }
+
+  public RelOptSamplingRowLimitParameters(
+      boolean isBernoulli,
+      int numberOfRows,
+      boolean isRepeatable,
+      int repeatableSeed) {
+    this.isBernoulli = isBernoulli;
+    this.isPercentage = false;
+    this.samplingPercentage = -1.0f;
+    this.numberOfRows = numberOfRows;
     this.isRepeatable = isRepeatable;
     this.repeatableSeed = repeatableSeed;
   }
@@ -59,15 +77,39 @@ public class RelOptSamplingParameters {
   }
 
   /**
-   * Returns the sampling percentage. For Bernoulli sampling, the sampling
-   * percentage is the likelihood that any given row will be included in the
-   * sample. For system sampling, the sampling percentage indicates (roughly)
-   * what percentage of the rows will appear in the sample.
+   * Indicates whether sampling by a percentage or a fixed number of rows.
    *
-   * @return the sampling percentage between 0.0 and 1.0, exclusive
+   * @return true if a sampling percentage is configured, false for fixed-size
+   * sampling
+   */
+  public boolean isPercentage() {
+    return isPercentage;
+  }
+
+  /**
+   * If {@link #isPercentage()} returns <code>true</code>, this method returns
+   * a sampling percentage. For Bernoulli sampling, the sampling percentage is
+   * the likelihood that any given row will be included in the sample. For
+   * system sampling, the sampling percentage indicates (roughly) what
+   * percentage of the rows will appear in the sample.
+   *
+   * @return the sampling percentage between 0.0 and 1.0, exclusive, or -1.0
+   * if a sampling percentage was not configured.
    */
   public float getSamplingPercentage() {
-    return samplingPercentage;
+    return isPercentage ? samplingPercentage : -1.0f;
+  }
+
+  /**
+   * If {@link #isPercentage()} returns <code>false</code>, this method returns
+   * a fixed number of rows. For fixed-size sampling, this is the number of rows
+   * that will appear in the output.
+   *
+   * @return the number of rows between 0 and 1000000, inclusive, or -1 if
+   * fixed-size sampling was not configured.
+   */
+  public int getNumberOfRows() {
+    return isPercentage ? -1 : numberOfRows;
   }
 
   /**

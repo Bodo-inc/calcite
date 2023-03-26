@@ -16,7 +16,7 @@
  */
 package org.apache.calcite.rel.mutable;
 
-import org.apache.calcite.plan.RelOptSamplingParameters;
+import org.apache.calcite.plan.RelOptSamplingRowLimitParameters;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -24,9 +24,9 @@ import java.util.Objects;
 
 /** Mutable equivalent of {@link org.apache.calcite.rel.core.Sample}. */
 public class MutableSample extends MutableSingleRel {
-  public final RelOptSamplingParameters params;
+  public final RelOptSamplingRowLimitParameters params;
 
-  private MutableSample(MutableRel input, RelOptSamplingParameters params) {
+  private MutableSample(MutableRel input, RelOptSamplingRowLimitParameters params) {
     super(MutableRelType.SAMPLE, input.rowType, input);
     this.params = params;
   }
@@ -38,7 +38,7 @@ public class MutableSample extends MutableSingleRel {
    * @param params  parameters necessary to produce a sample of a relation
    */
   public static MutableSample of(
-      MutableRel input, RelOptSamplingParameters params) {
+      MutableRel input, RelOptSamplingRowLimitParameters params) {
     return new MutableSample(input, params);
   }
 

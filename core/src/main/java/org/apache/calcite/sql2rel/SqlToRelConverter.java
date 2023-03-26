@@ -20,7 +20,7 @@ import org.apache.calcite.avatica.util.Spaces;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.plan.RelOptSamplingParameters;
+import org.apache.calcite.plan.RelOptSamplingRowLimitParameters;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
@@ -2428,8 +2428,8 @@ public class SqlToRelConverter {
         SqlSampleSpec.SqlTableSampleSpec tableSampleSpec =
             (SqlSampleSpec.SqlTableSampleSpec) sampleSpec;
         convertFrom(bb, operands.get(0));
-        RelOptSamplingParameters params =
-            new RelOptSamplingParameters(
+        RelOptSamplingRowLimitParameters params =
+            new RelOptSamplingRowLimitParameters(
                 tableSampleSpec.isBernoulli(),
                 tableSampleSpec.getSamplePercentage(),
                 tableSampleSpec.isRepeatable(),
@@ -2439,8 +2439,8 @@ public class SqlToRelConverter {
         SqlSampleSpec.SqlTableSampleRowLimitSpec tableSampleRowLimitSpec =
             (SqlSampleSpec.SqlTableSampleRowLimitSpec) sampleSpec;
         convertFrom(bb, operands.get(0));
-        RelOptSamplingParameters params =
-            new RelOptSamplingParameters(
+        RelOptSamplingRowLimitParameters params =
+            new RelOptSamplingRowLimitParameters(
                 tableSampleRowLimitSpec.isBernoulli(),
                 tableSampleRowLimitSpec.getNumberOfRows().intValue(),
                 tableSampleRowLimitSpec.isRepeatable(),
