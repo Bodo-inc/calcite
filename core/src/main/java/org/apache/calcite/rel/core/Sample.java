@@ -86,8 +86,9 @@ public class Sample extends SingleRel {
       }
     }
     throw new IllegalArgumentException("Cannot create sample node with "
-        + "percentage=" + percentage.toString() + " and numberOfRows="
-        + numberOfRows.toString());
+        + "percentage='" + (percentage == null ? "null" : percentage.toString())
+        + "' and numberOfRows='"
+        + (numberOfRows == null ? "null" : numberOfRows.toString()) + "'");
   }
 
   @Override public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
