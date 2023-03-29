@@ -4795,13 +4795,6 @@ SqlLiteral DateTimeLiteral() :
     final Span s;
 }
 {
-    <LBRACE_D> <QUOTED_STRING> {
-        p = token.image;
-    }
-    <RBRACE> {
-        return SqlParserUtil.parseDateLiteral(p, getPos());
-    }
-|
     <LBRACE_T> <QUOTED_STRING> {
         p = token.image;
     }
@@ -4814,10 +4807,6 @@ SqlLiteral DateTimeLiteral() :
     }
     <RBRACE> {
         return SqlParserUtil.parseTimestampLiteral(p, s.end(this));
-    }
-|
-    <DATE> { s = span(); } <QUOTED_STRING> {
-        return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
     }
 |
     <TIME> { s = span(); } <QUOTED_STRING> {

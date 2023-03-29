@@ -8120,6 +8120,17 @@ LogicalProject(EXPR$0=[CAST('2020-02-14 10:59:03.399029'):DATE NOT NULL])
       <![CDATA[select '2020-02-14 10:59:03.399029'::DATE from emp]]>
     </Resource>
   </TestCase>
+  <TestCase name="testSelectInfixCastStringDateWithoutSimplifying">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[CAST('2020-02-14'):DATE NOT NULL])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select '2020-02-14'::DATE from emp]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testSelectInfixCastStringFloat">
     <Resource name="sql">
       <![CDATA[select '2020.21232'::float from emp]]>

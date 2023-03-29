@@ -2212,6 +2212,13 @@ public class RexSimplify {
           break;
         }
         break;
+      case CHAR:
+        switch (e.getType().getSqlTypeName()) {
+        case DATE:
+          return e;
+        default:
+          break;
+        }
       default:
         break;
       }
