@@ -107,6 +107,7 @@ import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
+import org.apache.calcite.sql.SqlDeleteUsingItem;
 import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlInternalOperators;
@@ -1729,11 +1730,11 @@ SqlNode SqlDelete() :
         }
     ]
     [ [ <AS> ] alias = SimpleIdentifier() ]
-    using = SqlDeleteUsingList()
+    [ <USING> using = SqlDeleteUsingList() ]
     condition = WhereOpt()
     {
         return new SqlDelete(s.add(table).addIf(extendList).addIf(alias).addIf(using)
-            .addIf(condition).pos(), table, condition, null, alias);
+            .addIf(condition).pos(), table, using, condition, null, alias);
     }
 }
 
@@ -1745,12 +1746,10 @@ SqlNodeList SqlDeleteUsingList() :
 }
 {
 
+    deleteUsingElement = SqlDeleteUsingElement() {usingList.add(deleteUsingElement);}
     (
-    // Based on my reading of with parsing, this should allow
-    // for anything valid as a "with" subquery (which is the expected
-    // behavior)
-    deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY) {usingList.add(deleteUsingElement);}
-    | deleteUsingElement = TableRefWithHintsOpt() {usingList.add(deleteUsingElement);}
+    <COMMA>
+    deleteUsingElement = SqlDeleteUsingElement() {usingList.add(deleteUsingElement);}
     )*
 
     {
@@ -1758,6 +1757,32 @@ SqlNodeList SqlDeleteUsingList() :
     }
 }
 
+
+SqlDeleteUsingItem SqlDeleteUsingElement() :
+{
+    SqlNode deleteUsingElement;
+    SqlIdentifier alias = null;
+}
+{
+
+    // Based on my reading of with parsing, this should allow
+    // for either a table identifier, or
+    // any subquery valid in a "with" cluase (which is the expected
+    // behavior)
+    (deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
+    | deleteUsingElement = TableRefWithHintsOpt()
+    )
+    [
+     (<AS> alias = SimpleIdentifier())
+     | alias = SimpleIdentifier()
+    ]
+    {
+        return new SqlDeleteUsingItem(
+            deleteUsingElement.getParserPosition(),
+            alias,
+            deleteUsingElement);
+    }
+}
 
 /**
  * Parses an UPDATE statement.
@@ -1980,7 +2005,7 @@ SqlDelete WhenMatchedClauseDelete(SqlNode table, SqlIdentifier alias) :
 
     <DELETE>
     {
-        return new SqlDelete(span().pos(), table, null, null, alias);
+        return new SqlDelete(span().pos(), table, null, null, null, alias);
     }
 }
 

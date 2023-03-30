@@ -9936,6 +9936,46 @@ public class SqlParserTest {
     sql(sql).ok(expected);
   }
 
+  @Test void testUsingTableInDelete() {
+    final String sql = "delete from emps\n"
+        + "using dept\n"
+        + "where empno = (SELECT MAX(deptno) from dept)\n";
+    final String expected = "DELETE FROM `EMPS`\n"
+        + "USING ((`DEPT`))\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingSubqueryInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered)\n";
+    final String expected = "DELETE FROM `EMPS`\n"
+        + "USING ((`DEPT_FILTERED` AS (SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))))\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingMultipleValuesInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered, (Select * from dept where deptno > 10) as dept_filtered_2\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered) and empno = (SELECT MAX(deptno) from dept_filtered_2)\n";
+    final String expected = "DELETE FROM `EMPS`\n"
+        + "USING ((`DEPT_FILTERED` AS (SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))), (`DEPT_FILTERED_2` AS (SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` > 10))))\n"
+        + "WHERE ((`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`)) AND (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED_2`)))";
+    sql(sql).ok(expected);
+  }
+
   @Test void testTableHintsInUpdate() {
     final String sql = "update emps\n"
         + "/*+ properties(k1='v1', k2='v2'), index(idx1, idx2), no_hash_join */\n"

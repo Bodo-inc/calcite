@@ -35,6 +35,8 @@ public class SqlDelete extends SqlCall {
       new SqlSpecialOperator("DELETE", SqlKind.DELETE);
 
   SqlNode targetTable;
+
+  @Nullable SqlNodeList usingList;
   @Nullable SqlNode condition;
   @Nullable SqlSelect sourceSelect;
   @Nullable SqlIdentifier alias;
@@ -44,12 +46,14 @@ public class SqlDelete extends SqlCall {
   public SqlDelete(
       SqlParserPos pos,
       SqlNode targetTable,
+      @Nullable SqlNodeList usingList,
       @Nullable SqlNode condition,
       @Nullable SqlSelect sourceSelect,
       @Nullable SqlIdentifier alias) {
     super(pos);
     this.targetTable = targetTable;
     this.condition = condition;
+    this.usingList = usingList;
     this.sourceSelect = sourceSelect;
     this.alias = alias;
   }
@@ -134,6 +138,11 @@ public class SqlDelete extends SqlCall {
     if (alias != null) {
       writer.keyword("AS");
       alias.unparse(writer, opLeft, opRight);
+    }
+    SqlNode using = this.usingList;
+    if (using != null) {
+      writer.sep("USING");
+      using.unparse(writer, opLeft, opRight);
     }
     SqlNode condition = this.condition;
     if (condition != null) {
