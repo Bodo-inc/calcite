@@ -1713,6 +1713,7 @@ SqlNode SqlDelete() :
     SqlNode table;
     SqlNodeList extendList = null;
     SqlIdentifier alias = null;
+    SqlNodeList using = null;
     final SqlNode condition;
     final Span s;
 }
@@ -1728,12 +1729,35 @@ SqlNode SqlDelete() :
         }
     ]
     [ [ <AS> ] alias = SimpleIdentifier() ]
+    using = SqlDeleteUsingList()
     condition = WhereOpt()
     {
-        return new SqlDelete(s.add(table).addIf(extendList).addIf(alias)
+        return new SqlDelete(s.add(table).addIf(extendList).addIf(alias).addIf(using)
             .addIf(condition).pos(), table, condition, null, alias);
     }
 }
+
+
+SqlNodeList SqlDeleteUsingList() :
+{
+    SqlNodeList usingList = SqlNodeList.EMPTY;
+    SqlNode deleteUsingElement = null;
+}
+{
+
+    (
+    // Based on my reading of with parsing, this should allow
+    // for anything valid as a "with" subquery (which is the expected
+    // behavior)
+    deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY) {usingList.add(deleteUsingElement);}
+    | deleteUsingElement = TableRefWithHintsOpt() {usingList.add(deleteUsingElement);}
+    )*
+
+    {
+        return usingList;
+    }
+}
+
 
 /**
  * Parses an UPDATE statement.
