@@ -98,10 +98,8 @@ public class SqlDeleteUsingItem extends SqlCall{
     @Override public SqlCall createCall(@Nullable SqlLiteral functionQualifier,
         SqlParserPos pos, @Nullable SqlNode... operands) {
       assert functionQualifier == null;
-      assert operands.length == 3;
-      return new SqlWithItem(pos, (SqlIdentifier) operands[0],
-          (SqlNodeList) operands[1], operands[2]);
+      assert operands.length == 2;
+      return new SqlDeleteUsingItem(pos, (SqlIdentifier) operands[0], operands[1]);
     }
   }
-
 }

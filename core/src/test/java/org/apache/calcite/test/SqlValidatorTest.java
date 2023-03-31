@@ -11900,6 +11900,59 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .fails("Duplicate name 'EXTRA' in column list");
   }
 
+  @Test void testDeleteUsingExpressionType() {
+    //Some simple tests to make sure that we disallow expressions other than
+    //tables and sub queries.
+    sql("delete from emp\n"
+        + "using not_a_real_table_name\n"
+        +"where ename = 'bob'").fails("TODO");
+    sql("delete from emp\n"
+        + "using (emp.deptno > 10) filter\n"
+        +"where ename = 'bob'").fails("TODO");
+
+  }
+
+  @Test void testDeleteUsingIdentifierQualification() {
+    // Some simple tests to make sure that we properly handle identifier scoping/qualification
+    // in the
+    // where statement based on what's going on in the using statement
+
+    sql("delete from emp\n"
+        + "using depto\n"
+        +"where emp.deptno = dept.deptno").ok();
+
+    // The rules for ambiguous column are the same as a join,
+    // so since there are two tables
+    sql("delete from emp\n"
+        + "using depto\n"
+        +"where deptno = deptno").fails("TODO");
+
+    // Note that this is true even if the subquery doesn't have an alias/any way to
+    // reference it
+    sql("delete from emp\n"
+        + "using (SELECT deptno from depto)\n"
+        +"where deptno = deptno").fails("TODO");
+
+
+    sql("delete from emp\n"
+        + "using (SELECT unique_column_identifier from depto)\n"
+        +"where deptno = unique_column_identifier").ok();
+
+  }
+
+  @Test void testDeleteUsingTypeChecking() {
+    //Some simple tests to make sure that we properly do type checking
+
+    sql("delete from emp\n"
+        + "using (SELECT 10 as int_col from DEPT) using_tbl\n"
+        +"where ename = using_tbl.int_col").fails("TODO");
+
+    sql("delete from emp\n"
+        + "using (SELECT 'bob' as str_col from DEPT) using_tbl\n"
+        +"where ename = str_col").ok();
+  }
+
+
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-1804">[CALCITE-1804]
    * Cannot assign NOT NULL array to nullable array</a>. */

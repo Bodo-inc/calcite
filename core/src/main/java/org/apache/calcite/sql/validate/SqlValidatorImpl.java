@@ -1480,8 +1480,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     case DELETE: {
       SqlDelete call = (SqlDelete) node;
-      SqlSelect select = createSourceSelectForDelete(call);
-      call.setSourceSelect(select);
+      if (call.getUsing() != null){
+        //If we have a Using clause, we rewrite the delete as a merge operation
+        node = rewriteDeleteToMerge(call);
+      } else {
+        //Otherwise, we leave it as is, and just generate the createSourceSelectForDelete
+        SqlSelect select = createSourceSelectForDelete(call);
+        call.setSourceSelect(select);
+      }
       break;
     }
 
@@ -1704,6 +1710,58 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
   }
 
+  /**
+   * Used in UnconditonalRewrites. In the case that we have a delete with a using clause.
+   *
+   * DELETE FROM target using T1, T2, ... where (cond) is equivalent to
+   *
+   * MERGE INTO target using (T1 full outer join T2...) on (cond) WHEN MATCHED THEN DELETE
+   *
+   * We choose to do this rewrite (similar to rewriteUpdateToMerge), in order to simplify validation
+   * and sqlToRel code generation.
+   *
+   * @param originalDeleteCall
+   * @return
+   */
+  private SqlNode rewriteDeleteToMerge(
+      SqlDelete originalDeleteCall
+  ){
+    SqlNodeList usingClauses = originalDeleteCall.getUsing();
+    SqlNode targetTable = originalDeleteCall.getTargetTable();
+    SqlNode condition = originalDeleteCall.getCondition();
+    SqlIdentifier alias = originalDeleteCall.getAlias();
+
+    SqlNodeList matchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
+
+    matchedCallList.add(new
+        SqlDelete(originalDeleteCall.getParserPosition(), targetTable, null, null, null, alias));
+    SqlNodeList unMatchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
+
+    //Set source to be the join of all the tables in Using.
+    //We're relying on the optimizer to push filters from the ON clause,
+    //into the source table when appropriate.
+    SqlNode source = usingClauses.get(0);
+    for (int i = 1; i < usingClauses.size(); i++) {
+      SqlNode newExpr = usingClauses.get(i);
+      source = new SqlJoin(SqlParserPos.ZERO,
+          source,
+          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          JoinType.FULL.symbol(SqlParserPos.ZERO),
+          newExpr,
+          JoinConditionType.ON.symbol(SqlParserPos.ZERO),
+          SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
+    }
+
+    SqlMerge mergeCall =
+        new SqlMerge(originalDeleteCall.getParserPosition(), targetTable, condition, source,
+            matchedCallList, unMatchedCallList, null,
+            alias);
+
+    //Run rewrite merge, so that it can apply whatever changes it needs to...
+    rewriteMerge(mergeCall);
+    return mergeCall;
+  }
+
   private SqlNode rewriteUpdateToMerge(
       SqlUpdate updateCall,
       SqlNode selfJoinSrcExpr) {
@@ -1770,7 +1828,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     source = SqlValidatorUtil.addAlias(source, UPDATE_SRC_ALIAS);
     SqlMerge mergeCall =
         new SqlMerge(updateCall.getParserPosition(), target, condition, source,
-            SqlNodeList.of(updateCall), SqlNodeList.EMPTY, null,
+            SqlNodeList.of(updateCall), SqlNodeList.EMPTY.clone(SqlParserPos.ZERO), null,
             updateCall.getAlias());
     rewriteMerge(mergeCall);
     return mergeCall;
@@ -1875,6 +1933,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @return select statement
    */
   protected SqlSelect createSourceSelectForDelete(SqlDelete call) {
+
+    //If the DELETE condition is satisfied for any of the joined combinations, the target row is deleted.
+
     final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     SqlNode sourceTable = call.getTargetTable();

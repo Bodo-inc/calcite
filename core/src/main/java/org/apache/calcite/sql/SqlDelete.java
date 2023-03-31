@@ -128,6 +128,8 @@ public class SqlDelete extends SqlCall {
     return sourceSelect;
   }
 
+  public @Nullable SqlNodeList getUsing() { return usingList;}
+
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     final SqlWriter.Frame frame =
         writer.startList(SqlWriter.FrameTypeEnum.SELECT, "DELETE FROM", "");
