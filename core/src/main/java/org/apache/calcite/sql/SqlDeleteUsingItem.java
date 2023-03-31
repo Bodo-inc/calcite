@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql;
 
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
 import org.apache.calcite.util.ImmutableNullableList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -30,7 +29,7 @@ import java.util.List;
  * This is heavily based on SqlWithItem which can be found here:
  * core/src/main/java/org/apache/calcite/sql/SqlWithItem.java
  */
-public class SqlDeleteUsingItem extends SqlCall{
+public class SqlDeleteUsingItem extends SqlCall {
 
   public @Nullable SqlIdentifier name;
   public SqlNode query;
@@ -43,13 +42,25 @@ public class SqlDeleteUsingItem extends SqlCall{
     this.query = query;
   }
 
-  @Override
-  public SqlOperator getOperator() {
+  @Override public SqlOperator getOperator() {
     return SqlDeleteUsingItemOperator.INSTANCE;
   }
 
-  @Override
-  public List<SqlNode> getOperandList() {
+  /**
+   * Helper function used when converting Delete to Merge
+   * @return
+   */
+  public SqlNode getSqlDeleteItemAsJoinExpression() {
+    if (name == null) {
+      return query;
+    } else {
+      return SqlStdOperatorTable.AS.createCall(
+          this.pos, query, name);
+    }
+
+  }
+
+  @Override public List<SqlNode> getOperandList() {
     return ImmutableNullableList.of(name, query);
   }
 
@@ -75,8 +86,9 @@ public class SqlDeleteUsingItem extends SqlCall{
     private static final SqlDeleteUsingItemOperator INSTANCE =
         new SqlDeleteUsingItemOperator();
 
+    //We're not casing by this SqlKind anywhere, so just leaving it as "Other" for now.
     SqlDeleteUsingItemOperator() {
-      super("WITH_ITEM", SqlKind.WITH_ITEM, 0);
+      super("DELETE_WITH_ITEM", SqlKind.OTHER, 0);
     }
 
     //~ Methods ----------------------------------------------------------------
@@ -87,7 +99,7 @@ public class SqlDeleteUsingItem extends SqlCall{
         int leftPrec,
         int rightPrec) {
       final SqlDeleteUsingItem usingItem = (SqlDeleteUsingItem) call;
-      if (usingItem.name != null){
+      if (usingItem.name != null) {
         usingItem.name.unparse(writer, getLeftPrec(), getRightPrec());
         writer.keyword("AS");
       }

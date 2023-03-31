@@ -11904,11 +11904,11 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     //Some simple tests to make sure that we disallow expressions other than
     //tables and sub queries.
     sql("delete from emp\n"
-        + "using not_a_real_table_name\n"
-        +"where ename = 'bob'").fails("TODO");
+        + "using ^not_a_real_table_name^\n"
+        +"where ename = 'bob'").fails("Object 'NOT_A_REAL_TABLE_NAME' not found");
     sql("delete from emp\n"
-        + "using (emp.deptno > 10) filter\n"
-        +"where ename = 'bob'").fails("TODO");
+        + "using (emp.^deptno^ > 10) filter\n"
+        +"where ename = 'bob'").fails("Non-query expression encountered in illegal context");
 
   }
 
@@ -11918,24 +11918,24 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // where statement based on what's going on in the using statement
 
     sql("delete from emp\n"
-        + "using depto\n"
+        + "using dept\n"
         +"where emp.deptno = dept.deptno").ok();
 
     // The rules for ambiguous column are the same as a join,
     // so since there are two tables
     sql("delete from emp\n"
-        + "using depto\n"
+        + "using dept\n"
         +"where deptno = deptno").fails("TODO");
 
     // Note that this is true even if the subquery doesn't have an alias/any way to
     // reference it
     sql("delete from emp\n"
-        + "using (SELECT deptno from depto)\n"
+        + "using (SELECT deptno from dept)\n"
         +"where deptno = deptno").fails("TODO");
 
 
     sql("delete from emp\n"
-        + "using (SELECT unique_column_identifier from depto)\n"
+        + "using (SELECT unique_column_identifier from dept)\n"
         +"where deptno = unique_column_identifier").ok();
 
   }

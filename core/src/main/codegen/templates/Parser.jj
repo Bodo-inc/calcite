@@ -1741,12 +1741,17 @@ SqlNode SqlDelete() :
 
 SqlNodeList SqlDeleteUsingList() :
 {
-    SqlNodeList usingList = SqlNodeList.EMPTY;
+    SqlNodeList usingList;
     SqlNode deleteUsingElement = null;
+    final Span s;
 }
 {
 
-    deleteUsingElement = SqlDeleteUsingElement() {usingList.add(deleteUsingElement);}
+    deleteUsingElement = SqlDeleteUsingElement() {
+        s = span();
+        usingList = new SqlNodeList(s.pos());
+        usingList.add(deleteUsingElement);
+    }
     (
     <COMMA>
     deleteUsingElement = SqlDeleteUsingElement() {usingList.add(deleteUsingElement);}
@@ -1762,23 +1767,26 @@ SqlDeleteUsingItem SqlDeleteUsingElement() :
 {
     SqlNode deleteUsingElement;
     SqlIdentifier alias = null;
+    SqlParserPos s;
 }
 {
-
     // Based on my reading of with parsing, this should allow
     // for either a table identifier, or
     // any subquery valid in a "with" cluase (which is the expected
     // behavior)
-    (deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
+    (
+    deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
     | deleteUsingElement = TableRefWithHintsOpt()
-    )
+    ) {s = deleteUsingElement.getParserPosition();}
     [
-     (<AS> alias = SimpleIdentifier())
-     | alias = SimpleIdentifier()
+     (
+         (<AS> alias = SimpleIdentifier())
+         | alias = SimpleIdentifier()
+     ){s = s.plus(alias.getParserPosition());}
     ]
     {
         return new SqlDeleteUsingItem(
-            deleteUsingElement.getParserPosition(),
+            s,
             alias,
             deleteUsingElement);
     }
