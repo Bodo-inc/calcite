@@ -961,7 +961,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
   }
 
   @Test void testSelectInfixCastDateString() {
-    withPostgresLib(sql("select (DATE '2000-01-01')::varchar from emp")).ok();
+    withPostgresLib(sql("select (DATE '12233456')::varchar from emp")).ok();
   }
 
   @Test void testSelectInfixCastStringTimestamp() {

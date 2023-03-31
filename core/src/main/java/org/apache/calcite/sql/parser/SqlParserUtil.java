@@ -142,15 +142,7 @@ public final class SqlParserUtil {
 
   public static SqlDateLiteral parseDateLiteral(String s, SqlParserPos pos) {
     final String dateStr = parseString(s);
-    final Calendar cal =
-        DateTimeUtils.parseDateFormat(dateStr, Format.get().date,
-            DateTimeUtils.UTC_ZONE);
-    if (cal == null) {
-      throw SqlUtil.newContextException(pos,
-          RESOURCE.illegalLiteral("DATE", s,
-              RESOURCE.badFormat(DateTimeUtils.DATE_FORMAT_STRING).str()));
-    }
-    final DateString d = DateString.fromCalendarFields(cal);
+    final DateString d = new DateString(dateStr, true);
     return SqlLiteral.createDate(d, pos);
   }
 

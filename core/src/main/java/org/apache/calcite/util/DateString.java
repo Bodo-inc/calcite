@@ -37,7 +37,7 @@ public class DateString implements Comparable<DateString> {
   final String v;
 
   /** Internal constructor, no validation. */
-  private DateString(String v, @SuppressWarnings("unused") boolean ignore) {
+  public DateString(String v, @SuppressWarnings("unused") boolean ignore) {
     this.v = v;
   }
 
