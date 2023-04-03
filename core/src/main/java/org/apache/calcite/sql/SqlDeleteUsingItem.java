@@ -47,8 +47,8 @@ public class SqlDeleteUsingItem extends SqlCall {
   }
 
   /**
-   * Helper function used when converting Delete to Merge.
-   * @return
+   * Helper function used when converting Delete to Merge. Returns the original query/table
+   * reference wrapped in a call to AS, if the delete item had an alias.
    */
   public SqlNode getSqlDeleteItemAsJoinExpression() {
     if (name == null) {
@@ -63,6 +63,8 @@ public class SqlDeleteUsingItem extends SqlCall {
     return name;
   }
 
+  //Note that this warning suppression is standard/common for getOperandList
+  @SuppressWarnings("nullness")
   @Override public List<SqlNode> getOperandList() {
     return ImmutableNullableList.of(name, query);
   }
@@ -90,8 +92,10 @@ public class SqlDeleteUsingItem extends SqlCall {
         new SqlDeleteUsingItemOperator();
 
     //We're not casing by this SqlKind anywhere, so just leaving it as "Other" for now.
+    //NOTE2: We do actually use this in SqlCall during unparsing. Any SqlKind that is not
+    //an expression works perfectly fine.
     SqlDeleteUsingItemOperator() {
-      super("DELETE_WITH_ITEM", SqlKind.OTHER, 0);
+      super("DELETE_WITH_ITEM", SqlKind.WITH, 0);
     }
 
     //~ Methods ----------------------------------------------------------------
@@ -103,14 +107,17 @@ public class SqlDeleteUsingItem extends SqlCall {
         int rightPrec) {
       final SqlDeleteUsingItem usingItem = (SqlDeleteUsingItem) call;
 
-      usingItem.query.unparse(writer, 10, 10);
+      if (usingItem.query instanceof SqlIdentifier) {
+        //If it's an identifier, avoid the parenthesis
+        usingItem.query.unparse(writer, 0, 0);
+      } else {
+        final SqlWriter.Frame frame = writer.startList("(", ")");
+        usingItem.query.unparse(writer, 0, 0);
+        writer.endList(frame);
+      }
       if (usingItem.name != null) {
-        final SqlWriter.Frame frame =
-            writer.startList(
-                SqlWriter.FrameTypeEnum.AS);
         writer.keyword("AS");
         usingItem.name.unparse(writer, getLeftPrec(), getRightPrec());
-        writer.endList(frame);
       }
     }
 

@@ -92,10 +92,12 @@ public class SqlWithItem extends SqlCall {
         int leftPrec,
         int rightPrec) {
       final SqlWithItem withItem = (SqlWithItem) call;
+
       withItem.name.unparse(writer, getLeftPrec(), getRightPrec());
       if (withItem.columnList != null) {
         withItem.columnList.unparse(writer, getLeftPrec(), getRightPrec());
       }
+
       writer.keyword("AS");
       withItem.query.unparse(writer, 10, 10);
     }
