@@ -535,6 +535,10 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
     rewriteGeneric(rel);
   }
 
+  public void rewriteRel(RowSample rel) {
+    rewriteGeneric(rel);
+  }
+
   public void rewriteRel(Sample rel) {
     rewriteGeneric(rel);
   }
