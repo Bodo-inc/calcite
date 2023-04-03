@@ -769,7 +769,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
           Expressions.constant(
               requireNonNull(bd,
                   () -> "value for " + literal).toString()));
-
+    case DATE:
     case TIME:
     case TIME_WITH_LOCAL_TIME_ZONE:
     case INTERVAL_YEAR:

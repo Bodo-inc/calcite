@@ -1089,6 +1089,13 @@ public class RexLiteral extends RexNode {
         return clazz.cast(((BigDecimal) value).floatValue());
       }
       break;
+    case DATE:
+      if (clazz == Integer.class) {
+        return clazz.cast(((DateString) value).getDaysSinceEpoch());
+      } else if (clazz == Calendar.class) {
+        return clazz.cast(((DateString) value).toCalendar());
+      }
+      break;
     case TIME:
       if (clazz == Integer.class) {
         return clazz.cast(((TimeString) value).getMillisOfDay());
