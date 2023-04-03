@@ -96,7 +96,7 @@ public abstract class SqlSampleSpec {
   }
 
   /**
-   * Creates a table sample with repeatability.
+   * Creates a table sample with a row limit with repeatability.
    *
    * @param isBernoulli      true if Bernoulli style sampling is to be used;
    *                         false for implementation specific sampling

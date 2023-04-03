@@ -20,7 +20,8 @@ import org.apache.calcite.avatica.util.Spaces;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.plan.RelOptSamplingRowLimitParameters;
+import org.apache.calcite.plan.RelOptRowSamplingParameters;
+import org.apache.calcite.plan.RelOptSamplingParameters;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
@@ -45,6 +46,7 @@ import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.LogicalTableCreate;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.RelFactories;
+import org.apache.calcite.rel.core.RowSample;
 import org.apache.calcite.rel.core.Sample;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.hint.HintStrategyTable;
@@ -2428,8 +2430,8 @@ public class SqlToRelConverter {
         SqlSampleSpec.SqlTableSampleSpec tableSampleSpec =
             (SqlSampleSpec.SqlTableSampleSpec) sampleSpec;
         convertFrom(bb, operands.get(0));
-        RelOptSamplingRowLimitParameters params =
-            new RelOptSamplingRowLimitParameters(
+        RelOptSamplingParameters params =
+            new RelOptSamplingParameters(
                 tableSampleSpec.isBernoulli(),
                 tableSampleSpec.getSamplePercentage(),
                 tableSampleSpec.isRepeatable(),
@@ -2439,13 +2441,13 @@ public class SqlToRelConverter {
         SqlSampleSpec.SqlTableSampleRowLimitSpec tableSampleRowLimitSpec =
             (SqlSampleSpec.SqlTableSampleRowLimitSpec) sampleSpec;
         convertFrom(bb, operands.get(0));
-        RelOptSamplingRowLimitParameters params =
-            new RelOptSamplingRowLimitParameters(
+        RelOptRowSamplingParameters params =
+            new RelOptRowSamplingParameters(
                 tableSampleRowLimitSpec.isBernoulli(),
                 tableSampleRowLimitSpec.getNumberOfRows().intValue(),
                 tableSampleRowLimitSpec.isRepeatable(),
                 tableSampleRowLimitSpec.getRepeatableSeed());
-        bb.setRoot(new Sample(cluster, bb.root(), params), false);
+        bb.setRoot(new RowSample(cluster, bb.root(), params), false);
       } else {
         throw new AssertionError("unknown TABLESAMPLE type: " + sampleSpec);
       }
