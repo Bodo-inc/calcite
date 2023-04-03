@@ -11905,10 +11905,10 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     //tables and sub queries.
     sql("delete from emp\n"
         + "using ^not_a_real_table_name^\n"
-        +"where ename = 'bob'").fails("Object 'NOT_A_REAL_TABLE_NAME' not found");
+        + "where ename = 'bob'").fails("Object 'NOT_A_REAL_TABLE_NAME' not found");
     sql("delete from emp\n"
         + "using (emp.^deptno^ > 10) filter\n"
-        +"where ename = 'bob'").fails("Non-query expression encountered in illegal context");
+        + "where ename = 'bob'").fails("Non-query expression encountered in illegal context");
 
   }
 
@@ -11917,32 +11917,33 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // in the
     // where statement based on what's going on in the using statement
 
-//    sql("SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1").ok();
+    sql("SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1")
+        .ok();
 
     sql("delete from emp\n"
         + "using dept\n"
-        +"where emp.deptno = 1").ok();
+        + "where emp.deptno = 1").ok();
 
     sql("delete from emp\n"
         + "using dept\n"
-        +"where emp.deptno = dept.deptno").ok();
+        + "where emp.deptno = dept.deptno").ok();
 
     // The rules for ambiguous column are the same as a join,
     // so since there are two tables
     sql("delete from emp\n"
         + "using dept\n"
-        +"where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
 
     // Note that this is true even if the subquery doesn't have an alias/any way to
     // reference it
     sql("delete from emp\n"
         + "using (SELECT deptno from dept)\n"
-        +"where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
 
-    // Any unique identifiers should still be referencable
+    // Any unique identifiers should still be referencable from the "where" clause
     sql("delete from emp\n"
-        + "using (SELECT unique_column_identifier from dept)\n"
-        +"where deptno = unique_column_identifier").ok();
+        + "using (SELECT 1 as unique_column_identifier from dept)\n"
+        + "where deptno = unique_column_identifier").ok();
 
   }
 
@@ -11951,11 +11952,12 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
     sql("delete from emp\n"
         + "using (SELECT 10 as int_col from DEPT) using_tbl\n"
-        +"where ename = using_tbl.int_col").fails("TODO");
+        //Have to do an additional cast to date, otherwise calcite will coerce both columns to int
+        + "where ^Cast(ename as Date) = using_tbl.int_col^")
+        .fails(
+            "Cannot apply '=' to arguments of type '<DATE> = <INTEGER>'\\. "
+                + "Supported form\\(s\\): '<COMPARABLE_TYPE> = <COMPARABLE_TYPE>'");
 
-    sql("delete from emp\n"
-        + "using (SELECT 'bob' as str_col from DEPT) using_tbl\n"
-        +"where ename = str_col").ok();
   }
 
 

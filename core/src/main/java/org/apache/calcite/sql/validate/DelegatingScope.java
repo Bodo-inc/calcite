@@ -328,9 +328,6 @@ public abstract class DelegatingScope implements SqlValidatorScope {
       int size = identifier.names.size();
       int i = size - 1;
       for (; i > 0; i--) {
-        if (this instanceof JoinScope){
-          System.out.println("HERE");
-        }
         final SqlIdentifier prefix = identifier.getComponent(0, i);
         resolved.clear();
         resolve(prefix.names, nameMatcher, false, resolved);

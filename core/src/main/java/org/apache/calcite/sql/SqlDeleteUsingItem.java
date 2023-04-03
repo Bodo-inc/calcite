@@ -47,7 +47,7 @@ public class SqlDeleteUsingItem extends SqlCall {
   }
 
   /**
-   * Helper function used when converting Delete to Merge
+   * Helper function used when converting Delete to Merge.
    * @return
    */
   public SqlNode getSqlDeleteItemAsJoinExpression() {
@@ -58,6 +58,9 @@ public class SqlDeleteUsingItem extends SqlCall {
           this.pos, query, name);
     }
 
+  }
+  public @Nullable SqlIdentifier getName() {
+    return name;
   }
 
   @Override public List<SqlNode> getOperandList() {
@@ -99,11 +102,16 @@ public class SqlDeleteUsingItem extends SqlCall {
         int leftPrec,
         int rightPrec) {
       final SqlDeleteUsingItem usingItem = (SqlDeleteUsingItem) call;
-      if (usingItem.name != null) {
-        usingItem.name.unparse(writer, getLeftPrec(), getRightPrec());
-        writer.keyword("AS");
-      }
+
       usingItem.query.unparse(writer, 10, 10);
+      if (usingItem.name != null) {
+        final SqlWriter.Frame frame =
+            writer.startList(
+                SqlWriter.FrameTypeEnum.AS);
+        writer.keyword("AS");
+        usingItem.name.unparse(writer, getLeftPrec(), getRightPrec());
+        writer.endList(frame);
+      }
     }
 
     @SuppressWarnings("argument.type.incompatible")

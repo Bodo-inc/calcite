@@ -9965,11 +9965,12 @@ public class SqlParserTest {
         + "using (Select * from dept where deptno < 10) as dept_filtered, (Select * from dept where deptno > 10) as dept_filtered_2\n"
         + "where empno = (SELECT MAX(deptno) from dept_filtered) and empno = (SELECT MAX(deptno) from dept_filtered_2)\n";
     final String expected = "DELETE FROM `EMPS`\n"
-        + "USING ((`DEPT_FILTERED` AS (SELECT *\n"
+        + "USING ((SELECT *\n"
         + "FROM `DEPT`\n"
-        + "WHERE (`DEPTNO` < 10))), (`DEPT_FILTERED_2` AS (SELECT *\n"
+        + "WHERE (`DEPTNO` < 10)) AS `DEPT_FILTERED`)\n"
+        + ", ((SELECT *\n"
         + "FROM `DEPT`\n"
-        + "WHERE (`DEPTNO` > 10))))\n"
+        + "WHERE (`DEPTNO` > 10)) AS `DEPT_FILTERED_2`)\n"
         + "WHERE ((`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
         + "FROM `DEPT_FILTERED`)) AND (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
         + "FROM `DEPT_FILTERED_2`)))";

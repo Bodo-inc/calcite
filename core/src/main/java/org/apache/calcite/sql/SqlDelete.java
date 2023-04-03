@@ -22,6 +22,8 @@ import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.ImmutableNullableList;
 
+import org.apache.calcite.util.Pair;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
@@ -134,7 +136,7 @@ public class SqlDelete extends SqlCall {
 
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     final SqlWriter.Frame frame =
-        writer.startList(SqlWriter.FrameTypeEnum.SELECT, "DELETE FROM", "");
+        writer.startList(SqlWriter.FrameTypeEnum.AS, "DELETE FROM", "");
     final int opLeft = getOperator().getLeftPrec();
     final int opRight = getOperator().getRightPrec();
     targetTable.unparse(writer, opLeft, opRight);
@@ -143,10 +145,24 @@ public class SqlDelete extends SqlCall {
       writer.keyword("AS");
       alias.unparse(writer, opLeft, opRight);
     }
-    SqlNode using = this.usingList;
+    SqlNodeList using = this.usingList;
     if (using != null) {
       writer.sep("USING");
-      using.unparse(writer, opLeft, opRight);
+      final SqlWriter.Frame frame1 = writer.startList("", "");
+
+      for (int i = 0; i < using.size(); i ++) {
+        SqlDeleteUsingItem val = (SqlDeleteUsingItem) using.get(i);
+        if (i != 0){
+          writer.sep(",");
+        }
+        val.unparse(writer, opLeft, opRight);
+        if (val.getName() != null) {
+
+          writer.keyword("AS");
+          val.getName().unparse(writer, leftPrec, rightPrec);
+        }
+      }
+      writer.endList(frame1);
     }
     SqlNode condition = this.condition;
     if (condition != null) {
