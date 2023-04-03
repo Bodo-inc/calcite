@@ -25,7 +25,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.List;
 
 /**
- * Sql node for representing an item in the.
+ * Sql node for representing an item in the "USING" clause of a DELETE statement.
  * This is heavily based on SqlWithItem which can be found here:
  * core/src/main/java/org/apache/calcite/sql/SqlWithItem.java
  */
@@ -47,8 +47,9 @@ public class SqlDeleteUsingItem extends SqlCall {
   }
 
   /**
-   * Helper function used when converting Delete to Merge. Returns the original query/table
-   * reference wrapped in a call to AS, if the delete item had an alias.
+   * Helper function used when converting Delete to Merge during the unconditional rewrite step.
+   * Returns the original query/table reference wrapped in a call to AS,
+   * if the delete item had an alias.
    */
   public SqlNode getSqlDeleteItemAsJoinExpression() {
     if (name == null) {
@@ -84,16 +85,15 @@ public class SqlDeleteUsingItem extends SqlCall {
   }
 
   /**
-   * SqlWithItemOperator is used to represent an item in a WITH clause of a
-   * query. It has a name, an optional column list, and a query.
+   * SqlDeleteUsingItemOperator is the operator used for an item in a USING clause of a DELETE
+   * query.
    */
   private static class SqlDeleteUsingItemOperator extends SqlSpecialOperator {
     private static final SqlDeleteUsingItemOperator INSTANCE =
         new SqlDeleteUsingItemOperator();
 
-    //We're not casing by this SqlKind anywhere, so just leaving it as "Other" for now.
-    //NOTE2: We do actually use this in SqlCall during unparsing. Any SqlKind that is not
-    //an expression works perfectly fine.
+    //We do actually use this in SqlCall during unparsing. Any SqlKind that is not
+    //an expression works perfectly fine, since we get rid of it during un conditionalRewrites
     SqlDeleteUsingItemOperator() {
       super("DELETE_WITH_ITEM", SqlKind.WITH, 0);
     }

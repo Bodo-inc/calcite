@@ -1483,10 +1483,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case DELETE: {
       SqlDelete call = (SqlDelete) node;
       if (call.getUsing() != null) {
-        //If we have a Using clause, we rewrite the delete as a merge operation
+        //If we have a USING clause, we rewrite the delete as a merge operation
         node = rewriteDeleteToMerge(call);
       } else {
-        //Otherwise, we leave it as is, and just generate the createSourceSelectForDelete
+        //Otherwise, we leave it as is, and just generate the source select
         SqlSelect select = createSourceSelectForDelete(call);
         call.setSourceSelect(select);
       }
@@ -1764,6 +1764,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         "rewriteDeleteToMerge called on a delete with no 'USING' clause";
     SqlNode targetTable = originalDeleteCall.getTargetTable();
     SqlNode condition = originalDeleteCall.getCondition();
+    if (condition == null) {
+      condition = SqlLiteral.createBoolean(true, SqlParserPos.ZERO);
+    }
     SqlIdentifier alias = originalDeleteCall.getAlias();
 
     SqlNodeList matchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
@@ -1772,14 +1775,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         SqlDelete(originalDeleteCall.getParserPosition(),
         targetTable, null, null, null, alias);
 
-    //There's a wierd issue here. Essentially, the will infer the row type as EMP from the merge.
+    //There's a wierd issue here. Essentially, in validation, it will infer
+    // the row type of EMP as the row type from the merge in one location, but
+    // as the emp from the original table in another location, which causes a number conflicts.
     //
     // I spent about a day trying to resolve this, but all the fixes I tried ended up breaking
-    // existing
-    // Merge into paths, and we don't even use the Delete List anywhere
+    // existing merge into paths, and we don't even use the created Delete List anywhere
     // in the merge path, I'm just going to set this to something arbitrary, and leave this as
     // technical debt to figure out later.
-
     SqlSelect select = createSourceSelectForDelete(matchedDeleteExpression);
     select.getSelectList().remove(0);
     select.getSelectList().add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
@@ -1789,7 +1792,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     SqlNodeList unMatchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
 
     //Set source to be the join of all the tables in Using.
-    //We're relying on the optimizer to push filters from the ON clause,
+    //We're relying on the optimizer to push filters from the ON clause
     //into the source table when appropriate.
     SqlNode source = ((SqlDeleteUsingItem) usingClauses.get(0)).getSqlDeleteItemAsJoinExpression();
     for (int i = 1; i < usingClauses.size(); i++) {
@@ -1809,7 +1812,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             matchedCallList, unMatchedCallList, null,
             alias);
 
-    //Run rewrite merge, so that it can apply whatever changes it needs to...
+    //Run rewrite merge, so that it can apply whatever changes it needs to.
     rewriteMerge(mergeCall);
     return mergeCall;
   }
