@@ -1552,7 +1552,25 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           SqlValidatorUtil.addAlias(
               targetTable,
               call.getAlias().getSimple());
-    } else {
+    }
+    else {
+      // Due to the manner in which calcite handles subqueries, we need to explicitly add an
+      // alias here in order to handle fully qualification.
+      //
+      // For example this will succseed:
+      //
+      // SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1
+      //
+      // But this will not:
+      //
+      // SELECT *, True from dept inner join (SELECT *, True from emp) on emp.ename = 1
+      //
+      // Therefore, we need add this explicit alias because we expect a query like:
+      // ... using table T1
+      // WHEN MATCHED AND T1.foo > 1
+      //
+      // to be able to properly handle the fully qualified reference to T1.foo
+      //
       targetTable =
           SqlValidatorUtil.addAlias(
               targetTable,
@@ -1707,9 +1725,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         SqlDelete(originalDeleteCall.getParserPosition(),
         targetTable, null, null, null, alias);
 
-    //There's a wierd issue here. Essentially, infers the row type as EMP from the merge,
+    //There's a wierd issue here. Essentially, the will infer the row type as EMP from the merge.
     //
+    // I spent about a day trying to resolve this, but all the fixes I tried ended up breaking
+    // existing
+    // Merge into paths, and we don't even use the Delete List anywhere
+    // in the merge path, I'm just going to set this to something arbitrary, and leave this as
+    // technical debt to figure out later.
+
     SqlSelect select = createSourceSelectForDelete(matchedDeleteExpression);
+    select.getSelectList().remove(0);
+    select.getSelectList().add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
     matchedDeleteExpression.setSourceSelect(select);
 
     matchedCallList.add(matchedDeleteExpression);

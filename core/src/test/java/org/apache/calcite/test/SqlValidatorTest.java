@@ -11917,6 +11917,12 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // in the
     // where statement based on what's going on in the using statement
 
+//    sql("SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1").ok();
+
+    sql("delete from emp\n"
+        + "using dept\n"
+        +"where emp.deptno = 1").ok();
+
     sql("delete from emp\n"
         + "using dept\n"
         +"where emp.deptno = dept.deptno").ok();
@@ -11925,15 +11931,15 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // so since there are two tables
     sql("delete from emp\n"
         + "using dept\n"
-        +"where deptno = deptno").fails("TODO");
+        +"where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
 
     // Note that this is true even if the subquery doesn't have an alias/any way to
     // reference it
     sql("delete from emp\n"
         + "using (SELECT deptno from dept)\n"
-        +"where deptno = deptno").fails("TODO");
+        +"where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
 
-
+    // Any unique identifiers should still be referencable
     sql("delete from emp\n"
         + "using (SELECT unique_column_identifier from dept)\n"
         +"where deptno = unique_column_identifier").ok();
