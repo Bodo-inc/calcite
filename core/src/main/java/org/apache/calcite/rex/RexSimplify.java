@@ -2219,6 +2219,7 @@ public class RexSimplify {
         default:
           break;
         }
+        break;
       default:
         break;
       }
