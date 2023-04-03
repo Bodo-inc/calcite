@@ -324,7 +324,11 @@ void SqlSelectKeywords(List<SqlLiteral> keywords) :
 void SqlInsertKeywords(List<SqlLiteral> keywords) :
 {}
 {
-    E()
+    // I looked through the various available parsers, none of them seemed to extend this in any way,
+    // and directly adding the "SqlInsertKeywords" production to our local copy of the bodo parser failed with:
+    // Error: Line 1100, Column 1: SqlInsertKeywords occurs on the left hand side of more than one production.
+    // Therore, for now, I'm just going to manually add this to the core parser.
+    [<OVERWRITE> {keywords.add(SqlInsertKeyword.OVERWRITE.symbol(getPos()));}]
 }
 
 /*
@@ -8100,6 +8104,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < OVERLAPS: "OVERLAPS" >
 |   < OVERLAY: "OVERLAY" >
 |   < OVERRIDING: "OVERRIDING" >
+|   < OVERWRITE: "OVERWRITE" >
 |   < PAD: "PAD" >
 |   < PARAMETER: "PARAMETER" >
 |   < PARAMETER_MODE: "PARAMETER_MODE" >
@@ -8433,6 +8438,7 @@ String NonReservedKeyWord() :
     |   <CONTAINS>
     |   <INSERT>
     |   <DAY>
+    |   <OVERWRITE>
     )
     {
         return unquotedIdentifier();
