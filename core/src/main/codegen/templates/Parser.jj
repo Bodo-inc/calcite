@@ -1772,7 +1772,7 @@ SqlDeleteUsingItem SqlDeleteUsingElement() :
 {
     // Based on my reading of with parsing, this should allow
     // for either a table identifier, or
-    // any subquery valid in a "with" cluase (which is the expected
+    // any subquery valid in a WITH clause (which is the expected
     // behavior)
     (
     deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
