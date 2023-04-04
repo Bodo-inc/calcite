@@ -1486,7 +1486,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // If we have a USING clause, we rewrite the delete as a merge operation
         node = rewriteDeleteToMerge(call);
       } else {
-        //Otherwise, we leave it as is, and just generate the source select
+        // Otherwise, we leave it as is, and just generate the source select
         SqlSelect select = createSourceSelectForDelete(call);
         call.setSourceSelect(select);
       }
@@ -1601,12 +1601,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
               call.getAlias().getSimple());
     } else {
       // Due to the manner in which calcite handles subqueries, we need to explicitly add an
-      // alias here in order to handle fully qualification.
+      // alias here in order to handle fully qualified table names.
       //
       // For example this will succseed:
       //
       // SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1
-      //
+      //                                                               ^^^^^^
       // But this will not:
       //
       // SELECT *, True from dept inner join (SELECT *, True from emp) on emp.ename = 1
@@ -1738,7 +1738,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
 
   /**
-   * Used in UnconditonalRewrites. In the case that we have a delete with a using clause.
+   * Used in UnconditonalRewrites. In the case that we have a DELETE with a USING clause.
    *
    * DELETE FROM target using T1, T2, ... where (cond) is equivalent to
    *
@@ -1747,7 +1747,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * We choose to do this rewrite (similar to rewriteUpdateToMerge), in order to simplify validation
    * and sqlToRel code generation.
    *
-   * @param originalDeleteCall The delete call to transform. Must have at least one table/subquery
+   * @param originalDeleteCall The DELETE call to transform. Must have at least one table/subquery
    *                           in the "USING" clause.
    * @return A new SqlMerge, which is equivalent to the original SqlDelete call.
    */
@@ -1783,6 +1783,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // existing merge into paths, and we don't even use the created Delete List anywhere
     // in the merge path, I'm just going to set this to something arbitrary, and leave this as
     // technical debt to figure out later.
+    // TODO(keaton)
     SqlSelect select = createSourceSelectForDelete(matchedDeleteExpression);
     select.getSelectList().remove(0);
     select.getSelectList().add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
@@ -1883,7 +1884,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     source = SqlValidatorUtil.addAlias(source, UPDATE_SRC_ALIAS);
     SqlMerge mergeCall =
         new SqlMerge(updateCall.getParserPosition(), target, condition, source,
-            SqlNodeList.of(updateCall), SqlNodeList.EMPTY.clone(SqlParserPos.ZERO), null,
+            SqlNodeList.of(updateCall), SqlNodeList.EMPTY, null,
             updateCall.getAlias());
     rewriteMerge(mergeCall);
     return mergeCall;
@@ -1988,7 +1989,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @return select statement
    */
   protected SqlSelect createSourceSelectForDelete(SqlDelete call) {
-
     final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     SqlNode sourceTable = call.getTargetTable();
