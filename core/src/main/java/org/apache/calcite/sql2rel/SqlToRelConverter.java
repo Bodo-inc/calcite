@@ -49,6 +49,7 @@ import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.RowSample;
 import org.apache.calcite.rel.core.Sample;
 import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
@@ -4118,11 +4119,11 @@ public class SqlToRelConverter {
         convertQueryRecursive(call.getSource(), true, targetRowType).project();
     RelNode massagedRel = convertColumnList(call, sourceRel);
 
-    return createModify(targetTable, massagedRel);
+    return createModify(targetTable, massagedRel, call.isOverwrite());
   }
 
   /** Creates a relational expression to modify a table or modifiable view. */
-  private RelNode createModify(RelOptTable targetTable, RelNode source) {
+  private RelNode createModify(RelOptTable targetTable, RelNode source, boolean overwrite) {
     final ModifiableTable modifiableTable =
         targetTable.unwrap(ModifiableTable.class);
     if (modifiableTable != null
@@ -4141,10 +4142,12 @@ public class SqlToRelConverter {
               modifiableView.getTablePath());
       final RelNode newSource =
           createSource(targetTable, source, modifiableView, delegateRowType);
-      return createModify(delegateRelOptTable, newSource);
+      return createModify(delegateRelOptTable, newSource, overwrite);
     }
+    TableModify.Operation op = overwrite ? TableModify.Operation.TRUNCATE_AND_INSERT
+        : TableModify.Operation.INSERT;
     return LogicalTableModify.create(targetTable, catalogReader, source,
-        LogicalTableModify.Operation.INSERT, null, null, false);
+        op, null, null, false);
   }
 
   /** Wraps a relational expression in the projects and filters implied by

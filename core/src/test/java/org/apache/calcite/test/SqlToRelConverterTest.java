@@ -3123,6 +3123,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+  @Test void testInsertOverwrite() {
+    final String sql = "insert overwrite into empnullables (empno, ename)\n"
+        + "select deptno, ename from emp order by ename limit 10";
+    sql(sql).ok();
+  }
+
   @Test void testDelete() {
     final String sql = "delete from emp";
     sql(sql).ok();

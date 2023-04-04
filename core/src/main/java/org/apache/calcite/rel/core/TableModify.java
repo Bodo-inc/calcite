@@ -71,7 +71,8 @@ public abstract class TableModify extends SingleRel {
     DELETE(0),
     INSERT(1),
     UPDATE(2),
-    MERGE(3);
+    MERGE(3),
+    TRUNCATE_AND_INSERT(4);
 
     private final int value;
     private static final Operation[] VALUEMAP;
