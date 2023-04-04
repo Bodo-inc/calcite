@@ -1717,6 +1717,7 @@ SqlNode SqlDelete() :
     SqlNodeList using = null;
     final SqlNode condition;
     final Span s;
+    final SqlDelete delete;
 }
 {
     <DELETE> {
@@ -1733,8 +1734,10 @@ SqlNode SqlDelete() :
     [ <USING> using = SqlDeleteUsingList() ]
     condition = WhereOpt()
     {
-        return new SqlDelete(s.add(table).addIf(extendList).addIf(alias).addIf(using)
-            .addIf(condition).pos(), table, using, condition, null, alias);
+        delete = new SqlDelete(s.add(table).addIf(extendList).addIf(alias).addIf(using)
+            .addIf(condition).pos(), table, condition, null, alias);
+        delete.setUsingList(using);
+        return delete;
     }
 }
 
@@ -2013,7 +2016,7 @@ SqlDelete WhenMatchedClauseDelete(SqlNode table, SqlIdentifier alias) :
 
     <DELETE>
     {
-        return new SqlDelete(span().pos(), table, null, null, null, alias);
+        return new SqlDelete(span().pos(), table, null, null, alias);
     }
 }
 

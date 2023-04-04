@@ -1483,7 +1483,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case DELETE: {
       SqlDelete call = (SqlDelete) node;
       if (call.getUsing() != null) {
-        //If we have a USING clause, we rewrite the delete as a merge operation
+        // If we have a USING clause, we rewrite the delete as a merge operation
         node = rewriteDeleteToMerge(call);
       } else {
         //Otherwise, we leave it as is, and just generate the source select
@@ -1773,7 +1773,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     SqlDelete matchedDeleteExpression = new
         SqlDelete(originalDeleteCall.getParserPosition(),
-        targetTable, null, null, null, alias);
+        targetTable, null, null, alias);
 
     //There's a wierd issue here. Essentially, in validation, it will infer
     // the row type of EMP as the row type from the merge in one location, but

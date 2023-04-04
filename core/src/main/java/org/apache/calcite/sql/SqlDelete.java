@@ -46,19 +46,22 @@ public class SqlDelete extends SqlCall {
   public SqlDelete(
       SqlParserPos pos,
       SqlNode targetTable,
-      @Nullable SqlNodeList usingList,
       @Nullable SqlNode condition,
       @Nullable SqlSelect sourceSelect,
       @Nullable SqlIdentifier alias) {
     super(pos);
     this.targetTable = targetTable;
     this.condition = condition;
-    this.usingList = usingList;
     this.sourceSelect = sourceSelect;
     this.alias = alias;
+    this.usingList = null;
   }
 
   //~ Methods ----------------------------------------------------------------
+
+  public void setUsingList(SqlNodeList list) {
+    this.usingList = list;
+  }
 
   @Override public SqlKind getKind() {
     return SqlKind.DELETE;
