@@ -5080,7 +5080,7 @@ public class SqlParserTest {
     expr("trim('mustache' FROM 'beard'^,^ 'a')")
         .fails("(?s).*Encountered \",\" at.*");
 
-    //Sanity check that lookahead isn't going to be an issue
+    // Sanity check that lookahead isn't going to be an issue
     expr("trim('mustache'||'beard'||'hello'||'beard'||'hello', "
         + "'hello'||'beard'||'hello'||'beard'||'hello')")
         .ok("TRIM(BOTH (((('hello' || 'beard') || 'hello') || 'beard') || 'hello') "

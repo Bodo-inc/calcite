@@ -1775,7 +1775,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         SqlDelete(originalDeleteCall.getParserPosition(),
         targetTable, null, null, alias);
 
-    //There's a wierd issue here. Essentially, in validation, it will infer
+    // TODO(keaton)
+    // There's a wierd issue here. Essentially, in validation, it will infer
     // the row type of EMP as the row type from the merge in one location, but
     // as the emp from the original table in another location, which causes a number conflicts.
     //
@@ -1783,7 +1784,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // existing merge into paths, and we don't even use the created Delete List anywhere
     // in the merge path, I'm just going to set this to something arbitrary, and leave this as
     // technical debt to figure out later.
-    // TODO(keaton)
     SqlSelect select = createSourceSelectForDelete(matchedDeleteExpression);
     select.getSelectList().remove(0);
     select.getSelectList().add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
