@@ -1749,6 +1749,7 @@ SqlNode SqlUpdate() :
     SqlIdentifier id;
     SqlNode exp;
     final Span s;
+    SqlNodeList fromExpressionList = null;
 }
 {
     <UPDATE> { s = span(); }
@@ -1781,6 +1782,8 @@ SqlNode SqlUpdate() :
             sourceExpressionList.add(exp);
         }
     )*
+
+    [SqlUpdateFrom()]
     condition = WhereOpt()
     {
         return new SqlUpdate(s.addAll(targetColumnList)
@@ -1788,6 +1791,61 @@ SqlNode SqlUpdate() :
             targetColumnList, sourceExpressionList, condition, null, alias);
     }
 }
+
+
+SqlNodeList SqlUpdateFrom():
+{
+    SqlNodeList returnList;
+    SqlNode val;
+    final Span s;
+}
+{
+    <FROM> { s = span(); returnList = new SqlNodeList(s.pos()); }
+    (
+    val = SqlUpdateFromItem() {returnList.add(val);}
+    )*
+    {
+      return fromExpressionList;
+    }
+}
+
+
+SqlNode SqlUpdateFromItem():
+{
+    SqlNode deleteUsingElement;
+    SqlIdentifier alias = null;
+    SqlParserPos s;
+}
+{
+    // Snowflake documentation can be found here: https://docs.snowflake.com/en/sql-reference/sql/update
+    // The exact syntax for from is listed as
+    // FROM <additional_tables>. However, upon manual testing,
+    // it seems that subqeries are allowed:
+    //
+    // UPDATE TEST_DB.PUBLIC.KEATON_TABLE_TEST table1
+    // SET L_ORDERKEY = 1
+    // FROM (SELECT * from TEST_DB.PUBLIC.KEATON_TABLE_TEST limit 10) table2
+    // WHERE table1.L_ORDERKEY = table2.L_ORDERKEY
+    //
+    // Therefore, I'm going to assume that the allowed are the same as DELETE USING's
+    (
+    deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
+    | deleteUsingElement = TableRefWithHintsOpt()
+    ) {s = deleteUsingElement.getParserPosition();}
+    [
+     (
+         (<AS> alias = SimpleIdentifier())
+         | alias = SimpleIdentifier()
+     ) {s = s.plus(alias.getParserPosition());}
+    ]
+    {
+        return new SqlDeleteUsingItem(
+            s,
+            alias,
+            deleteUsingElement);
+    }
+}
+
 
 /**
  * Parses a MERGE statement.
