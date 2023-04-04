@@ -44,8 +44,7 @@ public class SqlInsert extends SqlCall {
               operands[1],
               operands[2],
               (SqlNodeList) operands[3],
-              operands[4]
-              );
+              operands[4]);
         }
       };
 
@@ -102,7 +101,7 @@ public class SqlInsert extends SqlCall {
 
   /** Returns whether this insert contains an OVERWRITE clause.
    */
-  public final boolean isOverWrite() {
+  public final boolean isOverwrite() {
     return getModifierNode(SqlInsertKeyword.OVERWRITE) != null;
   }
 
@@ -194,7 +193,7 @@ public class SqlInsert extends SqlCall {
   @Override public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
     writer.startList(SqlWriter.FrameTypeEnum.SELECT);
     StringBuilder initialString = new StringBuilder(isUpsert() ? "UPSERT" : "INSERT");
-    initialString.append(isOverWrite() ? " OVERWRITE " : " ");
+    initialString.append(isOverwrite() ? " OVERWRITE " : " ");
     initialString.append("INTO");
     writer.sep(initialString.toString());
     final int opLeft = getOperator().getLeftPrec();
