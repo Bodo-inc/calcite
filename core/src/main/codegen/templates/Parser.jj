@@ -1750,6 +1750,7 @@ SqlNode SqlUpdate() :
     SqlNode exp;
     final Span s;
     SqlNodeList fromExpressionList = null;
+    final SqlUpdate update;
 }
 {
     <UPDATE> { s = span(); }
@@ -1783,12 +1784,16 @@ SqlNode SqlUpdate() :
         }
     )*
 
-    [SqlUpdateFrom()]
+    [fromExpressionList = SqlUpdateFrom()]
     condition = WhereOpt()
     {
-        return new SqlUpdate(s.addAll(targetColumnList)
+        update = new SqlUpdate(s.addAll(targetColumnList)
             .addAll(sourceExpressionList).addIf(condition).pos(), table,
             targetColumnList, sourceExpressionList, condition, null, alias);
+
+        update.setFromList(fromExpressionList);
+
+        return update;
     }
 }
 
@@ -1805,7 +1810,7 @@ SqlNodeList SqlUpdateFrom():
     val = SqlUpdateFromItem() {returnList.add(val);}
     )*
     {
-      return fromExpressionList;
+      return returnList;
     }
 }
 
@@ -1839,10 +1844,11 @@ SqlNode SqlUpdateFromItem():
      ) {s = s.plus(alias.getParserPosition());}
     ]
     {
-        return new SqlDeleteUsingItem(
-            s,
-            alias,
-            deleteUsingElement);
+        return null;
+//        return new SqlDeleteUsingItem(
+//            s,
+//            alias,
+//            deleteUsingElement);
     }
 }
 
