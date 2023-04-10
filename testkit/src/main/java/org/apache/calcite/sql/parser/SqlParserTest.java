@@ -2294,6 +2294,22 @@ public class SqlParserTest {
     sql(sql).ok(expected);
   }
 
+  @Test void testWithMultiple() {
+    // Tests parsing multiple "with" elements in the same query
+    final String sql = "with emp2 as (select * from emp), emp3 as (select * from emp)\n"
+        + "select * from emp2\n"
+        + "union\n"
+        + "select * from emp2\n";
+    final String expected = "WITH `EMP2` AS (SELECT *\n"
+        + "FROM `EMP`), `EMP3` AS (SELECT *\n"
+        + "FROM `EMP`) (SELECT *\n"
+        + "FROM `EMP2`\n"
+        + "UNION\n"
+        + "SELECT *\n"
+        + "FROM `EMP2`)";
+    sql(sql).ok(expected);
+  }
+
   @Test void testIdentifier() {
     expr("ab").ok("`AB`");
     expr("     \"a  \"\" b!c\"").ok("`a  \" b!c`");
@@ -4387,6 +4403,14 @@ public class SqlParserTest {
         .ok(expected);
   }
 
+  @Test void testInsertOverwrite() {
+    final String expected = "INSERT OVERWRITE INTO `EMPS`\n"
+        + "VALUES (ROW(1, 'Fredkin'))";
+    sql("insert overwrite into emps values (1,'Fredkin')")
+        .ok(expected)
+        .node(not(isDdl()));
+  }
+
   @Test void testExplainInsert() {
     final String expected = "EXPLAIN PLAN INCLUDING ATTRIBUTES"
         + " WITH IMPLEMENTATION FOR\n"
@@ -5038,6 +5062,20 @@ public class SqlParserTest {
         .ok("CAST(DATE '2004-12-21' AS VARCHAR(10))");
   }
 
+  @Test void testDateFunction() {
+    expr("date('2000-01-01')")
+        .ok("DATE('2000-01-01')");
+    expr("date(date '2000-01-01')")
+        .ok("DATE(DATE '2000-01-01')");
+    expr("date(timestamp '2000-01-01 23:59:59.1')")
+        .ok("DATE(TIMESTAMP '2000-01-01 23:59:59.1')");
+    expr("date('123456')")
+        .ok("DATE('123456')");
+
+    expr("date('01-01-2000', 'MM-DD-YYYY')")
+        .ok("DATE('01-01-2000', 'MM-DD-YYYY')");
+  }
+
   @Test void testTrim() {
     expr("trim('mustache', 'a')")
         .ok("TRIM(BOTH 'a' FROM 'mustache')");
@@ -5064,7 +5102,7 @@ public class SqlParserTest {
     expr("trim('mustache' FROM 'beard'^,^ 'a')")
         .fails("(?s).*Encountered \",\" at.*");
 
-    //Sanity check that lookahead isn't going to be an issue
+    // Sanity check that lookahead isn't going to be an issue
     expr("trim('mustache'||'beard'||'hello'||'beard'||'hello', "
         + "'hello'||'beard'||'hello'||'beard'||'hello')")
         .ok("TRIM(BOTH (((('hello' || 'beard') || 'hello') || 'beard') || 'hello') "
@@ -9933,6 +9971,43 @@ public class SqlParserTest {
     final String expected = "DELETE FROM `EMPS`\n"
         + "/*+ `PROPERTIES`(`K1` = 'v1', `K2` = 'v2'), `INDEX`(`IDX1`, `IDX2`), `NO_HASH_JOIN` */\n"
         + "WHERE (`EMPNO` = 12)";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingTableInDelete() {
+    final String sql = "delete from emps\n"
+        + "using dept\n"
+        + "where empno = (SELECT MAX(deptno) from dept)\n";
+    final String expected = "DELETE FROM `EMPS` USING `DEPT`\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingSubqueryInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered)\n";
+    final String expected = "DELETE FROM `EMPS` USING ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))) AS `DEPT_FILTERED`\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingMultipleValuesInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered, (Select * from dept where deptno > 10) as dept_filtered_2\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered) and empno = (SELECT MAX(deptno) from dept_filtered_2)\n";
+    final String expected = "DELETE FROM `EMPS` USING ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))) AS `DEPT_FILTERED`, ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` > 10))) AS `DEPT_FILTERED_2`\n"
+        + "WHERE ((`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`)) AND (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED_2`)))";
     sql(sql).ok(expected);
   }
 

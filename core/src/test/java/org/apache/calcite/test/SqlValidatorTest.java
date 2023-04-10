@@ -1475,6 +1475,15 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("CAST( '2004-12-21 10:12:21' AS TIMESTAMP)").ok();
   }
 
+  @Test void testDateFunction() {
+    expr("date('2000-01-01')").ok();
+    expr("date(date '2000-01-01')").ok();
+    expr("date(timestamp '2000-01-01 23:59:59.1')").ok();
+    expr("date('123456')").ok();
+
+    expr("date('01-01-2000', 'MM-DD-YYYY')").ok();
+  }
+
   @Test void testConvertTimezoneFunction() {
     wholeExpr("CONVERT_TIMEZONE('UTC', 'America/Los_Angeles',"
         + " CAST('2000-01-01' AS TIMESTAMP))")
@@ -9931,6 +9940,9 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
     sql("insert into empnullables (empno, ename)\n"
         + "values (1, 'Karl')").ok();
+
+    sql("insert overwrite into empnullables (empno, ename)\n"
+        + "values (1, 'Karl')").ok();
   }
 
   @Test void testInsertWithNonEqualSourceSinkFieldsNum() {
@@ -11899,6 +11911,67 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + " where extra = 'test'")
         .fails("Duplicate name 'EXTRA' in column list");
   }
+
+  @Test void testDeleteUsingExpressionType() {
+    //Some simple tests to make sure that we disallow expressions other than
+    //tables and sub queries.
+    sql("delete from emp\n"
+        + "using ^not_a_real_table_name^\n"
+        + "where ename = 'bob'").fails("Object 'NOT_A_REAL_TABLE_NAME' not found");
+    sql("delete from emp\n"
+        + "using (emp.^deptno^ > 10) filter\n"
+        + "where ename = 'bob'").fails("Non-query expression encountered in illegal context");
+
+  }
+
+  @Test void testDeleteUsingIdentifierQualification() {
+    // Some simple tests to make sure that we properly handle identifier scoping/qualification
+    // in the
+    // where statement based on what's going on in the using statement
+
+    sql("SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1")
+        .ok();
+
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where emp.deptno = 1").ok();
+
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where emp.deptno = dept.deptno").ok();
+
+    // The rules for ambiguous column are the same as a join,
+    // so since there are two tables
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+
+    // Note that this is true even if the subquery doesn't have an alias/any way to
+    // reference it
+    sql("delete from emp\n"
+        + "using (SELECT deptno from dept)\n"
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+
+    // Any unique identifiers should still be referencable from the "where" clause
+    sql("delete from emp\n"
+        + "using (SELECT 1 as unique_column_identifier from dept)\n"
+        + "where deptno = unique_column_identifier").ok();
+
+  }
+
+  @Test void testDeleteUsingTypeChecking() {
+    //Some simple tests to make sure that we properly do type checking
+
+    sql("delete from emp\n"
+        + "using (SELECT 10 as int_col from DEPT) using_tbl\n"
+        //Have to do an additional cast to date, otherwise calcite will coerce both columns to int
+        + "where ^Cast(ename as Date) = using_tbl.int_col^")
+        .fails(
+            "Cannot apply '=' to arguments of type '<DATE> = <INTEGER>'\\. "
+                + "Supported form\\(s\\): '<COMPARABLE_TYPE> = <COMPARABLE_TYPE>'");
+
+  }
+
 
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-1804">[CALCITE-1804]
