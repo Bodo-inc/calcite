@@ -193,13 +193,13 @@ public class SqlValidatorFixture {
     return withValidatorConfig(c -> c.withNamedParamTableName("BodoNamedParams"));
   }
 
-  SqlValidatorFixture withWhole(boolean whole) {
+  public SqlValidatorFixture withWhole(boolean whole) {
     Preconditions.checkArgument(sap.cursor < 0);
     final StringAndPos sap = StringAndPos.of("^" + this.sap.sql + "^");
     return new SqlValidatorFixture(tester, factory, sap, expression, whole);
   }
 
-  SqlValidatorFixture ok() {
+  public SqlValidatorFixture ok() {
     tester.assertExceptionIsThrown(factory, toSql(false), null);
     return this;
   }
@@ -217,7 +217,7 @@ public class SqlValidatorFixture {
    * Checks that a SQL expression fails, giving an {@code expected} error,
    * if {@code b} is true, otherwise succeeds.
    */
-  SqlValidatorFixture failsIf(boolean b, String expected) {
+  public SqlValidatorFixture failsIf(boolean b, String expected) {
     if (b) {
       fails(expected);
     } else {
