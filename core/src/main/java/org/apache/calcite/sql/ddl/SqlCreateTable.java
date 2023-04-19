@@ -60,9 +60,23 @@ public class SqlCreateTable extends SqlCreate {
    * DDL statements prior to SqlToRel conversion.
    */
   public enum CreateTableType {
-    PERMANENT,
+    DEFAULT,
     TEMPORARY,
     TRANSIENT;
+
+    public String asStringKeyword() {
+      switch (this) {
+      case TEMPORARY:
+        return "TEMPORARY";
+      case TRANSIENT:
+        return "TRANSIENT";
+      case DEFAULT:
+        return "";
+      default:
+        throw new RuntimeException("Reached unreachable code in CreateTableType.asStringKeyword");
+      }
+    }
+
   }
 
   private static final SqlOperator OPERATOR =
@@ -75,7 +89,7 @@ public class SqlCreateTable extends SqlCreate {
     this.name = Objects.requireNonNull(name, "name");
     this.columnList = columnList; // may be null
     this.query = query; // for "CREATE TABLE ... AS query"; may be null
-    this.createType = CreateTableType.PERMANENT; // To handle CREATE [TEMPORARY/PERMANENT/..] TABLE
+    this.createType = CreateTableType.DEFAULT; // To handle CREATE [TEMPORARY/TRANSIENT/..] TABLE
   }
 
   @SuppressWarnings("nullness")
