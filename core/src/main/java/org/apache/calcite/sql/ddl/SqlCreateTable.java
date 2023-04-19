@@ -64,6 +64,8 @@ public class SqlCreateTable extends SqlCreate {
     TEMPORARY,
     TRANSIENT;
 
+    //Helper function to convert the enum to string. Used in the BodoSQL repo when generating
+    //text
     public String asStringKeyword() {
       switch (this) {
       case TEMPORARY:
