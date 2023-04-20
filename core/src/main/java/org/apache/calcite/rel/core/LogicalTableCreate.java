@@ -58,6 +58,18 @@ public class LogicalTableCreate extends TableCreate {
     this.createTableType = createTableType;
   }
 
+  protected LogicalTableCreate(final RelOptCluster cluster, final RelTraitSet traits,
+      final RelNode input, final Schema schema, final String tableName,
+      final boolean isReplace,
+      final List<String> path) {
+    super(cluster, traits, input);
+    this.schema = schema;
+    this.tableName = tableName;
+    this.isReplace = isReplace;
+    this.schemaPath = path;
+    this.createTableType = SqlCreateTable.CreateTableType.DEFAULT;
+  }
+
   /** Creates a LogicalTableModify. */
   public static LogicalTableCreate create(final RelNode input,
       final Schema schema, final String tableName,
