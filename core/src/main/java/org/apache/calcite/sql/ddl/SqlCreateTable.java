@@ -52,7 +52,7 @@ public class SqlCreateTable extends SqlCreate {
   private @Nullable Schema outputTableSchema;
   private @Nullable List<String> outputTableSchemaPath;
 
-  private CreateTableType createType;
+  protected CreateTableType createType;
 
   /** Enum describing the possible types of output table.
    * This should be reverted/moved to the bodo create table SqlNode
