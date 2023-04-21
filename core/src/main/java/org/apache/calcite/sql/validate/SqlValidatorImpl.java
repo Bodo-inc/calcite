@@ -3720,7 +3720,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       break;
 
-    case DATE:
     case TIME:
     case TIMESTAMP:
       Calendar calendar = literal.getValueAs(Calendar.class);

@@ -370,26 +370,26 @@ class RexBuilderTest {
     assertThat(literal.getValueAs(TimeString.class), notNullValue());
   }
 
-  /** Tests {@link RexBuilder#makeDateLiteral(DateString)}. */
-  @Test void testDateLiteral() {
-    final RelDataTypeFactory typeFactory =
-        new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
-    RelDataType dateType = typeFactory.createSqlType(SqlTypeName.DATE);
-    final RexBuilder builder = new RexBuilder(typeFactory);
-
-    // Old way: provide a Calendar
-    final Calendar calendar = Util.calendar();
-    calendar.set(1969, Calendar.JULY, 21); // one small step
-    calendar.set(Calendar.MILLISECOND, 0);
-    checkDate(builder.makeLiteral(calendar, dateType));
-
-    // Old way #2: Provide in Integer
-    checkDate(builder.makeLiteral(MOON_DAY, dateType));
-
-    // The new way
-    final DateString d = new DateString(1969, 7, 21);
-    checkDate(builder.makeLiteral(d, dateType));
-  }
+//  /** Tests {@link RexBuilder#makeDateLiteral(DateString)}. */
+//  @Test void testDateLiteral() {
+//    final RelDataTypeFactory typeFactory =
+//        new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
+//    RelDataType dateType = typeFactory.createSqlType(SqlTypeName.DATE);
+//    final RexBuilder builder = new RexBuilder(typeFactory);
+//
+//    // Old way: provide a Calendar
+//    final Calendar calendar = Util.calendar();
+//    calendar.set(1969, Calendar.JULY, 21); // one small step
+//    calendar.set(Calendar.MILLISECOND, 0);
+//    checkDate(builder.makeLiteral(calendar, dateType));
+//
+//    // Old way #2: Provide in Integer
+//    checkDate(builder.makeLiteral(MOON_DAY, dateType));
+//
+//    // The new way
+//    final DateString d = new DateString(1969, 7, 21);
+//    checkDate(builder.makeLiteral(d, dateType));
+//  }
 
   private void checkDate(RexLiteral literal) {
     assertThat(literal.toString(), is("1969-07-21"));

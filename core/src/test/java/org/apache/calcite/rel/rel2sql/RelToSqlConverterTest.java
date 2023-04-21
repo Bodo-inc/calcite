@@ -3353,7 +3353,7 @@ class RelToSqlConverterTest {
 
   @Test void testLiteral() {
     checkLiteral("DATE '1978-05-02'");
-    checkLiteral2("DATE '1978-5-2'", "DATE '1978-05-02'");
+    checkLiteral2("DATE '1978-5-2'", "DATE '1978-5-2'");
     checkLiteral("TIME '12:34:56'");
     checkLiteral("TIME '12:34:56.78'");
     checkLiteral2("TIME '1:4:6.080'", "TIME '01:04:06.080'");

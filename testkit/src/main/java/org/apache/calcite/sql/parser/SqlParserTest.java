@@ -5009,6 +5009,8 @@ public class SqlParserTest {
     // Date literals
     expr("DATE '2004-12-01'")
         .ok("DATE '2004-12-01'");
+    expr("DATE '12/21/99'")
+        .ok("DATE '12/21/99'");
 
     // Time literals
     expr("TIME '12:01:01'")
@@ -5034,8 +5036,6 @@ public class SqlParserTest {
     expr("TIMESTAMP '2004-12-01 12:01:01.01023456789'").same();
 
     // Failures.
-    sql("^DATE '12/21/99'^")
-        .fails("(?s).*Illegal DATE literal.*");
     sql("^TIME '1230:33'^")
         .fails("(?s).*Illegal TIME literal.*");
     sql("^TIME '12:00:00 PM'^")

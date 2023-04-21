@@ -946,7 +946,6 @@ public class RexLiteral extends RexNode {
     }
     switch (typeName) {
     case TIME:
-    case DATE:
     case TIMESTAMP:
       return getValueAs(Calendar.class);
     default:
