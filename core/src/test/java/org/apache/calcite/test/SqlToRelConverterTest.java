@@ -968,6 +968,10 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     withPostgresLib(sql("select '2023-01-04 10:59:03.399029'::TIMESTAMP from emp")).ok();
   }
 
+  @Test void testSelectInfixCastStringTimestampntz() {
+    withPostgresLib(sql("select '2023-01-04 10:59:03.399029'::TIMESTAMP_NTZ from emp")).ok();
+  }
+
   @Test void testSelectInfixCastStringDate() {
     withPostgresLib(sql("select '2020-02-14 10:59:03.399029'::DATE from emp")).ok();
   }

@@ -1121,6 +1121,19 @@ public class SqlOperatorTest {
     f.checkScalar("cast('2004-02-29' as TIMESTAMP)",
         "2004-02-29 00:00:00", "TIMESTAMP(0) NOT NULL");
 
+    f.checkScalar("cast('1945-02-24 12:42:25' as TIMESTAMP_NTZ)",
+        "1945-02-24 12:42:25", "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("cast('1945-2-2 12:2:5' as TIMESTAMP_NTZ)",
+        "1945-02-02 12:02:05", "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("cast('  1945-02-24 12:42:25  ' as TIMESTAMP_NTZ)",
+        "1945-02-24 12:42:25", "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("cast('1945-02-24 12:42:25.34' as TIMESTAMP_NTZ)",
+        "1945-02-24 12:42:25", "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("cast('1945-12-31' as TIMESTAMP_NTZ)",
+        "1945-12-31 00:00:00", "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("cast('2004-02-29' as TIMESTAMP_NTZ)",
+        "2004-02-29 00:00:00", "TIMESTAMP(0) NOT NULL");
+
     if (Bug.FRG282_FIXED) {
       f.checkScalar("cast('1945-02-24 12:42:25.34' as TIMESTAMP(2))",
           "1945-02-24 12:42:25.34", "TIMESTAMP(2) NOT NULL");

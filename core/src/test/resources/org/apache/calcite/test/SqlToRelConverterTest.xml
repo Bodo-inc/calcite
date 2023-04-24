@@ -8142,6 +8142,17 @@ LogicalProject(EXPR$0=[2023-01-04 10:59:03])
       <![CDATA[select '2023-01-04 10:59:03.399029'::TIMESTAMP from emp]]>
     </Resource>
   </TestCase>
+  <TestCase name="testSelectInfixCastStringTimestampntz">
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[2023-01-04 10:59:03])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="sql">
+      <![CDATA[select '2023-01-04 10:59:03.399029'::TIMESTAMP from emp]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testSelectInfixCastTimestampString">
     <Resource name="plan">
       <![CDATA[
