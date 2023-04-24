@@ -1649,6 +1649,8 @@ public class SqlParserTest {
         .ok("CAST(`X` AS TIMESTAMP(0) WITH LOCAL TIME ZONE)");
     expr("cast(x as timestamp)")
         .ok("CAST(`X` AS TIMESTAMP)");
+    expr("cast(x as timestamp_ntz)")
+        .ok("CAST(`X` AS TIMESTAMP)");
     expr("cast(x as decimal(1,1))")
         .ok("CAST(`X` AS DECIMAL(1, 1))");
     expr("cast(x as char(1))")
@@ -1710,6 +1712,8 @@ public class SqlParserTest {
     expr("x::timestamp(0) with local time zone")
         .ok("`X` :: TIMESTAMP(0) WITH LOCAL TIME ZONE");
     expr("x::timestamp")
+        .ok("`X` :: TIMESTAMP");
+    expr("x::timestamp_ntz")
         .ok("`X` :: TIMESTAMP");
     expr("x::decimal(1,1)")
         .ok("`X` :: DECIMAL(1, 1)");

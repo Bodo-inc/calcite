@@ -6116,7 +6116,7 @@ SqlTypeNameSpec DateTimeTypeName() :
 |
     <TIMESTAMP_NTZ> {
         s = span();
-        precision = PrecisionOpt()
+        precision = PrecisionOpt();
         typeName = SqlTypeName.TIMESTAMP;
         return new SqlBasicTypeNameSpec(typeName, precision, s.end(this));
     }
@@ -8388,7 +8388,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < TIES: "TIES" >
 |   < TIME: "TIME" >
 |   < TIMESTAMP: "TIMESTAMP" >
-|   < TIMESTAMP_NTZ: "TIMESTAMP" >
+|   < TIMESTAMP_NTZ: "TIMESTAMP_NTZ" >
 |   < TIMESTAMPADD: "TIMESTAMPADD" >
 |   < TIMESTAMPDIFF: "TIMESTAMPDIFF" >
 |   < TIMEZONE_HOUR: "TIMEZONE_HOUR" >
