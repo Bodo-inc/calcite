@@ -5907,7 +5907,7 @@ SqlJdbcDataTypeName JdbcOdbcDataTypeName() :
 |   (<SQL_VARCHAR> | <VARCHAR>) { return SqlJdbcDataTypeName.SQL_VARCHAR; }
 |   (<SQL_DATE> | <DATE>) { return SqlJdbcDataTypeName.SQL_DATE; }
 |   (<SQL_TIME> | <TIME>) { return SqlJdbcDataTypeName.SQL_TIME; }
-|   (<SQL_TIMESTAMP> | <TIMESTAMP>) { return SqlJdbcDataTypeName.SQL_TIMESTAMP; }
+|   (<SQL_TIMESTAMP> | <TIMESTAMP> | <TIMESTAMP_NTZ>) { return SqlJdbcDataTypeName.SQL_TIMESTAMP; }
 |   (<SQL_DECIMAL> | <DECIMAL>) { return SqlJdbcDataTypeName.SQL_DECIMAL; }
 |   (<SQL_NUMERIC> | <NUMERIC>) { return SqlJdbcDataTypeName.SQL_NUMERIC; }
 |   (<SQL_BOOLEAN> | <BOOLEAN>) { return SqlJdbcDataTypeName.SQL_BOOLEAN; }
