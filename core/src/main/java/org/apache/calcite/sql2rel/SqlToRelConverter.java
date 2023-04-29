@@ -4553,10 +4553,9 @@ public class SqlToRelConverter {
     // TLDR: We'd like to set top=False, to enable some optimizations on the plan,
     // but we run into a bug with calcite. For right now, we're just setting top=True,
     // which is always correct, but may result in a less performant plan.
-
-    RelRoot relRoot = convertQueryRecursive(
-        requireNonNull(createTableDef,
-            "createTableDef"), true, null);
+    SqlNode nonNullCreateTableDef = requireNonNull(createTableDef, "createTableDef");
+    RelDataType validatedRowType = this.validator().getValidatedNodeType(nonNullCreateTableDef);
+    RelRoot relRoot = convertQueryRecursive(nonNullCreateTableDef, true, validatedRowType);
     return relRoot.project();
   }
 
