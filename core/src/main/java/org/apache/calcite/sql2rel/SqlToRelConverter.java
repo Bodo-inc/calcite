@@ -4554,9 +4554,13 @@ public class SqlToRelConverter {
     // but we run into a bug with calcite. For right now, we're just setting top=True,
     // which is always correct, but may result in a less performant plan.
     SqlNode nonNullCreateTableDef = requireNonNull(createTableDef, "createTableDef");
+    RelRoot relRoot = convertQueryRecursive(nonNullCreateTableDef, true, null);
+    // Map the root to the final row type. This is needed to prune intermediate columns needed
+    // if the inner data requires intermediate columns. See testCreateTableOrderByExpr
+    // as an example.
     RelDataType validatedRowType = this.validator().getValidatedNodeType(nonNullCreateTableDef);
-    RelRoot relRoot = convertQueryRecursive(nonNullCreateTableDef, true, validatedRowType);
-    return relRoot.project();
+    RelNode topNode = relRoot.project();
+    return RelRoot.of(topNode, validatedRowType, nonNullCreateTableDef.getKind()).project();
   }
 
   private RelNode convertCreateTableIdentifier(
