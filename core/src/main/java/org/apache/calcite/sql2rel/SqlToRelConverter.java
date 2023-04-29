@@ -4557,7 +4557,7 @@ public class SqlToRelConverter {
     RelRoot relRoot = convertQueryRecursive(
         requireNonNull(createTableDef,
             "createTableDef"), true, null);
-    return relRoot.rel;
+    return relRoot.project();
   }
 
   private RelNode convertCreateTableIdentifier(
