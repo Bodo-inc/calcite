@@ -325,6 +325,10 @@ class TypeCoercionTest {
 
   /** Test cases for binary comparison expressions. */
   @Test void testBinaryComparisonCoercion() {
+    expr("true > 3").columnType("BOOLEAN NOT NULL");
+    expr("false = 0").columnType("BOOLEAN NOT NULL");
+    expr("-1 <= true").columnType("BOOLEAN NOT NULL");
+    expr("3 >= false").columnType("BOOLEAN NOT NULL");
     expr("'2' = 3").columnType("BOOLEAN NOT NULL");
     expr("'2' > 3").columnType("BOOLEAN NOT NULL");
     expr("'2' >= 3").columnType("BOOLEAN NOT NULL");
