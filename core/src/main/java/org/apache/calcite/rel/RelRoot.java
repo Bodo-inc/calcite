@@ -157,6 +157,7 @@ public class RelRoot {
   public RelNode project(boolean force) {
     if (isRefTrivial()
         && (SqlKind.DML.contains(kind)
+            || SqlKind.DDL.contains(kind)
             || !force
             || rel instanceof LogicalProject)) {
       return rel;

@@ -1132,7 +1132,7 @@ public enum SqlKind {
    * we'll need to refine this.
    */
   public static final EnumSet<SqlKind> DML =
-      EnumSet.of(INSERT, DELETE, UPDATE, MERGE, PROCEDURE_CALL, CREATE_TABLE);
+      EnumSet.of(INSERT, DELETE, UPDATE, MERGE, PROCEDURE_CALL);
 
   /**
    * Category consisting of all DDL operators.
