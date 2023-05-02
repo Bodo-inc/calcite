@@ -463,6 +463,14 @@ public abstract class AbstractTypeCoercion implements TypeCoercion {
       return null;
     }
 
+    // BOOLEAN + NUMERIC -> BOOLEAN
+    if (SqlTypeUtil.isBoolean(type1) && SqlTypeUtil.isNumeric(type2)) {
+      return type1;
+    }
+    if (SqlTypeUtil.isNumeric(type1) && SqlTypeUtil.isBoolean(type2)) {
+      return type2;
+    }
+
     // DATETIME + CHARACTER -> DATETIME
     // REVIEW Danny 2019-09-23: There is some legacy redundant code in SqlToRelConverter
     // that coerce Datetime and CHARACTER comparison.
