@@ -2036,7 +2036,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * <code>NOT NULL</code> constraint. When this expression is implemented, if
    * the value is NULL, an exception will be thrown.</p>
    */
-  public static final SqlFunction CAST = new SqlCastFunction();
+  public static final SqlFunction CAST = new SqlCastFunction("CAST");
+  public static final SqlFunction TRY_CAST = new SqlCastFunction("TRY_CAST");
 
   /**
    * The Snowflake <code>DATE</code> function.
