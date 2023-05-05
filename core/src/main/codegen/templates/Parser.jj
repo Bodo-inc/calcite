@@ -4601,6 +4601,8 @@ SqlNode NonIntervalLiteral() :
         e = SpecialLiteral()
     |
         e = DateTimeLiteral()
+    |
+        e = TimeUnitLiteral()
 <#-- additional literal parser methods are included here -->
 <#list (parser.literalParserMethods!default.parser.literalParserMethods) as method>
     |
