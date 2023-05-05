@@ -81,10 +81,12 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     return LOCAL_FIXTURE;
   }
 
+
   @Test void testDotLiteralAfterNestedRow() {
     final String sql = "select ((1,2),(3,4,5)).\"EXPR$1\".\"EXPR$2\" from emp";
     sql(sql).ok();
   }
+
 
   @Test void testDotLiteralAfterRow() {
     final String sql = "select row(1,2).\"EXPR$1\" from emp";
@@ -691,6 +693,20 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "(SELECT max(deptno) as tmp_val_two from dept GROUP BY deptno HAVING tmp_val_two > 0)";
     fixture.withSql(sql).ok();
+  }
+
+  @Test void testHavingNonAggregate() {
+    // tests that we can have a having clause in the case that we have no aggregates in the select
+    final String sql = "select empno from emp having empno > 10";
+    sql(sql).ok();
+  }
+
+
+  @Test void testHavingAndWhereNonAggregate() {
+    // tests that we can have a having clause and a where clause, that the two
+    // are properly AND'd together
+    final String sql = "select empno from emp WHERE empno < 20 having empno > 10";
+    sql(sql).ok();
   }
 
   @Test void testQualifyWithAlias() {
@@ -2161,6 +2177,15 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).withExpand(false).ok();
   }
 
+  @Test void testNonAggregateHavingInCorrelated() {
+    //Tests that non-aggregate Having is identical to WHERE in this case
+    final String sql = "select empno from emp as e\n"
+        + "join dept as d using (deptno)\n"
+        + "having e.sal in (\n"
+        + "  select e2.sal from emp as e2 having e2.deptno > e.deptno)";
+    sql(sql).withExpand(false).ok();
+  }
+
   @Test void testInUncorrelatedSubQueryInSelect() {
     // In the SELECT clause, the value of IN remains in 3-valued logic
     // -- it's not forced into 2-valued by the "... IS TRUE" wrapper as in the
@@ -3348,6 +3373,8 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql2).ok();
   }
 
+
+
   @Test void testMergeMatchedOnly() {
     //Tests a basic merge query with only an matched condition
     final String sql1 = "merge into empnullables as target\n"
@@ -3781,6 +3808,101 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     final String sql = "insert into empnullables_20 (empno, ename)\n"
         + "values (150, 'Fred')";
     sql(sql).ok();
+  }
+
+  @Test void testInsertWith() {
+    //Tests a basic INSERT query with a nested with condition
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "     'eb001209-33d7-4d3f-bcaa-9dd6b8cf08b0' AS client_id\n"
+        + "FROM emp";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithUsage() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually use the result of the WITH
+    //statement
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) as MAX_VAL FROM emp)\n"
+        + "SELECT MAX_VAL AS uuid,\n"
+        + "     'BOB' AS client_id\n"
+        + "FROM emp join MAXDATE on emp.empno = MAX_VAL";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithImplicitConversion() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually have some implicit conversion
+    //as a part of the query
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "      DATE '2022-02-01' AS client_id\n"
+        + "FROM emp";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertWithImplicitConversion2() {
+    //Tests a basic INSERT query with a nested with condition
+    //In this case, we actually have some implicit conversion
+    //as a part of the query, and we use the values found in the WITH statement
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAXDATE AS (SELECT MAX(empno) as MAX_VAL, DATE '2022-02-01' as date_val FROM emp)\n"
+        + "SELECT 1 AS uuid,\n"
+        + "      date_val AS client_id\n"
+        + "FROM emp join MAXDATE on emp.empno = MAX_VAL";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testInsertMultipleWith() {
+    //Tests a basic INSERT query with a nested with condition
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "WITH MAX_DATE AS (SELECT MAX(empno) as MAX_DATE_COL FROM emp),\n"
+        + "MAX_NAME AS (SELECT MAX(ename) as MAX_ENAME_COL FROM emp)\n"
+        + "SELECT MAX_DATE_COL AS uuid,\n"
+        + "     MAX_ENAME_COL AS client_id\n"
+        + "FROM emp "
+        + "JOIN MAX_DATE on empno = MAX_DATE_COL\n"
+        + "JOIN MAX_NAME on ename = MAX_ENAME_COL\n"
+        + "ORDER BY empno";
+
+    sql(sql1).ok();
+  }
+
+  @Test void testQualifyOrderBy() {
+    //Tests a basic INSERT query with some implicit conversion
+    final String sql1 = "SELECT\n"
+        +
+        "    empno\n"
+        +
+        "FROM emp\n"
+        +
+        "QUALIFY ROW_NUMBER() OVER(\n"
+        +
+        "  PARTITION BY\n"
+        +
+        "      empno\n"
+        +
+        ") = 1\n"
+        +
+        "ORDER BY ename";
+
+    sql(sql1).ok();
+  }
+
+
+  @Test void testInsertImplicitConversion() {
+    //Tests a basic INSERT query with some implicit conversion
+    final String sql1 = "INSERT INTO empnullables_20 (empno, ename)\n"
+        + "SELECT 1 AS uuid, DATE '2022-02-01' AS client_id";
+
+    sql(sql1).ok();
   }
 
   @Test void testInsertModifiableView() {
@@ -5782,6 +5904,7 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+
   /**
    * Test that - can be done between two dates.
    */
@@ -6586,6 +6709,34 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         +
         "select dept.deptno, dept.deptno + 2, dept.deptno + 3 from dept)";
     withPostgresLib(sql(sql)).ok();
+  }
+
+  @Test void testJoinSubqueryIssueOrig() {
+    //Test the minimal reproducer
+    final String sql = "SELECT * FROM\n"
+        +
+        " dept JOIN\n"
+        +
+        "emp\n"
+        +
+        "on dept.deptno = emp.deptno and\n"
+        +
+        "emp.sal = (Select max(sal) from emp)";
+    sql(sql).ok();
+  }
+
+  @Test void testJoinSubqueryIssueOrig2() {
+    //Test the minimal reproducer
+    final String sql = "SELECT * FROM\n"
+        +
+        " dept JOIN\n"
+        +
+        "emp\n"
+        +
+        "on dept.deptno = emp.deptno and\n"
+        +
+        "(emp.sal, dept.deptno) in (Select max(sal), 10 from emp)";
+    sql(sql).ok();
   }
 
 }

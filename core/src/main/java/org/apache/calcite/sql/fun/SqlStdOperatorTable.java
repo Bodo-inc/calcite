@@ -427,61 +427,73 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * <code>&lt; ANY</code>).
    */
   public static final SqlQuantifyOperator SOME_LT =
-      new SqlQuantifyOperator("< SOME", SqlKind.SOME, SqlKind.LESS_THAN, false);
+      new SqlQuantifyOperator("< SOME", SqlKind.SOME, SqlKind.LESS_THAN);
 
   public static final SqlQuantifyOperator SOME_LE =
-      new SqlQuantifyOperator("<= SOME", SqlKind.SOME, SqlKind.LESS_THAN_OR_EQUAL, false);
+      new SqlQuantifyOperator("<= SOME", SqlKind.SOME, SqlKind.LESS_THAN_OR_EQUAL);
 
   public static final SqlQuantifyOperator SOME_GT =
-      new SqlQuantifyOperator("> SOME", SqlKind.SOME, SqlKind.GREATER_THAN, false);
+      new SqlQuantifyOperator("> SOME", SqlKind.SOME, SqlKind.GREATER_THAN);
 
   public static final SqlQuantifyOperator SOME_GE =
-      new SqlQuantifyOperator(">= SOME", SqlKind.SOME, SqlKind.GREATER_THAN_OR_EQUAL, false);
+      new SqlQuantifyOperator(">= SOME", SqlKind.SOME, SqlKind.GREATER_THAN_OR_EQUAL);
 
   public static final SqlQuantifyOperator SOME_EQ =
-      new SqlQuantifyOperator("= SOME", SqlKind.SOME, SqlKind.EQUALS, false);
+      new SqlQuantifyOperator("= SOME", SqlKind.SOME, SqlKind.EQUALS);
 
   public static final SqlQuantifyOperator SOME_NE =
-      new SqlQuantifyOperator("<> SOME", SqlKind.SOME, SqlKind.NOT_EQUALS, false);
+      new SqlQuantifyOperator("<> SOME", SqlKind.SOME, SqlKind.NOT_EQUALS);
 
   public static final SqlQuantifyOperator SOME_NULLEQ =
-      new SqlQuantifyOperator("<=> SOME", SqlKind.SOME, SqlKind.NULL_EQUALS, false);
+      new SqlQuantifyOperator("<=> SOME", SqlKind.SOME, SqlKind.NULL_EQUALS);
 
   public static final SqlQuantifyOperator SOME_LIKE =
-      new SqlQuantifyOperator("LIKE SOME", SqlKind.SOME, SqlKind.LIKE, false);
+      new SqlQuantifyOperator("LIKE SOME", SqlKind.SOME, SqlKind.LIKE, false, true);
 
   public static final SqlQuantifyOperator SOME_NOT_LIKE =
-      new SqlQuantifyOperator("NOT LIKE SOME", SqlKind.SOME, SqlKind.LIKE, true);
+      new SqlQuantifyOperator("NOT LIKE SOME", SqlKind.SOME, SqlKind.LIKE, true, true);
+
+  public static final SqlQuantifyOperator SOME_ILIKE =
+      new SqlQuantifyOperator("ILIKE SOME", SqlKind.SOME, SqlKind.LIKE, false, false);
+
+  public static final SqlQuantifyOperator SOME_NOT_ILIKE =
+      new SqlQuantifyOperator("NOT ILIKE SOME", SqlKind.SOME, SqlKind.LIKE, true, false);
 
   /**
    * The <code>&lt; ALL</code> operator.
    */
   public static final SqlQuantifyOperator ALL_LT =
-      new SqlQuantifyOperator("< ALL", SqlKind.ALL, SqlKind.LESS_THAN, false);
+      new SqlQuantifyOperator("< ALL", SqlKind.ALL, SqlKind.LESS_THAN);
 
   public static final SqlQuantifyOperator ALL_LE =
-      new SqlQuantifyOperator("<= ALL", SqlKind.ALL, SqlKind.LESS_THAN_OR_EQUAL, false);
+      new SqlQuantifyOperator("<= ALL", SqlKind.ALL, SqlKind.LESS_THAN_OR_EQUAL);
 
   public static final SqlQuantifyOperator ALL_GT =
-      new SqlQuantifyOperator("> ALL", SqlKind.ALL, SqlKind.GREATER_THAN, false);
+      new SqlQuantifyOperator("> ALL", SqlKind.ALL, SqlKind.GREATER_THAN);
 
   public static final SqlQuantifyOperator ALL_GE =
-      new SqlQuantifyOperator(">= ALL", SqlKind.ALL, SqlKind.GREATER_THAN_OR_EQUAL, false);
+      new SqlQuantifyOperator(">= ALL", SqlKind.ALL, SqlKind.GREATER_THAN_OR_EQUAL);
 
   public static final SqlQuantifyOperator ALL_EQ =
-      new SqlQuantifyOperator("= ALL", SqlKind.ALL, SqlKind.EQUALS, false);
+      new SqlQuantifyOperator("= ALL", SqlKind.ALL, SqlKind.EQUALS);
 
   public static final SqlQuantifyOperator ALL_NE =
-      new SqlQuantifyOperator("<> ALL", SqlKind.ALL, SqlKind.NOT_EQUALS, false);
+      new SqlQuantifyOperator("<> ALL", SqlKind.ALL, SqlKind.NOT_EQUALS);
 
   public static final SqlQuantifyOperator ALL_NULLEQ =
-      new SqlQuantifyOperator("<=> ALL", SqlKind.ALL, SqlKind.NULL_EQUALS, false);
+      new SqlQuantifyOperator("<=> ALL", SqlKind.ALL, SqlKind.NULL_EQUALS);
 
   public static final SqlQuantifyOperator ALL_LIKE =
-      new SqlQuantifyOperator("LIKE ALL", SqlKind.ALL, SqlKind.LIKE, false);
+      new SqlQuantifyOperator("LIKE ALL", SqlKind.ALL, SqlKind.LIKE, false, true);
 
   public static final SqlQuantifyOperator ALL_NOT_LIKE =
-      new SqlQuantifyOperator("NOT LIKE ALL", SqlKind.ALL, SqlKind.LIKE, true);
+      new SqlQuantifyOperator("NOT LIKE ALL", SqlKind.ALL, SqlKind.LIKE, true, true);
+
+  public static final SqlQuantifyOperator ALL_ILIKE =
+      new SqlQuantifyOperator("ILIKE ALL", SqlKind.ALL, SqlKind.LIKE, false, false);
+
+  public static final SqlQuantifyOperator ALL_NOT_ILIKE =
+      new SqlQuantifyOperator("NOT ILIKE ALL", SqlKind.ALL, SqlKind.LIKE, true, false);
 
   /**
    * Logical less-than operator, '<code>&lt;</code>'.
@@ -1983,10 +1995,10 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new SqlCurrentDateFunction();
 
   /** The <code>TIMESTAMPADD</code> function. */
-  public static final SqlFunction TIMESTAMP_ADD = new SqlTimestampAddFunction();
+  public static final SqlFunction TIMESTAMP_ADD = new BodoSqlTimestampAddFunction();
 
   /** The <code>TIMESTAMPDIFF</code> function. */
-  public static final SqlFunction TIMESTAMP_DIFF = new SqlTimestampDiffFunction();
+  public static final SqlFunction TIMESTAMP_DIFF = new BodoSqlTimestampDiffFunction();
 
   /**
    * Use of the <code>IN_FENNEL</code> operator forces the argument to be
@@ -2025,6 +2037,34 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * the value is NULL, an exception will be thrown.</p>
    */
   public static final SqlFunction CAST = new SqlCastFunction();
+
+  /**
+   * The Snowflake <code>DATE</code> function.
+   * The SQL syntaxs are
+   *
+   * DATE(string_expr [, format])
+   * DATE(timestamp_expr)
+   * DATE('integer')
+   * DATE(variant_expr)
+   *  For conversion to date, snowflake allows a string, datetime, or integer.
+   *            If the first argument is string, an optional format string is allowed
+   *            as a second argument.
+   */
+  public static final SqlFunction DATE =
+      new SqlFunction(
+          "DATE",
+          SqlKind.OTHER_FUNCTION,
+          ReturnTypes.DATE,
+          null,
+          OperandTypes.or(
+              OperandTypes.or(
+                  OperandTypes.STRING,
+                  OperandTypes.DATETIME,
+                  OperandTypes.DATE,
+                  OperandTypes.TIMESTAMP,
+                  OperandTypes.INTEGER),
+              OperandTypes.STRING_STRING),
+          SqlFunctionCategory.TIMEDATE);
 
   /**
    * The SQL <code>EXTRACT</code> operator. Extracts a specified field value
@@ -2130,7 +2170,14 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
           SqlKind.OTHER_FUNCTION,
           ReturnTypes.DATE_NULLABLE,
           null,
-          OperandTypes.DATETIME,
+          OperandTypes.or(
+              OperandTypes.DATETIME,
+              OperandTypes.sequence(
+                  "LAST_DAY(DATE/TIMESTAMP, STRING)",
+                  OperandTypes.DATETIME,
+                  OperandTypes.CHARACTER
+              )
+          ),
           SqlFunctionCategory.TIMEDATE);
 
   /**

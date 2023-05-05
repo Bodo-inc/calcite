@@ -882,7 +882,13 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("position(x'11' in x'100110')").ok();
     expr("position(x'11' in x'100110' FROM 10)").ok();
     expr("position(x'abcd' in x'')").ok();
+    expr("position('mouse','house')").ok();
+    expr("position(x'11', x'100110')").ok();
+    expr("position(x'11', x'100110', 10)").ok();
+    expr("position(x'abcd', x'')").ok();
     expr("position('mouse' in 'house')")
+        .columnType("INTEGER NOT NULL");
+    expr("position(x'11', x'100110', 10)")
         .columnType("INTEGER NOT NULL");
     wholeExpr("position(x'1234' in '110')")
         .fails("Parameters must be of the same type");
@@ -1467,6 +1473,15 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("CAST( TIME '10:12:21' AS VARCHAR(20))").ok();
     expr("CAST( '10:12:21' AS TIME)").ok();
     expr("CAST( '2004-12-21 10:12:21' AS TIMESTAMP)").ok();
+  }
+
+  @Test void testDateFunction() {
+    expr("date('2000-01-01')").ok();
+    expr("date(date '2000-01-01')").ok();
+    expr("date(timestamp '2000-01-01 23:59:59.1')").ok();
+    expr("date('123456')").ok();
+
+    expr("date('01-01-2000', 'MM-DD-YYYY')").ok();
   }
 
   @Test void testConvertTimezoneFunction() {
@@ -4151,9 +4166,9 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("timestampadd(SQL_TSI_WEEK, 2, cast(null as timestamp))")
         .columnType("TIMESTAMP(0)");
     expr("timestampdiff(SQL_TSI_WEEK, current_timestamp, current_timestamp)")
-        .columnType("INTEGER NOT NULL");
+        .columnType("BIGINT NOT NULL");
     expr("timestampdiff(SQL_TSI_WEEK, cast(null as timestamp), current_timestamp)")
-        .columnType("INTEGER");
+        .columnType("BIGINT");
 
     expr("timestampadd(^incorrect^, 1, current_timestamp)")
         .fails("(?s).*Was expecting one of.*");
@@ -4164,7 +4179,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
   @Test void testTimestampAddNullInterval() {
     expr("timestampadd(SQL_TSI_SECOND, cast(NULL AS INTEGER),"
         + " current_timestamp)")
-        .columnType("TIMESTAMP(0)");
+        .columnType("TIMESTAMP('UTC')");
     expr("timestampadd(SQL_TSI_DAY, cast(NULL AS INTEGER),"
         + " current_timestamp)")
         .columnType("TIMESTAMP('UTC')");
@@ -5943,6 +5958,14 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "    (select * from dept where dept.deptno = e1.deptno))").ok();
   }
 
+
+  @Test void testNonAggregateHavingReference() {
+    // see testWhereReference
+    sql("select * from emp as e1 having exists (\n"
+        + "  select * from emp as e2,\n"
+        + "    (select * from dept having dept.deptno = e1.deptno))").ok();
+  }
+
   @Test void testUnionNameResolution() {
     sql("select * from emp as e1 where exists (\n"
         + "  select * from emp as e2,\n"
@@ -6421,6 +6444,24 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING ^sal^ > 10")
         .fails("Expression 'SAL' is not being grouped");
   }
+
+  @Test void testNonAggregateHaving() {
+    sql("select * from emp having ^sal^")
+        .fails("HAVING clause must be a condition");
+  }
+
+  @Test void testNonAggregateHavingAndWhere() {
+    sql("select * from emp WHERE ^sal^ having sal > 10")
+        .fails("WHERE clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having ^sal^")
+        .fails("HAVING clause must be a condition");
+
+    sql("select * from emp WHERE sal > 10 having sal < 20")
+        .ok();
+  }
+
+
 
   @Test void testHavingBetween() {
     // FRG-115: having clause with between not working
@@ -7071,6 +7112,13 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("select deptno from emp group by ^100^, deptno")
         .withConformance(lenient).fails("Ordinal out of range")
         .withConformance(strict).ok();
+    // Recursive expansion of group by ordinals.
+    // Function here doesn't matter just needs to be a function.
+    sql("select deptno as x, sqrt(x) as y, count(*) from emp group by 1, 2")
+        // The identifier lookups for other elements in the select list are
+        // presently bugged and don't work properly when identifier expansion is off.
+        .withValidatorIdentifierExpansion(true)
+        .withConformance(lenient).ok();
   }
 
   /**
@@ -8004,6 +8052,13 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         .fails("(?s).*Cannot apply.*");
   }
 
+  @Test void testLastDay() {
+    expr("last_day(date '2000-01-01')").columnType("DATE NOT NULL");
+    expr("last_day(date '2000-01-01', 'year')").ok();
+    expr("last_day(timestamp '2000-01-01 23:59:59.1')").ok();
+    expr("last_day(timestamp '2000-01-01 23:59:59.1', 'WEEK')").columnType("DATE NOT NULL");
+  }
+
   @Test void testCastToInterval() {
     expr("cast(interval '1' hour as varchar(20))")
         .columnType("VARCHAR(20) NOT NULL");
@@ -8542,18 +8597,21 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     sql("SELECT deptno FROM emp GROUP BY deptno HAVING deptno > 55").ok();
     sql("SELECT DISTINCT deptno, 33 FROM emp\n"
         + "GROUP BY deptno HAVING deptno > 55").ok();
-    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
-    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
-        .fails("Expression 'DEPTNO' is not being grouped")
-        .withConformance(SqlConformanceEnum.LENIENT)
-        .fails("Expression 'DEPTNO' is not being grouped");
+
+    //Bodo change: since HAVING is now equivalent to WHERE in non-aggregate selects,
+    //these statements are now valid.
+//    sql("SELECT DISTINCT deptno, 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+//    sql("SELECT DISTINCT 33 FROM emp HAVING ^deptno^ > 55")
+//        .fails("Expression 'DEPTNO' is not being grouped")
+//        .withConformance(SqlConformanceEnum.LENIENT)
+//        .fails("Expression 'DEPTNO' is not being grouped");
+
     sql("SELECT DISTINCT * from emp").ok();
     sql("SELECT DISTINCT ^*^ from emp GROUP BY deptno")
         .fails("Expression 'EMP\\.EMPNO' is not being grouped");
-
     // similar validation for SELECT DISTINCT and GROUP BY
     sql("SELECT deptno FROM emp GROUP BY deptno ORDER BY deptno, ^empno^")
         .fails("Expression 'EMPNO' is not being grouped");
@@ -9711,6 +9769,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + ">= SOME left\n"
         + "BETWEEN ASYMMETRIC -\n"
         + "BETWEEN SYMMETRIC -\n"
+        + "ILIKE ALL left\n"
+        + "ILIKE SOME left\n"
         + "IN left\n"
         + "LIKE -\n"
         + "LIKE ALL left\n"
@@ -9719,6 +9779,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "NEGATED POSIX REGEX CASE SENSITIVE left\n"
         + "NOT BETWEEN ASYMMETRIC -\n"
         + "NOT BETWEEN SYMMETRIC -\n"
+        + "NOT ILIKE ALL left\n"
+        + "NOT ILIKE SOME left\n"
         + "NOT IN left\n"
         + "NOT LIKE -\n"
         + "NOT LIKE ALL left\n"
@@ -9888,6 +9950,9 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "select 1, 'b' from (values 'a')").ok();
 
     sql("insert into empnullables (empno, ename)\n"
+        + "values (1, 'Karl')").ok();
+
+    sql("insert overwrite into empnullables (empno, ename)\n"
         + "values (1, 'Karl')").ok();
   }
 
@@ -11857,6 +11922,67 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + " where extra = 'test'")
         .fails("Duplicate name 'EXTRA' in column list");
   }
+
+  @Test void testDeleteUsingExpressionType() {
+    //Some simple tests to make sure that we disallow expressions other than
+    //tables and sub queries.
+    sql("delete from emp\n"
+        + "using ^not_a_real_table_name^\n"
+        + "where ename = 'bob'").fails("Object 'NOT_A_REAL_TABLE_NAME' not found");
+    sql("delete from emp\n"
+        + "using (emp.^deptno^ > 10) filter\n"
+        + "where ename = 'bob'").fails("Non-query expression encountered in illegal context");
+
+  }
+
+  @Test void testDeleteUsingIdentifierQualification() {
+    // Some simple tests to make sure that we properly handle identifier scoping/qualification
+    // in the
+    // where statement based on what's going on in the using statement
+
+    sql("SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1")
+        .ok();
+
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where emp.deptno = 1").ok();
+
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where emp.deptno = dept.deptno").ok();
+
+    // The rules for ambiguous column are the same as a join,
+    // so since there are two tables
+    sql("delete from emp\n"
+        + "using dept\n"
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+
+    // Note that this is true even if the subquery doesn't have an alias/any way to
+    // reference it
+    sql("delete from emp\n"
+        + "using (SELECT deptno from dept)\n"
+        + "where ^deptno^ = deptno").fails("Column 'DEPTNO' is ambiguous");
+
+    // Any unique identifiers should still be referencable from the "where" clause
+    sql("delete from emp\n"
+        + "using (SELECT 1 as unique_column_identifier from dept)\n"
+        + "where deptno = unique_column_identifier").ok();
+
+  }
+
+  @Test void testDeleteUsingTypeChecking() {
+    //Some simple tests to make sure that we properly do type checking
+
+    sql("delete from emp\n"
+        + "using (SELECT 10 as int_col from DEPT) using_tbl\n"
+        //Have to do an additional cast to date, otherwise calcite will coerce both columns to int
+        + "where ^Cast(ename as Date) = using_tbl.int_col^")
+        .fails(
+            "Cannot apply '=' to arguments of type '<DATE> = <INTEGER>'\\. "
+                + "Supported form\\(s\\): '<COMPARABLE_TYPE> = <COMPARABLE_TYPE>'");
+
+  }
+
 
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-1804">[CALCITE-1804]

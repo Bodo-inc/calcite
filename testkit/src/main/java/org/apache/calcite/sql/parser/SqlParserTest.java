@@ -2294,6 +2294,22 @@ public class SqlParserTest {
     sql(sql).ok(expected);
   }
 
+  @Test void testWithMultiple() {
+    // Tests parsing multiple "with" elements in the same query
+    final String sql = "with emp2 as (select * from emp), emp3 as (select * from emp)\n"
+        + "select * from emp2\n"
+        + "union\n"
+        + "select * from emp2\n";
+    final String expected = "WITH `EMP2` AS (SELECT *\n"
+        + "FROM `EMP`), `EMP3` AS (SELECT *\n"
+        + "FROM `EMP`) (SELECT *\n"
+        + "FROM `EMP2`\n"
+        + "UNION\n"
+        + "SELECT *\n"
+        + "FROM `EMP2`)";
+    sql(sql).ok(expected);
+  }
+
   @Test void testIdentifier() {
     expr("ab").ok("`AB`");
     expr("     \"a  \"\" b!c\"").ok("`a  \" b!c`");
@@ -4387,6 +4403,14 @@ public class SqlParserTest {
         .ok(expected);
   }
 
+  @Test void testInsertOverwrite() {
+    final String expected = "INSERT OVERWRITE INTO `EMPS`\n"
+        + "VALUES (ROW(1, 'Fredkin'))";
+    sql("insert overwrite into emps values (1,'Fredkin')")
+        .ok(expected)
+        .node(not(isDdl()));
+  }
+
   @Test void testExplainInsert() {
     final String expected = "EXPLAIN PLAN INCLUDING ATTRIBUTES"
         + " WITH IMPLEMENTATION FOR\n"
@@ -4891,6 +4915,10 @@ public class SqlParserTest {
   @Test void testPosition() {
     expr("posiTion('mouse' in 'house')")
         .ok("POSITION('mouse' IN 'house')");
+    expr("posiTion('ball', 'ballroom')")
+        .ok("POSITION('ball' IN 'ballroom')");
+    expr("posiTion('ball', 'roomball', 4)")
+        .ok("POSITION('ball' IN 'roomball' FROM 4)");
   }
 
   @Test void testReplace() {
@@ -5034,6 +5062,20 @@ public class SqlParserTest {
         .ok("CAST(DATE '2004-12-21' AS VARCHAR(10))");
   }
 
+  @Test void testDateFunction() {
+    expr("date('2000-01-01')")
+        .ok("DATE('2000-01-01')");
+    expr("date(date '2000-01-01')")
+        .ok("DATE(DATE '2000-01-01')");
+    expr("date(timestamp '2000-01-01 23:59:59.1')")
+        .ok("DATE(TIMESTAMP '2000-01-01 23:59:59.1')");
+    expr("date('123456')")
+        .ok("DATE('123456')");
+
+    expr("date('01-01-2000', 'MM-DD-YYYY')")
+        .ok("DATE('01-01-2000', 'MM-DD-YYYY')");
+  }
+
   @Test void testTrim() {
     expr("trim('mustache', 'a')")
         .ok("TRIM(BOTH 'a' FROM 'mustache')");
@@ -5060,7 +5102,7 @@ public class SqlParserTest {
     expr("trim('mustache' FROM 'beard'^,^ 'a')")
         .fails("(?s).*Encountered \",\" at.*");
 
-    //Sanity check that lookahead isn't going to be an issue
+    // Sanity check that lookahead isn't going to be an issue
     expr("trim('mustache'||'beard'||'hello'||'beard'||'hello', "
         + "'hello'||'beard'||'hello'||'beard'||'hello')")
         .ok("TRIM(BOTH (((('hello' || 'beard') || 'hello') || 'beard') || 'hello') "
@@ -7806,6 +7848,21 @@ public class SqlParserTest {
         .fails("(?s)Encountered \"to\".*");
   }
 
+  @Test void testLastDay() {
+    expr("last_day(date1)")
+        .ok("LAST_DAY(`DATE1`)");
+    expr("last_day(date1, unit)")
+        .ok("LAST_DAY(`DATE1`, `UNIT`)");
+    expr("last_day(date '2000-01-01')")
+        .ok("LAST_DAY(DATE '2000-01-01')");
+    expr("last_day(date '2000-01-01', 'year')")
+        .ok("LAST_DAY(DATE '2000-01-01', 'year')");
+    expr("last_day(timestamp '2000-01-01 23:59:59.1')")
+        .ok("LAST_DAY(TIMESTAMP '2000-01-01 23:59:59.1')");
+    expr("last_day(timestamp '2000-01-01 23:59:59.1', 'week')")
+        .ok("LAST_DAY(TIMESTAMP '2000-01-01 23:59:59.1', 'week')");
+  }
+
   @Test void testGeometry() {
     expr("cast(null as ^geometry^)")
         .fails("Geo-spatial extensions and the GEOMETRY data type are not enabled");
@@ -7869,10 +7926,14 @@ public class SqlParserTest {
   @Test void testNamedParameterOperators() {
     expr("@q")
         .ok("@q");
+    expr("$Z")
+        .ok("$Z");
     expr("a > @Q")
         .ok("(`A` > @Q)");
     expr("a + @Q")
         .ok("(`A` + @Q)");
+    expr("@Q + $Todo")
+        .ok("(@Q + $Todo)");
     expr("1 <=> @WeWon")
         .ok("(1 <=> @WeWon)");
   }
@@ -7885,24 +7946,24 @@ public class SqlParserTest {
         + "WHERE (`A` > @B)";
     sql(sql).ok(expected);
     // Name doesn't match a column name + case insensitive
-    sql = "SELECT B from table1 where A = @GoBears";
+    sql = "SELECT B from table1 where A = $GoBears";
     expected = "SELECT `B`\n"
         + "FROM `TABLE1`\n"
-        + "WHERE (`A` = @GoBears)";
+        + "WHERE (`A` = $GoBears)";
     sql(sql).ok(expected);
 
     // Test the boundary of letters?
-    sql = "SELECT B from table1 where A between @a and @z";
+    sql = "SELECT B from table1 where A between @a + $A and @z + $Z";
     expected = "SELECT `B`\n"
         + "FROM `TABLE1`\n"
-        + "WHERE (`A` BETWEEN ASYMMETRIC @a AND @z)";
+        + "WHERE (`A` BETWEEN ASYMMETRIC (@a + $A) AND (@z + $Z))";
     sql(sql).ok(expected);
 
     // Test the boundary of letters? + AND
-    sql = "SELECT B from table1 where @A < A and C >= @Z";
+    sql = "SELECT B from table1 where @A < A and C >= $Z";
     expected = "SELECT `B`\n"
         + "FROM `TABLE1`\n"
-        + "WHERE ((@A < `A`) AND (`C` >= @Z))";
+        + "WHERE ((@A < `A`) AND (`C` >= $Z))";
     sql(sql).ok(expected);
 
     // Test underscore
@@ -7920,10 +7981,10 @@ public class SqlParserTest {
         + "FETCH NEXT @B ROWS ONLY";
     sql(sql).ok(expected);
     // Test @a because A is a non-reserved keyword
-    sql = "SELECT B from table1 limit @a";
+    sql = "SELECT B from table1 limit $a";
     expected = "SELECT `B`\n"
         + "FROM `TABLE1`\n"
-        + "FETCH NEXT @a ROWS ONLY";
+        + "FETCH NEXT $a ROWS ONLY";
     sql(sql).ok(expected);
     // Test for case insensitive
     sql = "SELECT B from table1 limit @RuDy";
@@ -7950,24 +8011,24 @@ public class SqlParserTest {
   }
 
   @Test void testNamedParameterCase() {
-    String sql = "SELECT Case WHEN @e IS NULL THEN @a"
+    String sql = "SELECT Case WHEN @e IS NULL THEN $a"
         + " WHEN @_3424 IS NOT NULL THEN 1"
         + " WHEN -@FWEFW < 0 THEN CAST(@_NONINT as int)"
         + " ELSE @FWEFW - 1 "
         + "END from table1";
-    String expected = "SELECT (CASE WHEN (@e IS NULL) THEN @a"
+    String expected = "SELECT (CASE WHEN (@e IS NULL) THEN $a"
         + " WHEN (@_3424 IS NOT NULL) THEN 1"
         + " WHEN ((- @FWEFW) < 0)"
         + " THEN CAST(@_NONINT AS INTEGER)"
         + " ELSE (@FWEFW - 1) END)\n"
         + "FROM `TABLE1`";
     sql(sql).ok(expected);
-    sql = "SELECT Case WHEN @e IS TRUE THEN @a / 6"
+    sql = "SELECT Case WHEN $e IS TRUE THEN @a / 6"
         + " WHEN @_3424 IS NOT TRUE THEN 15 / @a"
         + " WHEN @FWEFW IS FALSE THEN 4 * @a"
         + " WHEN @e IS NOT FALSE THEN @a"
         + " END from table1";
-    expected = "SELECT (CASE WHEN (@e IS TRUE) THEN (@a / 6)"
+    expected = "SELECT (CASE WHEN ($e IS TRUE) THEN (@a / 6)"
         + " WHEN (@_3424 IS NOT TRUE) THEN (15 / @a)"
         + " WHEN (@FWEFW IS FALSE) THEN (4 * @a)"
         + " WHEN (@e IS NOT FALSE) THEN @a"
@@ -7982,17 +8043,17 @@ public class SqlParserTest {
         + "FROM `TABLE1`\n"
         + "WHERE (`B` LIKE @b)";
     sql(sql).ok(expected);
-    sql = "SELECT A from table1 where B not LIKE @b";
+    sql = "SELECT A from table1 where B not LIKE $b";
     expected = "SELECT `A`\n"
         + "FROM `TABLE1`\n"
-        + "WHERE (`B` NOT LIKE @b)";
+        + "WHERE (`B` NOT LIKE $b)";
     sql(sql).ok(expected);
   }
 
   @Test void testNamedParameterFunction() {
     // Test a builtin numeric function
-    String sql = "SELECT A + CEIL(@break) from table1";
-    String expected = "SELECT (`A` + CEIL(@break))\n"
+    String sql = "SELECT A + CEIL($break) from table1";
+    String expected = "SELECT (`A` + CEIL($break))\n"
         + "FROM `TABLE1`";
     sql(sql).ok(expected);
     // Test a builtin string function
@@ -9910,6 +9971,43 @@ public class SqlParserTest {
     final String expected = "DELETE FROM `EMPS`\n"
         + "/*+ `PROPERTIES`(`K1` = 'v1', `K2` = 'v2'), `INDEX`(`IDX1`, `IDX2`), `NO_HASH_JOIN` */\n"
         + "WHERE (`EMPNO` = 12)";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingTableInDelete() {
+    final String sql = "delete from emps\n"
+        + "using dept\n"
+        + "where empno = (SELECT MAX(deptno) from dept)\n";
+    final String expected = "DELETE FROM `EMPS` USING `DEPT`\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingSubqueryInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered)\n";
+    final String expected = "DELETE FROM `EMPS` USING ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))) AS `DEPT_FILTERED`\n"
+        + "WHERE (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`))";
+    sql(sql).ok(expected);
+  }
+
+  @Test void testUsingMultipleValuesInDelete() {
+    final String sql = "delete from emps\n"
+        + "using (Select * from dept where deptno < 10) as dept_filtered, (Select * from dept where deptno > 10) as dept_filtered_2\n"
+        + "where empno = (SELECT MAX(deptno) from dept_filtered) and empno = (SELECT MAX(deptno) from dept_filtered_2)\n";
+    final String expected = "DELETE FROM `EMPS` USING ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` < 10))) AS `DEPT_FILTERED`, ((SELECT *\n"
+        + "FROM `DEPT`\n"
+        + "WHERE (`DEPTNO` > 10))) AS `DEPT_FILTERED_2`\n"
+        + "WHERE ((`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED`)) AND (`EMPNO` = (SELECT MAX(`DEPTNO`)\n"
+        + "FROM `DEPT_FILTERED_2`)))";
     sql(sql).ok(expected);
   }
 

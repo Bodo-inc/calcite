@@ -107,6 +107,7 @@ import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
+import org.apache.calcite.sql.SqlDeleteUsingItem;
 import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlInternalOperators;
@@ -324,7 +325,7 @@ void SqlSelectKeywords(List<SqlLiteral> keywords) :
 void SqlInsertKeywords(List<SqlLiteral> keywords) :
 {}
 {
-    E()
+    [<OVERWRITE> {keywords.add(SqlInsertKeyword.OVERWRITE.symbol(getPos()));}]
 }
 
 /*
@@ -1713,8 +1714,10 @@ SqlNode SqlDelete() :
     SqlNode table;
     SqlNodeList extendList = null;
     SqlIdentifier alias = null;
+    SqlNodeList using = null;
     final SqlNode condition;
     final Span s;
+    final SqlDelete delete;
 }
 {
     <DELETE> {
@@ -1728,10 +1731,67 @@ SqlNode SqlDelete() :
         }
     ]
     [ [ <AS> ] alias = SimpleIdentifier() ]
+    [ <USING> using = SqlDeleteUsingList() ]
     condition = WhereOpt()
     {
-        return new SqlDelete(s.add(table).addIf(extendList).addIf(alias)
+        delete = new SqlDelete(s.add(table).addIf(extendList).addIf(alias).addIf(using)
             .addIf(condition).pos(), table, condition, null, alias);
+        delete.setUsingList(using);
+        return delete;
+    }
+}
+
+
+SqlNodeList SqlDeleteUsingList() :
+{
+    SqlNodeList usingList;
+    SqlNode deleteUsingElement = null;
+    final Span s;
+}
+{
+
+    deleteUsingElement = SqlDeleteUsingElement() {
+        s = span();
+        usingList = new SqlNodeList(s.pos());
+        usingList.add(deleteUsingElement);
+    }
+    (
+    <COMMA>
+    deleteUsingElement = SqlDeleteUsingElement() {usingList.add(deleteUsingElement);}
+    )*
+
+    {
+        return usingList;
+    }
+}
+
+
+SqlDeleteUsingItem SqlDeleteUsingElement() :
+{
+    SqlNode deleteUsingElement;
+    SqlIdentifier alias = null;
+    SqlParserPos s;
+}
+{
+    // Based on my reading of with parsing, this should allow
+    // for either a table identifier, or
+    // any subquery valid in a WITH clause (which is the expected
+    // behavior)
+    (
+    deleteUsingElement = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
+    | deleteUsingElement = TableRefWithHintsOpt()
+    ) {s = deleteUsingElement.getParserPosition();}
+    [
+     (
+         (<AS> alias = SimpleIdentifier())
+         | alias = SimpleIdentifier()
+     ){s = s.plus(alias.getParserPosition());}
+    ]
+    {
+        return new SqlDeleteUsingItem(
+            s,
+            alias,
+            deleteUsingElement);
     }
 }
 
@@ -3656,17 +3716,20 @@ SqlWithItem WithItem() :
 }
 
 /**
- * Parses either a row expression, a leaf query expression, or
- * a parenthesized expression of any kind.
- */
+* Parses either a row expression, a leaf query expression, or
+* a parenthesized expression of any kind.
+*/
 SqlNode LeafQueryOrExpr(ExprContext exprContext) :
 {
-    SqlNode e;
+SqlNode e;
 }
 {
-    e = Expression(exprContext) { return e; }
-|
+    // Bodo Change: since values is now an unreserved keyword, we need to try and parse
+    // The LeafQuery first, otherwise we'll go down the expression path when trying to parse
+    // tableConstructor (IE: (VALUES (1,2), (3,4)))
     e = LeafQuery(exprContext) { return e; }
+    |
+    e = Expression(exprContext) { return e; }
 }
 
 /**
@@ -5261,9 +5324,17 @@ SqlNamedParam NamedParam() :
 {
     final String name;
     final SqlParserPos pos;
+    boolean prefixIsDollar = false;
 }
 {
-    <PARAM_IDENTIFIER>
+
+    (
+            <AT_PARAM_IDENTIFIER>
+        |
+            <DOLLAR_PARAM_IDENTIFIER> {
+                prefixIsDollar = true;
+            }
+    )
     (
       {
         name = pythonUnquotedIdentifier();
@@ -5271,7 +5342,7 @@ SqlNamedParam NamedParam() :
       }
     )
     {
-      return new SqlNamedParam(name, getPos());
+      return new SqlNamedParam(name, prefixIsDollar, getPos());
     }
 }
 
@@ -6166,18 +6237,42 @@ SqlNode BuiltinFunctionCall() :
             return SqlStdOperatorTable.EXTRACT.createCall(s.end(this), args);
         }
     |
+        <DATE> { s = span(); }
+        <LPAREN>
+        e = Expression(ExprContext.ACCEPT_SUB_QUERY) {
+            args = startList(e);
+        }
+        [
+        <COMMA>
+        e = Expression(ExprContext.ACCEPT_SUB_QUERY) {
+            args.add(e);
+        }
+        ]
+        <RPAREN> {
+            return SqlStdOperatorTable.DATE.createCall(s.end(this), args);
+        }
+    |
         <POSITION> { s = span(); }
         <LPAREN>
         // FIXME jvs 31-Aug-2006:  FRG-192:  This should be
         // Expression(ExprContext.ACCEPT_SUB_QUERY), but that doesn't work
         // because it matches the other kind of IN.
         e = AtomicRowExpression() { args = startList(e); }
-        <IN>
-        e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
-        [
-            <FROM>
-            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
-        ]
+        (
+            <IN>
+            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
+            [
+                <FROM>
+                e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
+            ]
+        |
+            <COMMA>
+            e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e);}
+            [
+                <COMMA>
+                e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
+            ]
+        )
         <RPAREN> {
             return SqlStdOperatorTable.POSITION.createCall(s.end(this), args);
         }
@@ -6875,9 +6970,15 @@ SqlCall TimestampAddFunctionCall() :
 {
     <TIMESTAMPADD> { s = span(); }
     <LPAREN>
-    interval = TimestampInterval() {
-        args = startList(SqlLiteral.createSymbol(interval, getPos()));
-    }
+    (
+        e = StringLiteral() {
+            args = startList(e);
+        }
+    |
+        interval = TimestampInterval() {
+            args = startList(SqlLiteral.createSymbol(interval, getPos()));
+        }
+    )
     <COMMA>
     e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
     <COMMA>
@@ -6902,9 +7003,15 @@ SqlCall TimestampDiffFunctionCall() :
 {
     <TIMESTAMPDIFF> { s = span(); }
     <LPAREN>
-    interval = TimestampInterval() {
-        args = startList(SqlLiteral.createSymbol(interval, getPos()));
-    }
+    (
+        e = StringLiteral() {
+            args = startList(e);
+        }
+    |
+        interval = TimestampInterval() {
+            args = startList(SqlLiteral.createSymbol(interval, getPos()));
+        }
+    )
     <COMMA>
     e = Expression(ExprContext.ACCEPT_SUB_QUERY) { args.add(e); }
     <COMMA>
@@ -8053,6 +8160,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < OVERLAPS: "OVERLAPS" >
 |   < OVERLAY: "OVERLAY" >
 |   < OVERRIDING: "OVERRIDING" >
+|   < OVERWRITE: "OVERWRITE" >
 |   < PAD: "PAD" >
 |   < PARAMETER: "PARAMETER" >
 |   < PARAMETER_MODE: "PARAMETER_MODE" >
@@ -8386,6 +8494,7 @@ String NonReservedKeyWord() :
     |   <CONTAINS>
     |   <INSERT>
     |   <DAY>
+    |   <OVERWRITE>
     )
     {
         return unquotedIdentifier();
@@ -8556,6 +8665,7 @@ void NonReservedKeyWord2of3() :
 |   < VERTICAL_BAR: "|" >
 |   < CARET: "^" >
 |   < DOLLAR: "$" >
+|   < AT_SYMBOL: "@" >
 |   < INFIX_CAST: "::" >
 <#list (parser.binaryOperatorsTokens!default.parser.binaryOperatorsTokens) as operator>
 |   ${operator}
@@ -8739,23 +8849,24 @@ MORE :
     // Per BigQuery: "Project IDs must contain 6-63 lowercase letters, digits,
     // or dashes. IDs must start with a letter and may not end with a dash."
     // We do not restrict length, or prevent identifiers from ending in a dash.
-    < HYPHENATED_IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>|"-")* > { popState(); }
+    < HYPHENATED_IDENTIFIER: <LETTER_EXCLUDING_DOLLAR> (<LETTER>|<DIGIT>|"-")* > { popState(); }
 }
 
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
-    < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+    < IDENTIFIER: <LETTER_EXCLUDING_DOLLAR> (<LETTER>|<DIGIT>)* >
 }
 
 <DEFAULT, DQID, BTID, BQID> TOKEN :
 {
-    < PARAM_IDENTIFIER: "@" (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
+    < AT_PARAM_IDENTIFIER: <AT_SYMBOL> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
+    | < DOLLAR_PARAM_IDENTIFIER: <DOLLAR> (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f"]) (["\u0041"-"\u005a", "\u0061"-"\u007a", "\u005f", "\u0030"-"\u0039"])* >
 }
 
 <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < COLLATION_ID:
-    (<LETTER>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
+    (<LETTER_EXCLUDING_DOLLAR>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
     "$"
     (<LETTER>|"_")+
     ("$" (<LETTER>|<DIGIT>|"_")+)?
@@ -8780,6 +8891,26 @@ MORE :
         "\uf900"-"\ufaff"
     ]
     >
+|
+    < #LETTER_EXCLUDING_DOLLAR:
+        [
+    // Bodo change, we dissalow identifiers begining with $ due to
+    // conflicts with Named parameters
+    //        "\u0024",
+            "\u0041"-"\u005a",
+            "\u005f",
+            "\u0061"-"\u007a",
+            "\u00c0"-"\u00d6",
+            "\u00d8"-"\u00f6",
+            "\u00f8"-"\u00ff",
+            "\u0100"-"\u1fff",
+            "\u3040"-"\u318f",
+            "\u3300"-"\u337f",
+            "\u3400"-"\u3d2d",
+            "\u4e00"-"\u9fff",
+            "\uf900"-"\ufaff"
+        ]
+        >
 |
     < #DIGIT:
     [

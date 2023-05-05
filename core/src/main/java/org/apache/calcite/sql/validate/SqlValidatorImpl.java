@@ -36,6 +36,7 @@ import org.apache.calcite.runtime.CalciteException;
 import org.apache.calcite.runtime.Feature;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
 import org.apache.calcite.sql.JoinConditionType;
@@ -46,8 +47,10 @@ import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCallBinding;
+import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDelete;
+import org.apache.calcite.sql.SqlDeleteUsingItem;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlExplain;
 import org.apache.calcite.sql.SqlFunction;
@@ -84,6 +87,7 @@ import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWindowTableFunction;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
+import org.apache.calcite.sql.ddl.SqlCreateTable;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -1166,6 +1170,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     return scopes.get(select);
   }
 
+
+  @Override public SqlValidatorScope getCreateTableScope(SqlCreateTable createTable) {
+    return requireNonNull(scopes.get(createTable));
+  }
+
   @Override public SqlValidatorScope getOrderScope(SqlSelect select) {
     return getScope(select, Clause.ORDER);
   }
@@ -1352,6 +1361,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         } else {
           childUnderFrom = false;
         }
+
         SqlNode newOperand =
             performUnconditionalRewrites(operand, childUnderFrom);
         if (newOperand != null && newOperand != operand) {
@@ -1472,8 +1482,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     case DELETE: {
       SqlDelete call = (SqlDelete) node;
-      SqlSelect select = createSourceSelectForDelete(call);
-      call.setSourceSelect(select);
+      if (call.getUsing() != null) {
+        // If we have a USING clause, we rewrite the delete as a merge operation
+        node = rewriteDeleteToMerge(call);
+      } else {
+        // Otherwise, we leave it as is, and just generate the source select
+        SqlSelect select = createSourceSelectForDelete(call);
+        call.setSourceSelect(select);
+      }
       break;
     }
 
@@ -1565,7 +1581,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * be present in the various conditions/clauses.
      */
 
-    SqlNode targetTable = call.getTargetTable();
+    SqlNode origTargetTable = call.getTargetTable();
 
     // NOTE, we add a projection onto the dest/target table, which adds a literal TRUE
     // This is used for checking if a merge has occurred later on. For all rows which did not match
@@ -1575,14 +1591,37 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     targetTableSelectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     targetTableSelectList.add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
 
-    targetTable = new SqlSelect(SqlParserPos.ZERO, null, targetTableSelectList,
-        targetTable, null, null, null, null, null,
+    SqlNode targetTable = new SqlSelect(SqlParserPos.ZERO, null, targetTableSelectList,
+        origTargetTable, null, null, null, null, null,
         null, null, null, null);
     if (call.getAlias() != null) {
       targetTable =
           SqlValidatorUtil.addAlias(
               targetTable,
               call.getAlias().getSimple());
+    } else {
+      // Due to the manner in which calcite handles subqueries, we need to explicitly add an
+      // alias here in order to handle fully qualified table names.
+      //
+      // For example this will succseed:
+      //
+      // SELECT *, True from dept inner join (SELECT *, True from emp) as emp on emp.ename = 1
+      //                                                               ^^^^^^
+      // But this will not:
+      //
+      // SELECT *, True from dept inner join (SELECT *, True from emp) on emp.ename = 1
+      //
+      // Therefore, we need add this explicit alias because we expect a query like:
+      // ... using table T1
+      // WHEN MATCHED AND T1.foo > 1
+      //
+      // to be able to properly handle the fully qualified reference to T1.foo
+      //
+      targetTable =
+          SqlValidatorUtil.addAlias(
+              targetTable,
+              ((SqlIdentifier) origTargetTable).getSimple()
+      );
     }
 
     // Provided there is an insert sub statement, the source select for
@@ -1694,6 +1733,89 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       insertCall.setSource(select);
     }
 
+  }
+
+
+
+  /**
+   * Used in UnconditonalRewrites. In the case that we have a DELETE with a USING clause.
+   *
+   * DELETE FROM target using T1, T2, ... where (cond) is equivalent to
+   *
+   * MERGE INTO target using (T1 full outer join T2...) on (cond) WHEN MATCHED THEN DELETE
+   *
+   * We choose to do this rewrite (similar to rewriteUpdateToMerge), in order to simplify validation
+   * and sqlToRel code generation.
+   *
+   * @param originalDeleteCall The DELETE call to transform. Must have at least one table/subquery
+   *                           in the "USING" clause.
+   * @return A new SqlMerge, which is equivalent to the original SqlDelete call.
+   */
+  private SqlMerge rewriteDeleteToMerge(
+      SqlDelete originalDeleteCall
+  ) {
+    //This should already be enforced in the one location we call this helper, but just to be safe
+    SqlNodeList usingClauses = requireNonNull(originalDeleteCall.getUsing(),
+        "rewriteDeleteToMerge called on a delete with no 'USING' clause");
+
+    //This should be required by parsing, but to be safe:
+    assert usingClauses.size() >= 1
+        :
+        "rewriteDeleteToMerge called on a delete with no 'USING' clause";
+    SqlNode targetTable = originalDeleteCall.getTargetTable();
+    SqlNode condition = originalDeleteCall.getCondition();
+    if (condition == null) {
+      condition = SqlLiteral.createBoolean(true, SqlParserPos.ZERO);
+    }
+    SqlIdentifier alias = originalDeleteCall.getAlias();
+
+    SqlNodeList matchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
+
+    SqlDelete matchedDeleteExpression = new
+        SqlDelete(originalDeleteCall.getParserPosition(),
+        targetTable, null, null, alias);
+
+    // TODO(keaton)
+    // There's a wierd issue here. Essentially, in validation, it will infer
+    // the row type of EMP as the row type from the merge in one location, but
+    // as the emp from the original table in another location, which causes a number conflicts.
+    //
+    // I spent about a day trying to resolve this, but all the fixes I tried ended up breaking
+    // existing merge into paths, and we don't even use the created Delete List anywhere
+    // in the merge path, I'm just going to set this to something arbitrary, and leave this as
+    // technical debt to figure out later.
+    SqlSelect select = createSourceSelectForDelete(matchedDeleteExpression);
+    select.getSelectList().remove(0);
+    select.getSelectList().add(SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
+    matchedDeleteExpression.setSourceSelect(select);
+
+    matchedCallList.add(matchedDeleteExpression);
+    SqlNodeList unMatchedCallList = SqlNodeList.EMPTY.clone(originalDeleteCall.getParserPosition());
+
+    //Set source to be the join of all the tables in Using.
+    //We're relying on the optimizer to push filters from the ON clause
+    //into the source table when appropriate.
+    SqlNode source = ((SqlDeleteUsingItem) usingClauses.get(0)).getSqlDeleteItemAsJoinExpression();
+    for (int i = 1; i < usingClauses.size(); i++) {
+      SqlNode newExpr = ((SqlDeleteUsingItem) usingClauses.get(i))
+          .getSqlDeleteItemAsJoinExpression();
+      source = new SqlJoin(SqlParserPos.ZERO,
+          source,
+          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          JoinType.FULL.symbol(SqlParserPos.ZERO),
+          newExpr,
+          JoinConditionType.ON.symbol(SqlParserPos.ZERO),
+          SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
+    }
+
+    SqlMerge mergeCall =
+        new SqlMerge(originalDeleteCall.getParserPosition(), targetTable, condition, source,
+            matchedCallList, unMatchedCallList, null,
+            alias);
+
+    //Run rewrite merge, so that it can apply whatever changes it needs to.
+    rewriteMerge(mergeCall);
+    return mergeCall;
   }
 
   private SqlNode rewriteUpdateToMerge(
@@ -2529,6 +2651,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       }
       parentScope = tableScope;
     }
+
     SqlCall call;
     SqlNode operand;
     SqlNode newOperand;
@@ -2869,6 +2992,63 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   /**
+   * Helper fn to avoid calcite function line limits.
+   */
+  private void registerCreateTableQuery(SqlValidatorScope parentScope,
+      @Nullable SqlValidatorScope usingScope,
+      SqlCreateTable createTable,
+      SqlNode enclosingNode,
+      boolean forceNullable) {
+    // TODO: I'll likely need some sort of call to
+    // validateFeature()
+    // to confirm that the sql dialect we're validating for even supports CREATE_TABLE.
+    // This will be done as followup: https://bodo.atlassian.net/browse/BE-4429
+
+    final SqlNode queryNode = createTable.getQuery();
+
+    // NOTE: query can be null, in the case that we're just doing a table definition with no data.
+    // For now, only supporting the case where we have a query, or a table identifier
+    if (queryNode != null) {
+      if (!(queryNode instanceof SqlIdentifier)) {
+        //In the case that the query is a select statement, we need to register it and
+        // it's sub queries.
+        registerQuery(
+            parentScope,
+            usingScope,
+            queryNode,
+            enclosingNode,
+            null,
+            false
+        );
+      } else {
+        // Modified version of the code for registering the namespace of an
+        // identifier in registerFrom.
+        final SqlValidatorNamespace newNs = new IdentifierNamespace(
+            this, (SqlIdentifier) queryNode, null, enclosingNode, parentScope
+        );
+        registerNamespace(usingScope, null, newNs, forceNullable);
+      }
+
+      DdlNamespace createTableNs = new DdlNamespace(
+          this,
+          createTable,
+          enclosingNode,
+          parentScope,
+          queryNode);
+      registerNamespace(usingScope, null, createTableNs, forceNullable);
+
+    } else {
+      throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
+    }
+    // Store the scope of the create table node itself.
+    // This will be used later during validation to resolve table aliases and/or
+    // the associated sub query.
+    // Since the create table node is always the topmost node, the usingScope
+    // should always be null, but better to be overly defensive.
+    scopes.put(createTable, (usingScope != null) ? usingScope : parentScope);
+  }
+
+  /**
    * Registers a query in a parent scope.
    *
    * @param parentScope Parent scope which this scope turns to in order to
@@ -3177,6 +3357,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
           false);
       break;
 
+    case CREATE_TABLE:
+      registerCreateTableQuery(parentScope, usingScope,
+          (SqlCreateTable) node, enclosingNode, forceNullable);
+      break;
+
     case MERGE:
       validateFeature(RESOURCE.sQLFeature_F312(), node.getParserPosition());
       SqlMerge mergeCall = (SqlMerge) node;
@@ -3370,10 +3555,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     if (node != null) {
       return node;
     }
+
+    // Bodo change: we allow having in non-aggregate clauses. (where it is equivalent to a
+    // WHERE clause).
+    // Note that we still require the having to behave as normal in the
+    // case that we encounter an aggregate in the having clause itself
     node = select.getHaving();
-    if (node != null) {
+    if (node != null && aggFinder.findAgg(node) != null) {
       return node;
     }
+
     return getAgg(select);
   }
 
@@ -3724,7 +3915,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       condition = getCondition(join);
 
 
-      validateWhereOrOn(joinScope, condition, "ON");
+      validateWhereOrOnOrNonAggregateHaving(joinScope, condition, "ON");
       checkRollUp(null, join, condition, joinScope, "ON");
       break;
     case USING:
@@ -3931,6 +4122,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     } else {
       validateFrom(select.getFrom(), fromType, fromScope);
     }
+
 
     validateWhereClause(select);
     validateGroupClause(select);
@@ -4622,10 +4814,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlNode expandedWhere = expandWithAlias(where, whereScope, select,
         ExtendedExpanderExprType.whereExpr);
     select.setWhere(expandedWhere);
-    validateWhereOrOn(whereScope, expandedWhere, "WHERE");
+    validateWhereOrOnOrNonAggregateHaving(whereScope, expandedWhere, "WHERE");
   }
 
-  protected void validateWhereOrOn(
+  protected void validateWhereOrOnOrNonAggregateHaving(
       SqlValidatorScope scope,
       SqlNode condition,
       String clause) {
@@ -4643,16 +4835,28 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   protected void validateHavingClause(SqlSelect select) {
-    // HAVING is validated in the scope after groups have been created.
-    // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
-    // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
-    // clause is illegal.
     SqlNode having = select.getHaving();
     if (having == null) {
       return;
     }
-    // If we have an HAVING clause, the select scope must be an aggregating scope,
-    // so the cast is safe
+
+    // If we have an HAVING clause, the select scope can either be an aggregating scope,
+    // or a non-aggregate scope, with both having different validation paths.
+    if (isAggregate(select)) {
+      validateAggregateHavingClause(select, having);
+    } else {
+      validateNonAggregateHavingClause(select, having);
+    }
+
+  }
+
+  protected void validateAggregateHavingClause(SqlSelect select, SqlNode having) {
+    // In the case that we're handling an aggregate select,
+    // HAVING is validated in the scope after groups have been created.
+    // For example, in "SELECT empno FROM emp WHERE empno = 10 GROUP BY
+    // deptno HAVING empno = 10", the reference to 'empno' in the HAVING
+    // clause is illegal.
+
     final AggregatingScope havingScope =
         (AggregatingScope) getSelectScope(select);
     if (config.conformance().isHavingAlias()) {
@@ -4678,6 +4882,18 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       throw newValidationError(having, RESOURCE.havingMustBeBoolean());
     }
   }
+
+  protected void validateNonAggregateHavingClause(SqlSelect select, SqlNode having) {
+    // In the case that we're handling a non-aggregate select,
+    // HAVING is semantically equivalent to a WHERE expression
+
+    final SqlValidatorScope havingScope = getSelectScope(select);
+    SqlNode expandedHaving = expandWithAlias(having, havingScope, select,
+        ExtendedExpanderExprType.whereExpr);
+    validateWhereOrOnOrNonAggregateHaving(havingScope, expandedHaving, "HAVING");
+    select.setHaving(expandedHaving);
+  }
+
   protected void validateQualifyClause(SqlSelect select) {
     SqlNode qualify = select.getQualify();
     if (qualify == null) {
@@ -5381,6 +5597,102 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     checkConstraint(table, call, targetRowType);
 
     validateAccess(call.getTargetTable(), table, SqlAccessEnum.UPDATE);
+  }
+
+  @Override public void validateCreateTable(SqlCreateTable createTable) {
+
+    // Issue: If both "IF NOT EXISTS" and "OR REPLACE", are specified,
+    // Snowflake throws the error: "IF NOT EXISTS and OR REPLACE are incompatible."
+    // I'm not sure if this is true in other dialects, but I'm going to assume
+    // it is
+    // If it isn't it will be handled as a followup issue:
+    // https://bodo.atlassian.net/browse/BE-4429
+
+    if (createTable.ifNotExists && createTable.getReplace()) {
+      throw newValidationError(createTable, RESOURCE.createTableInvalidSyntax());
+    }
+
+
+    final SqlNode queryNode = createTable.getQuery();
+    if (queryNode == null) {
+      throw newValidationError(createTable, RESOURCE.createTableRequiresAsQuery());
+    }
+
+    // Note, this can either a row expression or a query expression with an optional ORDER BY
+    // We're not currently handling the row expression case.
+
+    SqlValidatorScope createTableScope = this.getCreateTableScope(createTable);
+    // In order to be sufficiently general to the input of Create table,
+    // We have to validate this expression in the overall scope of the create table node,
+    // Since the associated query node
+    // doesn't necessarily have to be a select (notably, validaSelect doesn't work if the query has
+    // any 'with' clauses)
+    // Note that we also can't use validateScopedExpression, as this can rewrite the sqlNode
+    // via a call to performUnconditionalRewrites, which should have already been done by the time
+    // that we reach this points, and calling performUnconditionalRewrites twice is likely invalid.
+
+    if (!(queryNode instanceof SqlIdentifier)) {
+      queryNode.validate(this, createTableScope);
+    } else {
+      // Validate the namespace representation of the node,
+      // This is needed, as attempting to validate this identifier in the
+      // createTableScope will result in it being treated as a column identifier
+      // instead of a table.
+      requireNonNull(getNamespace(queryNode)).validate(unknownType);
+
+      final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
+      createTableScope.resolveTable(((SqlIdentifier) queryNode).names, catalogReader.nameMatcher(),
+          SqlValidatorScope.Path.EMPTY, resolved, new ArrayList<>());
+      if (resolved.count() != 1) {
+        throw newValidationError(queryNode, RESOURCE.tableNameNotFound(queryNode.toString()));
+      }
+    }
+
+
+    final SqlIdentifier tableNameNode = createTable.getName();
+    final List<String> names = tableNameNode.names;
+
+    //Create an empty resolve to accumulate the results
+    final SqlValidatorScope.ResolvedImpl resolved = new SqlValidatorScope.ResolvedImpl();
+
+    createTableScope.resolveSchema(
+        Util.skipLast(names), //Skip the last name element (the table name)
+        this.catalogReader.nameMatcher(),
+        SqlValidatorScope.Path.EMPTY,
+        resolved
+    );
+
+
+    SqlValidatorScope.Resolve bestResolve;
+    if (resolved.count() != 1) {
+      //If we have multiple resolutions, they're all invalid,
+      //but we want to pick the closest resolution to throw the best error.
+      bestResolve = resolved.resolves.get(0);
+      for (int i = 1; i < resolved.count(); i++) {
+        SqlValidatorScope.Resolve curResolve = resolved.resolves.get(i);
+        if (curResolve.remainingNames.size() < bestResolve.remainingNames.size()) {
+          bestResolve = curResolve;
+        }
+      }
+    } else {
+      bestResolve = resolved.only();
+    }
+
+    Schema resolvedSchema = ((SchemaNamespace) bestResolve.namespace).getSchema();
+    if (!bestResolve.remainingNames.isEmpty()) {
+      throw new RuntimeException(
+          "Unable to find schema "
+              + String.join(".", bestResolve.remainingNames)
+              + " in " + bestResolve.path);
+    }
+
+    if (!resolvedSchema.isMutable()) {
+      throw new RuntimeException("Error: Schema " + bestResolve.path + " is not mutable.");
+    }
+
+    createTable.setValidationInformation(Util.last(names),
+        resolvedSchema, bestResolve.path.stepNames());
+
   }
 
   @Override public void validateMerge(SqlMerge call) {
@@ -6851,6 +7163,233 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
 
+
+  /**
+   * Namespace for DDL statements (Data Definition Language, such as create [Or replace] Table).
+   * Currently, defers everything to the child query/table's namespace. This will likely need to be
+   * extended in the future in order to handle the case where the output column type are
+   * explicitly defined in the query.
+   *
+   * Note: this does not extend DmlNamespace because DmlNamespace
+   * requires there to be an existing target table, which is not necessarily true for DDL
+   * statements.
+   */
+  public static class DdlNamespace implements SqlValidatorNamespace {
+    private final SqlCreate node;
+    private final SqlValidatorNamespace childNamespace;
+
+    DdlNamespace(
+        SqlValidatorImpl validator,
+        SqlCreate node,
+        SqlNode enclosingNode, SqlValidatorScope parentScope, SqlNode childNode) {
+      requireNonNull(childNode, "childNode");
+      requireNonNull(node, "node");
+      this.node = node;
+
+      if (childNode instanceof SqlIdentifier) {
+        SqlIdentifier id = (SqlIdentifier) childNode;
+        switch (id.getKind()) {
+        case TABLE_IDENTIFIER_WITH_ID:
+        case TABLE_REF_WITH_ID:
+          childNamespace = new TableIdentifierWithIDNamespace(validator, id, enclosingNode,
+              parentScope);
+          break;
+        default:
+          childNamespace = new IdentifierNamespace(validator, id, enclosingNode, parentScope);
+        }
+      } else {
+        SqlValidatorNamespace childNs = validator.getNamespaceOrThrow(childNode);
+        childNamespace = childNs;
+      }
+    }
+
+
+    /**
+     * Returns the validator.
+     *
+     * @return validator
+     */
+    @Override public SqlValidator getValidator() {
+      return childNamespace.getValidator();
+    }
+
+    /**
+     * Returns the underlying table, or null if there is none.
+     */
+    @Override public @Nullable SqlValidatorTable getTable() {
+      return childNamespace.getTable();
+    }
+
+    /**
+     * Returns the row type of this namespace, which comprises a list of names
+     * and types of the output columns. If the scope's type has not yet been
+     * derived, derives it.
+     *
+     * @return Row type of this namespace, never null, always a struct
+     */
+    @Override public RelDataType getRowType() {
+      return childNamespace.getRowType();
+    }
+
+    /**
+     * Returns the type of this namespace.
+     *
+     * @return Row type converted to struct
+     */
+    @Override public RelDataType getType() {
+      return childNamespace.getType();
+    }
+
+    /**
+     * Sets the type of this namespace.
+     *
+     * <p>Allows the type for the namespace to be explicitly set, but usually is
+     * called during {@link #validate(RelDataType)}.</p>
+     *
+     * <p>Implicitly also sets the row type. If the type is not a struct, then
+     * the row type is the type wrapped as a struct with a single column,
+     * otherwise the type and row type are the same.</p>
+     *
+     * @param type the type to set
+     */
+    @Override public void setType(final RelDataType type) {
+      childNamespace.setType(type);
+    }
+
+    /**
+     * Returns the row type of this namespace, sans any system columns.
+     *
+     * @return Row type sans system columns
+     */
+    @Override public RelDataType getRowTypeSansSystemColumns() {
+      return childNamespace.getRowTypeSansSystemColumns();
+    }
+
+    /**
+     * Validates this namespace.
+     *
+     * <p>If the scope has already been validated, does nothing.</p>
+     *
+     * <p>Please call {@link SqlValidatorImpl#validateNamespace} rather than
+     * calling this method directly.</p>
+     *
+     * @param targetRowType Desired row type, must not be null, may be the data
+     *                      type 'unknown'.
+     */
+    @Override public void validate(final RelDataType targetRowType) {
+      childNamespace.validate(targetRowType);
+    }
+
+    @Override public @Nullable SqlNode getNode() {
+      return node;
+    }
+
+    /**
+     * Returns the parse tree node that at is at the root of this namespace and
+     * includes all decorations. If there are no decorations, returns the same
+     * as {@link #getNode()}.
+     */
+    @Override public @Nullable SqlNode getEnclosingNode() {
+      return node;
+    }
+
+    /**
+     * Looks up a child namespace of a given name.
+     *
+     * <p>For example, in the query <code>select e.name from emps as e</code>,
+     * <code>e</code> is an {@link IdentifierNamespace} which has a child <code>
+     * name</code> which is a {@link FieldNamespace}.
+     *
+     * @param name Name of namespace
+     * @return Namespace
+     */
+    @Override public @Nullable SqlValidatorNamespace lookupChild(final String name) {
+      return this.childNamespace.lookupChild(name);
+    }
+
+    /**
+     * Returns whether this namespace has a field of a given name.
+     *
+     * @param name Field name
+     * @return Whether field exists
+     */
+    @Override public boolean fieldExists(final String name) {
+      return this.childNamespace.fieldExists(name);
+    }
+
+    /**
+     * Returns a list of expressions which are monotonic in this namespace. For
+     * example, if the namespace represents a relation ordered by a column
+     * called "TIMESTAMP", then the list would contain a
+     * {@link SqlIdentifier} called "TIMESTAMP".
+     */
+    @Override public List<Pair<SqlNode, SqlMonotonicity>> getMonotonicExprs() {
+      return this.childNamespace.getMonotonicExprs();
+    }
+
+    /**
+     * Returns whether and how a given column is sorted.
+     *
+     * @param columnName the column to check
+     */
+    @Override public SqlMonotonicity getMonotonicity(final String columnName) {
+      return this.childNamespace.getMonotonicity(columnName);
+    }
+
+    @Override @Deprecated
+    public void makeNullable() {
+      this.childNamespace.makeNullable();
+    }
+
+    /**
+     * Returns this namespace, or a wrapped namespace, cast to a particular
+     * class.
+     *
+     * @param clazz Desired type
+     * @return This namespace cast to desired type
+     * @throws ClassCastException if no such interface is available
+     */
+    @Override public <T extends Object> T unwrap(final Class<T> clazz) {
+      return clazz.cast(this);
+    }
+
+    /**
+     * Returns whether this namespace implements a given interface, or wraps a
+     * class which does.
+     *
+     * @param clazz Interface
+     * @return Whether namespace implements given interface
+     */
+    @Override public boolean isWrapperFor(final Class<?> clazz) {
+      return clazz.isInstance(this);
+    }
+
+    /**
+     * If this namespace resolves to another namespace, returns that namespace,
+     * following links to the end of the chain.
+     *
+     * <p>A {@code WITH}) clause defines table names that resolve to queries
+     * (the body of the with-item). An {@link IdentifierNamespace} typically
+     * resolves to a {@link TableNamespace}.</p>
+     *
+     * <p>You must not call this method before {@link #validate(RelDataType)} has
+     * completed.</p>
+     */
+    @Override public SqlValidatorNamespace resolve() {
+      return this;
+    }
+
+    /**
+     * Returns whether this namespace is capable of giving results of the desired
+     * modality. {@code true} means streaming, {@code false} means relational.
+     *
+     * @param modality Modality
+     */
+    @Override public boolean supportsModality(final SqlModality modality) {
+      return childNamespace.supportsModality(modality);
+    }
+  }
+
   /**
    * Namespace for a MERGE statement.
    */
@@ -7644,7 +8183,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
             // SQL ordinals are 1-based, but Sort's are 0-based
             int ordinal = intValue - 1;
-            return SqlUtil.stripAs(SqlNonNullableAccessors.getSelectList(select).get(ordinal));
+            SqlNode expr = SqlUtil.stripAs(
+                SqlNonNullableAccessors.getSelectList(select).get(ordinal));
+            if (!(expr instanceof SqlLiteral)) {
+              expr = expr.accept(this);
+            }
+            return expr;
           }
           break;
         default:
