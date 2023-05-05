@@ -56,6 +56,7 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
   DATE,
   TIME,
   TIMESTAMP,
+  TIMEUNIT,
   BOOLEAN,
   INTERVAL_YEAR_MONTH,
   INTERVAL_DAY_TIME,

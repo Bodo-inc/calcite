@@ -45,4 +45,5 @@ public interface ExtraSqlTypes {
 
   // From OpenGIS
   int GEOMETRY = 2015; // TODO: confirm
+  int TIMEUNIT = 2016;
 }

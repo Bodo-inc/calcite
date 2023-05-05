@@ -277,6 +277,9 @@ public abstract class OperandTypes {
   public static final SqlSingleOperandTypeChecker TIMESTAMP =
       family(SqlTypeFamily.TIMESTAMP);
 
+  public static final SqlSingleOperandTypeChecker TIMEUNIT =
+      family(SqlTypeFamily.TIMEUNIT);
+
   public static final SqlSingleOperandTypeChecker INTERVAL =
       family(SqlTypeFamily.DATETIME_INTERVAL);
 
