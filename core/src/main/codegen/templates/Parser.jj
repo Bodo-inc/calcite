@@ -4683,6 +4683,17 @@ SqlLiteral SpecialLiteral() :
     <NULL> { return SqlLiteral.createNull(getPos()); }
 }
 
+/** Parse a time unit literal*/
+SqlLiteral TimeUnitLiteral() :
+{
+    final TimeUnit unit;
+}
+{
+    unit = TimeUnit() {
+      return SqlLiteral.createTimeUnit(unit, getPos());
+    }
+}
+
 /**
  * Parses a string literal. The literal may be continued onto several
  * lines.  For a simple literal, the result is an SqlLiteral.  For a continued

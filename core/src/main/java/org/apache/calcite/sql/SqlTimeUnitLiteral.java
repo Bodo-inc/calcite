@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql;
 
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -23,18 +22,20 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import static java.util.Objects.requireNonNull;
-
+/**
+ * A SQL literal representing a time unit.
+ */
 public class SqlTimeUnitLiteral extends SqlLiteral {
+  //~ Instance fields --------------------------------------------------------
   private TimeUnit unit;
 
+  //~ Constructors -----------------------------------------------------------
   protected SqlTimeUnitLiteral(TimeUnit unit, final SqlParserPos pos) {
     super(unit, SqlTypeName.TIMEUNIT, pos);
     this.unit = unit;
   }
 
+  //~ Methods ----------------------------------------------------------------
   @Override public SqlTimeUnitLiteral clone(SqlParserPos pos) {
     return new SqlTimeUnitLiteral(unit, pos);
   }

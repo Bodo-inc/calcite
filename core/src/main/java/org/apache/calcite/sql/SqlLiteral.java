@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql;
 
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.avatica.util.TimeUnitRange;
 import org.apache.calcite.rel.metadata.NullSentinel;
 import org.apache.calcite.rel.type.RelDataType;
@@ -1064,6 +1065,10 @@ public class SqlLiteral extends SqlNode {
         ns.getCharsetName(),
         ns.getCollation());
     return new SqlCharStringLiteral(ns, getParserPosition());
+  }
+
+  public static SqlLiteral createTimeUnit(TimeUnit unit, SqlParserPos pos) {
+    return new SqlTimeUnitLiteral(unit, pos);
   }
 
   //~ Inner Interfaces -------------------------------------------------------
