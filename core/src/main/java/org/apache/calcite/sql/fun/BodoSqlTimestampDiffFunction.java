@@ -66,8 +66,8 @@ public class BodoSqlTimestampDiffFunction extends SqlFunction {
                 || opBinding.getOperandType(2).isNullable());
       };
 
-  BodoSqlTimestampDiffFunction() {
-    super("TIMESTAMPDIFF", SqlKind.TIMESTAMP_DIFF,
+  BodoSqlTimestampDiffFunction(String fnName) {
+    super(fnName, SqlKind.TIMESTAMP_DIFF,
         RETURN_TYPE_INFERENCE, null,
         OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.DATETIME,
             SqlTypeFamily.DATETIME),

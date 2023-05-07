@@ -1994,11 +1994,25 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlFunction CURRENT_DATE =
       new SqlCurrentDateFunction();
 
+  /** The <code>TIMEADD</code> function. */
+  public static final SqlFunction TIME_ADD =
+      new BodoSqlTimestampAddFunction("TIMEADD");
+
   /** The <code>TIMESTAMPADD</code> function. */
-  public static final SqlFunction TIMESTAMP_ADD = new BodoSqlTimestampAddFunction();
+  public static final SqlFunction TIMESTAMP_ADD =
+      new BodoSqlTimestampAddFunction("TIMESTAMPADD");
+
+  /** The <code>DATEDIFF</code> function. */
+  public static final SqlFunction DATE_DIFF =
+      new BodoSqlTimestampDiffFunction("DATEDIFF");
+
+  /** The <code>TIMEDIFF</code> function. */
+  public static final SqlFunction TIME_DIFF =
+      new BodoSqlTimestampDiffFunction("TIMEDIFF");
 
   /** The <code>TIMESTAMPDIFF</code> function. */
-  public static final SqlFunction TIMESTAMP_DIFF = new BodoSqlTimestampDiffFunction();
+  public static final SqlFunction TIMESTAMP_DIFF =
+      new BodoSqlTimestampDiffFunction("TIMESTAMPDIFF");
 
   /**
    * Use of the <code>IN_FENNEL</code> operator forces the argument to be

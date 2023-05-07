@@ -58,6 +58,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
         SqlCallBinding opBindingWithCast = (SqlCallBinding) opBinding;
         RelDataType arg0Type = opBindingWithCast.getOperandType(0);
         TimeUnit arg0timeUnit;
+        String fnName = opBindingWithCast.getCall().getOperator().getName();
         switch (arg0Type.getSqlTypeName()) {
           // This must be a constant string or time unit input,
           // due to the way that we handle the parsing
@@ -67,13 +68,13 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
           try {
             String inputTimeStr =
                 requireNonNull(opBindingWithCast.getOperandLiteralValue(0, String.class));
-            arg0timeUnit = standardizeTimeUnit("TIMESTAMPADD",
+            arg0timeUnit = standardizeTimeUnit(fnName,
               inputTimeStr,
        opBindingWithCast.getOperandType(2).getSqlTypeName() == SqlTypeName.TIME);
           } catch (RuntimeException e) {
             String errMsg = requireNonNull(e.getMessage());
             throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),
-                RESOURCE.wrongTimeUnit("TIMESTAMPADD", errMsg));
+                RESOURCE.wrongTimeUnit(fnName, errMsg));
           }
           break;
 
@@ -88,7 +89,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
         } catch (RuntimeException e) {
           String errMsg = requireNonNull(e.getMessage());
           throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),
-              RESOURCE.wrongTimeUnit("TIMESTAMPADD", errMsg));
+              RESOURCE.wrongTimeUnit(fnName, errMsg));
         }
         return ret;
       };
@@ -364,8 +365,8 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
   }
 
   /** Creates a SqlTimestampAddFunction. */
-  BodoSqlTimestampAddFunction() {
-    super("TIMESTAMPADD", SqlKind.TIMESTAMP_ADD, RETURN_TYPE_INFERENCE, null,
+  BodoSqlTimestampAddFunction(String fnName) {
+    super(fnName, SqlKind.TIMESTAMP_ADD, RETURN_TYPE_INFERENCE, null,
         OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.INTEGER,
             SqlTypeFamily.DATETIME),
         SqlFunctionCategory.TIMEDATE);
