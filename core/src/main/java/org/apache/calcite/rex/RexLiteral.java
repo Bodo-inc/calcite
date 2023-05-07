@@ -702,6 +702,10 @@ public class RexLiteral extends RexNode {
       assert value instanceof TimestampString;
       sb.append(value.toString());
       break;
+    case TIMEUNIT:
+      assert value instanceof TimeUnit;
+      sb.append(value.toString());
+      break;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
