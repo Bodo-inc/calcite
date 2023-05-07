@@ -184,6 +184,8 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
       return ImmutableList.of(SqlTypeName.TIME, SqlTypeName.TIME_WITH_LOCAL_TIME_ZONE);
     case TIMESTAMP:
       return ImmutableList.of(SqlTypeName.TIMESTAMP, SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE);
+    case TIMEUNIT:
+      return ImmutableList.of(SqlTypeName.TIMEUNIT);
     case BOOLEAN:
       return SqlTypeName.BOOLEAN_TYPES;
     case INTERVAL_YEAR_MONTH:
@@ -240,6 +242,8 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
       return factory.createSqlType(SqlTypeName.TIME);
     case TIMESTAMP:
       return factory.createSqlType(SqlTypeName.TIMESTAMP);
+    case TIMEUNIT:
+      return factory.createSqlType(SqlTypeName.TIMEUNIT);
     case BOOLEAN:
       return factory.createSqlType(SqlTypeName.BOOLEAN);
     case STRING:

@@ -17,6 +17,7 @@
 package org.apache.calcite.sql2rel;
 
 import org.apache.calcite.avatica.util.ByteString;
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
@@ -155,6 +156,8 @@ public class SqlNodeToRexConverterImpl implements SqlNodeToRexConverter {
       return rexBuilder.makeIntervalLiteral(
           literal.getValueAs(BigDecimal.class, typeSystem),
           sqlIntervalQualifier);
+    case TIMEUNIT:
+      return rexBuilder.makeTimeUnitLiteral(literal.getValueAs(TimeUnit.class, typeSystem));
     default:
       throw Util.unexpected(literal.getTypeName());
     }

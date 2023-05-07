@@ -393,6 +393,10 @@ public class SqlLiteral extends SqlNode {
         return clazz.cast(valTime.getIntervalQualifier());
       }
       break;
+    case TIMEUNIT:
+      if (clazz == TimeUnit.class)
+        return clazz.cast(value);
+      break;
     default:
       break;
     }

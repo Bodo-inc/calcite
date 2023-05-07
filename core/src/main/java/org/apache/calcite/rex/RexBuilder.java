@@ -1256,6 +1256,15 @@ public class RexBuilder {
   }
 
   /**
+   * Creates a time unit literal.
+   */
+  public RexLiteral makeTimeUnitLiteral(TimeUnit timeunit) {
+    return makeLiteral(Objects.requireNonNull(timeunit, "timestamp"),
+        typeFactory.createSqlType(SqlTypeName.TIMEUNIT),
+        SqlTypeName.TIMEUNIT);
+  }
+
+  /**
    * Creates a literal representing an interval type, for example
    * {@code YEAR TO MONTH} or {@code DOW}.
    */

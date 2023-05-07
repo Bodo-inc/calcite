@@ -183,6 +183,9 @@ public class SqlTypeAssignmentRule implements SqlTypeMappingRule {
     rules.add(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
         EnumSet.of(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE));
 
+    // TIMEUNIT is assignable from ...
+    rules.add(SqlTypeName.TIMEUNIT, EnumSet.of(SqlTypeName.TIMEUNIT));
+
     // GEOMETRY is assignable from ...
     rules.add(SqlTypeName.GEOMETRY, EnumSet.of(SqlTypeName.GEOMETRY));
 
