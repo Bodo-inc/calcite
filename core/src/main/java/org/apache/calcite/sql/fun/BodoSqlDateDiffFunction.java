@@ -22,11 +22,15 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
 
+/**
+ * The <code>TIMESTAMPDIFF</code> function, which calculates the difference
+ * between two datetimes (TIMESTAMP, TIME or DATE).
+ */
 public class BodoSqlDateDiffFunction extends SqlFunction {
   /** Creates a BodoSqlDateDiffFunction. */
   BodoSqlDateDiffFunction() {
     super("DATEDIFF", SqlKind.OTHER,
-        ReturnTypes.BIGINT, null,
+        ReturnTypes.BIGINT_NULLABLE, null,
         OperandTypes.or(
             OperandTypes.sequence(
                 "DATEDIFF(TIMESTAMP/DATE, TIMESTAMP/DATE)",

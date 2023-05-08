@@ -1353,31 +1353,35 @@ Not implemented:
 
 ### Date/time functions
 
-| Operator syntax           | Description
-|:------------------------- |:-----------
-| LOCALTIME                 | Returns the current date and time in the session time zone in a value of datatype TIME
-| LOCALTIME(precision)      | Returns the current date and time in the session time zone in a value of datatype TIME, with *precision* digits of precision
-| LOCALTIMESTAMP            | Returns the current date and time in the session time zone in a value of datatype TIMESTAMP
-| LOCALTIMESTAMP(precision) | Returns the current date and time in the session time zone in a value of datatype TIMESTAMP, with *precision* digits of precision
-| CURRENT_TIME              | Returns the current time in the session time zone, in a value of datatype TIMESTAMP WITH TIME ZONE
-| CURRENT_DATE              | Returns the current date in the session time zone, in a value of datatype DATE
-| CURRENT_TIMESTAMP         | Returns the current date and time in the session time zone, in a value of datatype TIMESTAMP WITH TIME ZONE
-| EXTRACT(timeUnit FROM datetime) | Extracts and returns the value of a specified datetime field from a datetime value expression
-| FLOOR(datetime TO timeUnit) | Rounds *datetime* down to *timeUnit*
-| CEIL(datetime TO timeUnit) | Rounds *datetime* up to *timeUnit*
-| YEAR(date)                | Equivalent to `EXTRACT(YEAR FROM date)`. Returns an integer.
-| QUARTER(date)             | Equivalent to `EXTRACT(QUARTER FROM date)`. Returns an integer between 1 and 4.
-| MONTH(date)               | Equivalent to `EXTRACT(MONTH FROM date)`. Returns an integer between 1 and 12.
-| WEEK(date)                | Equivalent to `EXTRACT(WEEK FROM date)`. Returns an integer between 1 and 53.
-| DAYOFYEAR(date)           | Equivalent to `EXTRACT(DOY FROM date)`. Returns an integer between 1 and 366.
-| DAYOFMONTH(date)          | Equivalent to `EXTRACT(DAY FROM date)`. Returns an integer between 1 and 31.
-| DAYOFWEEK(date)           | Equivalent to `EXTRACT(DOW FROM date)`. Returns an integer between 1 and 7.
-| HOUR(date)                | Equivalent to `EXTRACT(HOUR FROM date)`. Returns an integer between 0 and 23.
-| MINUTE(date)              | Equivalent to `EXTRACT(MINUTE FROM date)`. Returns an integer between 0 and 59.
-| SECOND(date)              | Equivalent to `EXTRACT(SECOND FROM date)`. Returns an integer between 0 and 59.
-| TIMESTAMPADD(timeUnit, integer, datetime) | Returns *datetime* with an interval of (signed) *integer* *timeUnit*s added. Equivalent to `datetime + INTERVAL 'integer' timeUnit`
-| TIMESTAMPDIFF(timeUnit, datetime, datetime2) | Returns the (signed) number of *timeUnit* intervals between *datetime* and *datetime2*. Equivalent to `(datetime2 - datetime) timeUnit`
-| LAST_DAY(date)            | Returns the date of the last day of the month in a value of datatype DATE; For example, it returns DATE'2020-02-29' for both DATE'2020-02-10' and TIMESTAMP'2020-02-10 10:10:10'
+| Operator syntax                               | Description
+|:----------------------------------------------|:-----------
+| LOCALTIME                                     | Returns the current date and time in the session time zone in a value of datatype TIME
+| LOCALTIME(precision)                          | Returns the current date and time in the session time zone in a value of datatype TIME, with *precision* digits of precision
+| LOCALTIMESTAMP                                | Returns the current date and time in the session time zone in a value of datatype TIMESTAMP
+| LOCALTIMESTAMP(precision)                     | Returns the current date and time in the session time zone in a value of datatype TIMESTAMP, with *precision* digits of precision
+| CURRENT_TIME                                  | Returns the current time in the session time zone, in a value of datatype TIMESTAMP WITH TIME ZONE
+| CURRENT_DATE                                  | Returns the current date in the session time zone, in a value of datatype DATE
+| CURRENT_TIMESTAMP                             | Returns the current date and time in the session time zone, in a value of datatype TIMESTAMP WITH TIME ZONE
+| EXTRACT(timeUnit FROM datetime)               | Extracts and returns the value of a specified datetime field from a datetime value expression
+| FLOOR(datetime TO timeUnit)                   | Rounds *datetime* down to *timeUnit*
+| CEIL(datetime TO timeUnit)                    | Rounds *datetime* up to *timeUnit*
+| YEAR(date)                                    | Equivalent to `EXTRACT(YEAR FROM date)`. Returns an integer.
+| QUARTER(date)                                 | Equivalent to `EXTRACT(QUARTER FROM date)`. Returns an integer between 1 and 4.
+| MONTH(date)                                   | Equivalent to `EXTRACT(MONTH FROM date)`. Returns an integer between 1 and 12.
+| WEEK(date)                                    | Equivalent to `EXTRACT(WEEK FROM date)`. Returns an integer between 1 and 53.
+| DAYOFYEAR(date)                               | Equivalent to `EXTRACT(DOY FROM date)`. Returns an integer between 1 and 366.
+| DAYOFMONTH(date)                              | Equivalent to `EXTRACT(DAY FROM date)`. Returns an integer between 1 and 31.
+| DAYOFWEEK(date)                               | Equivalent to `EXTRACT(DOW FROM date)`. Returns an integer between 1 and 7.
+| HOUR(date)                                    | Equivalent to `EXTRACT(HOUR FROM date)`. Returns an integer between 0 and 23.
+| MINUTE(date)                                  | Equivalent to `EXTRACT(MINUTE FROM date)`. Returns an integer between 0 and 59.
+| SECOND(date)                                  | Equivalent to `EXTRACT(SECOND FROM date)`. Returns an integer between 0 and 59.
+| DATEADD(timeUnit, integer, datetime)          | Returns *datetime* with an interval of (signed) *integer* *timeUnit*s added. Equivalent to `datetime + INTERVAL 'integer' timeUnit`
+| DATEDIFF(timeUnit, datetime, datetime2)       | Returns the (signed) number of *timeUnit* intervals between *datetime* and *datetime2*. Equivalent to `(datetime2 - datetime) timeUnit`
+| TIMEADD(timeUnit, integer, datetime)          | Returns *datetime* with an interval of (signed) *integer* *timeUnit*s added. Equivalent to `datetime + INTERVAL 'integer' timeUnit`
+| TIMEDIFF(timeUnit, datetime, datetime2)  | Returns the (signed) number of *timeUnit* intervals between *datetime* and *datetime2*. Equivalent to `(datetime2 - datetime) timeUnit`
+| TIMESTAMPADD(timeUnit, integer, datetime)     | Returns *datetime* with an interval of (signed) *integer* *timeUnit*s added. Equivalent to `datetime + INTERVAL 'integer' timeUnit`
+| TIMESTAMPDIFF(timeUnit, datetime, datetime2)  | Returns the (signed) number of *timeUnit* intervals between *datetime* and *datetime2*. Equivalent to `(datetime2 - datetime) timeUnit`
+| LAST_DAY(date)                                | Returns the date of the last day of the month in a value of datatype DATE; For example, it returns DATE'2020-02-29' for both DATE'2020-02-10' and TIMESTAMP'2020-02-10 10:10:10'
 
 Calls to niladic functions such as `CURRENT_DATE` do not accept parentheses in
 standard SQL. Calls with parentheses, such as `CURRENT_DATE()` are accepted in certain
@@ -1771,23 +1775,27 @@ Not implemented:
 
 #### Date/time
 
-| Operator syntax | Description
-|:--------------- |:-----------
-| {fn CURDATE()}  | Equivalent to `CURRENT_DATE`
-| {fn CURTIME()}  | Equivalent to `LOCALTIME`
-| {fn NOW()}      | Equivalent to `LOCALTIMESTAMP`
-| {fn YEAR(date)} | Equivalent to `EXTRACT(YEAR FROM date)`. Returns an integer.
-| {fn QUARTER(date)} | Equivalent to `EXTRACT(QUARTER FROM date)`. Returns an integer between 1 and 4.
-| {fn MONTH(date)} | Equivalent to `EXTRACT(MONTH FROM date)`. Returns an integer between 1 and 12.
-| {fn WEEK(date)} | Equivalent to `EXTRACT(WEEK FROM date)`. Returns an integer between 1 and 53.
-| {fn DAYOFYEAR(date)} | Equivalent to `EXTRACT(DOY FROM date)`. Returns an integer between 1 and 366.
-| {fn DAYOFMONTH(date)} | Equivalent to `EXTRACT(DAY FROM date)`. Returns an integer between 1 and 31.
-| {fn DAYOFWEEK(date)} | Equivalent to `EXTRACT(DOW FROM date)`. Returns an integer between 1 and 7.
-| {fn HOUR(date)} | Equivalent to `EXTRACT(HOUR FROM date)`. Returns an integer between 0 and 23.
-| {fn MINUTE(date)} | Equivalent to `EXTRACT(MINUTE FROM date)`. Returns an integer between 0 and 59.
-| {fn SECOND(date)} | Equivalent to `EXTRACT(SECOND FROM date)`. Returns an integer between 0 and 59.
-| {fn TIMESTAMPADD(timeUnit, count, datetime)} | Adds an interval of *count* *timeUnit*s to a datetime
-| {fn TIMESTAMPDIFF(timeUnit, timestamp1, timestamp2)} | Subtracts *timestamp1* from *timestamp2* and returns the result in *timeUnit*s
+| Operator syntax                                       | Description
+|:------------------------------------------------------|:-----------
+| {fn CURDATE()}                                        | Equivalent to `CURRENT_DATE`
+| {fn CURTIME()}                                        | Equivalent to `LOCALTIME`
+| {fn NOW()}                                            | Equivalent to `LOCALTIMESTAMP`
+| {fn YEAR(date)}                                       | Equivalent to `EXTRACT(YEAR FROM date)`. Returns an integer.
+| {fn QUARTER(date)}                                    | Equivalent to `EXTRACT(QUARTER FROM date)`. Returns an integer between 1 and 4.
+| {fn MONTH(date)}                                      | Equivalent to `EXTRACT(MONTH FROM date)`. Returns an integer between 1 and 12.
+| {fn WEEK(date)}                                       | Equivalent to `EXTRACT(WEEK FROM date)`. Returns an integer between 1 and 53.
+| {fn DAYOFYEAR(date)}                                  | Equivalent to `EXTRACT(DOY FROM date)`. Returns an integer between 1 and 366.
+| {fn DAYOFMONTH(date)}                                 | Equivalent to `EXTRACT(DAY FROM date)`. Returns an integer between 1 and 31.
+| {fn DAYOFWEEK(date)}                                  | Equivalent to `EXTRACT(DOW FROM date)`. Returns an integer between 1 and 7.
+| {fn HOUR(date)}                                       | Equivalent to `EXTRACT(HOUR FROM date)`. Returns an integer between 0 and 23.
+| {fn MINUTE(date)}                                     | Equivalent to `EXTRACT(MINUTE FROM date)`. Returns an integer between 0 and 59.
+| {fn SECOND(date)}                                     | Equivalent to `EXTRACT(SECOND FROM date)`. Returns an integer between 0 and 59.
+| {fn DATEADD(timeUnit, count, datetime)}               | Adds an interval of *count* *timeUnit*s to a datetime
+| {fn DATEDIFF(timeUnit, timestamp1, timestamp2)}       | Subtracts *timestamp1* from *timestamp2* and returns the result in *timeUnit*s
+| {fn TIMEADD(timeUnit, count, datetime)}               | Adds an interval of *count* *timeUnit*s to a datetime
+| {fn TIMEDIFF(timeUnit, timestamp1, timestamp2)}       | Subtracts *timestamp1* from *timestamp2* and returns the result in *timeUnit*s
+| {fn TIMESTAMPADD(timeUnit, count, datetime)}          | Adds an interval of *count* *timeUnit*s to a datetime
+| {fn TIMESTAMPDIFF(timeUnit, timestamp1, timestamp2)}  | Subtracts *timestamp1* from *timestamp2* and returns the result in *timeUnit*s
 
 
 #### System

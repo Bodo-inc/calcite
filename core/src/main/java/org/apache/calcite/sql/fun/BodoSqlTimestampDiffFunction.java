@@ -55,7 +55,7 @@ public class BodoSqlTimestampDiffFunction extends SqlFunction {
   /** Creates a SqlTimestampDiffFunction. */
   BodoSqlTimestampDiffFunction(String fnName) {
     super(fnName, SqlKind.TIMESTAMP_DIFF,
-        ReturnTypes.BIGINT, null,
+        ReturnTypes.BIGINT_NULLABLE, null,
         OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.DATETIME,
             SqlTypeFamily.DATETIME),
         SqlFunctionCategory.TIMEDATE);

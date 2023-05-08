@@ -39,6 +39,10 @@ import static org.apache.calcite.util.Static.RESOURCE;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * The <code>DATEADD</code> function, which adds an interval to a
+ * datetime (TIMESTAMP, TIME or DATE).
+ */
 public class BodoSqlDateAddFunction extends SqlFunction {
   private static final SqlReturnTypeInference RETURN_TYPE_INFERENCE =
       opBinding -> {
@@ -83,30 +87,30 @@ public class BodoSqlDateAddFunction extends SqlFunction {
             throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),
                 RESOURCE.wrongTimeUnit(fnName, errMsg));
           }
-        }
-        else { // MySQL DATEADD
+        } else { // MySQL DATEADD
           if (arg1Type.equals(OperandTypes.INTEGER)) {
             // when the second argument is integer, it is equivalent to adding day interval
-            if (arg0Type.equals(OperandTypes.DATE))
+            if (arg0Type.equals(OperandTypes.DATE)) {
               ret = typeFactory.createSqlType(SqlTypeName.DATE);
-            else if (arg0Type instanceof TZAwareSqlType)
+            } else if (arg0Type instanceof TZAwareSqlType) {
               ret = arg0Type;
-            else
+            } else {
               ret = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
-          }
-          else {
+            }
+          } else {
             // if the first argument is date, the return type depends on the interval type
             if (arg0Type.equals(OperandTypes.DATE)) {
-              Set<SqlTypeName> DATE_INTERVAL_TYPES =
+              Set<SqlTypeName> date_interval_type =
                   Sets.immutableEnumSet(SqlTypeName.INTERVAL_YEAR_MONTH,
                       SqlTypeName.INTERVAL_YEAR,
                       SqlTypeName.INTERVAL_MONTH,
                       SqlTypeName.INTERVAL_WEEK,
                       SqlTypeName.INTERVAL_DAY);
-              if (DATE_INTERVAL_TYPES.contains(arg1Type))
+              if (date_interval_type.contains(arg1Type.getSqlTypeName())) {
                 ret = typeFactory.createSqlType(SqlTypeName.DATE);
-              else
+              } else {
                 ret = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
+              }
             } else if (arg0Type instanceof TZAwareSqlType) {
               ret = arg0Type;
             } else {
