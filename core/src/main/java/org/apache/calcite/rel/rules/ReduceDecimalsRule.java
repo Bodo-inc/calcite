@@ -233,6 +233,7 @@ public class ReduceDecimalsRule
         RexBuilder rexBuilder) {
       RexExpander cast = new CastExpander(rexBuilder);
       map.put(SqlStdOperatorTable.CAST, cast);
+      map.put(SqlStdOperatorTable.TRY_CAST, cast);
 
       RexExpander passThrough = new PassThroughExpander(rexBuilder);
       map.put(SqlStdOperatorTable.UNARY_MINUS, passThrough);
