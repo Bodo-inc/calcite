@@ -280,7 +280,8 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case TIME_WITH_LOCAL_TIME_ZONE:
     case TIME:
       if (!timeUnitSmallerThanDay) {
-        throw new RuntimeException("Unsupported unit for " + fnName + " with TIME input: " + timeUnit);
+        throw new RuntimeException("Unsupported unit for " +
+            fnName + " with TIME input: " + timeUnit);
       }
       outputType = operandType2;
       break;

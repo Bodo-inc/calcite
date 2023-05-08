@@ -26,6 +26,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.TZAwareSqlType;
 
 import com.google.common.collect.Sets;
 
@@ -84,25 +85,32 @@ public class BodoSqlDateAddFunction extends SqlFunction {
           }
         }
         else { // MySQL DATEADD
-          if (arg0Type.equals(OperandTypes.INTEGER)) {
+          if (arg1Type.equals(OperandTypes.INTEGER)) {
             // when the second argument is integer, it is equivalent to adding day interval
-            ret = arg1Type;
+            if (arg0Type.equals(OperandTypes.DATE))
+              ret = typeFactory.createSqlType(SqlTypeName.DATE);
+            else if (arg0Type instanceof TZAwareSqlType)
+              ret = arg0Type;
+            else
+              ret = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
           }
           else {
             // if the first argument is date, the return type depends on the interval type
-            if (arg1Type.getSqlTypeName().equals(SqlTypeName.DATE)) {
+            if (arg0Type.equals(OperandTypes.DATE)) {
               Set<SqlTypeName> DATE_INTERVAL_TYPES =
                   Sets.immutableEnumSet(SqlTypeName.INTERVAL_YEAR_MONTH,
                       SqlTypeName.INTERVAL_YEAR,
                       SqlTypeName.INTERVAL_MONTH,
                       SqlTypeName.INTERVAL_WEEK,
                       SqlTypeName.INTERVAL_DAY);
-              if (DATE_INTERVAL_TYPES.contains(opBinding.getOperandType(1)))
+              if (DATE_INTERVAL_TYPES.contains(arg1Type))
                 ret = typeFactory.createSqlType(SqlTypeName.DATE);
               else
                 ret = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
+            } else if (arg0Type instanceof TZAwareSqlType) {
+              ret = arg0Type;
             } else {
-              ret = arg1Type;
+              ret = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
             }
           }
         }
