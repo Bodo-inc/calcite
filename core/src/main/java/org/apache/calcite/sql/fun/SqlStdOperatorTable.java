@@ -2037,11 +2037,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * the value is NULL, an exception will be thrown.</p>
    */
   public static final SqlFunction CAST = new SqlCastFunction("CAST");
-  public static final SqlFunction TRY_CAST = new SqlFunction("TRY_CAST", SqlKind.OTHER,
-      null,
-      InferTypes.FIRST_KNOWN,
-      null,
-      SqlFunctionCategory.SYSTEM);
+  public static final SqlFunction TRY_CAST = new SqlCastFunction("TRY_CAST");
 
   /**
    * The Snowflake <code>DATE</code> function.
