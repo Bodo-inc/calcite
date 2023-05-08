@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -32,12 +31,12 @@ import com.google.common.collect.Sets;
 
 import java.util.Set;
 
-import static java.util.Objects.requireNonNull;
-
 import static org.apache.calcite.sql.fun.BodoSqlTimestampAddFunction.deduceType;
 import static org.apache.calcite.sql.fun.BodoSqlTimestampAddFunction.standardizeTimeUnit;
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
 import static org.apache.calcite.util.Static.RESOURCE;
+
+import static java.util.Objects.requireNonNull;
 
 public class BodoSqlDateAddFunction extends SqlFunction {
   private static final SqlReturnTypeInference RETURN_TYPE_INFERENCE =
@@ -51,7 +50,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
         RelDataType arg1Type = opBindingWithCast.getOperandType(1);
         if (opBindingWithCast.getOperandCount() == 3) { // Snowflake DATEADD
           TimeUnit arg0timeUnit;
-
+          RelDataType arg2Type = opBindingWithCast.getOperandType(2);
           switch (arg0Type.getSqlTypeName()) {
           // This must be a constant string or time unit input,
           // due to the way that we handle the parsing
@@ -63,7 +62,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
                   requireNonNull(opBindingWithCast.getOperandLiteralValue(0, String.class));
               arg0timeUnit = standardizeTimeUnit(fnName,
                   inputTimeStr,
-                  opBindingWithCast.getOperandType(2).getSqlTypeName() == SqlTypeName.TIME);
+                  arg2Type.getSqlTypeName() == SqlTypeName.TIME);
             } catch (RuntimeException e) {
               String errMsg = requireNonNull(e.getMessage());
               throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),
@@ -111,7 +110,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
       };
 
 
-  /** Creates a DateAddFunction. */
+  /** Creates a BodoSqlDateAddFunction. */
   BodoSqlDateAddFunction() {
     super("DATEADD", SqlKind.OTHER, RETURN_TYPE_INFERENCE, null,
         OperandTypes.or(

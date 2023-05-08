@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.sql.SqlFunction;
@@ -22,9 +21,9 @@ import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
-import org.apache.calcite.sql.type.SqlTypeFamily;
 
 public class BodoSqlDateDiffFunction extends SqlFunction {
+  /** Creates a BodoSqlDateDiffFunction. */
   BodoSqlDateDiffFunction() {
     super("DATEDIFF", SqlKind.OTHER,
         ReturnTypes.BIGINT, null,
