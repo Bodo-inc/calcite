@@ -76,7 +76,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
 
           try {
             ret = deduceType(typeFactory, arg0timeUnit,
-                opBinding.getOperandType(1), opBinding.getOperandType(2));
+                opBinding.getOperandType(1), opBinding.getOperandType(2), fnName);
           } catch (RuntimeException e) {
             String errMsg = requireNonNull(e.getMessage());
             throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),

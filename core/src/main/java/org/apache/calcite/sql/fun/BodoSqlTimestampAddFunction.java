@@ -85,7 +85,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
         RelDataType ret;
         try {
           ret = deduceType(typeFactory, arg0timeUnit,
-              opBinding.getOperandType(1), opBinding.getOperandType(2));
+              opBinding.getOperandType(1), opBinding.getOperandType(2), fnName);
         } catch (RuntimeException e) {
           String errMsg = requireNonNull(e.getMessage());
           throw opBindingWithCast.getValidator().newValidationError(opBindingWithCast.getCall(),
@@ -108,14 +108,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
   public static TimeUnit standardizeTimeUnit(String fnName, String inputTimeStr, boolean isTime) {
     TimeUnit unit;
     switch (inputTimeStr.toLowerCase(Locale.ROOT)) {
-    case "\"year\"":
-    case "\"y\"":
-    case "\"yy\"":
-    case "\"yyy\"":
-    case "\"yyyy\"":
-    case "\"yr\"":
-    case "\"years\"":
-    case "\"yrs\"":
     case "year":
     case "y":
     case "yy":
@@ -127,16 +119,11 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_year":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: \"" + inputTimeStr + "\"");
       }
       unit = TimeUnit.YEAR;
       break;
 
-    case "\"month\"":
-    case "\"mm\"":
-    case "\"mon\"":
-    case "\"mons\"":
-    case "\"months\"":
     case "month":
     case "mm":
     case "mon":
@@ -145,16 +132,11 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_month":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: \"" + inputTimeStr + "\"");
       }
       unit = TimeUnit.MONTH;
       break;
 
-    case "\"day\"":
-    case "\"d\"":
-    case "\"dd\"":
-    case "\"days\"":
-    case "\"dayofmonth\"":
     case "day":
     case "d":
     case "dd":
@@ -163,17 +145,11 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_day":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: \"" + inputTimeStr + "\"");
       }
       unit = TimeUnit.DAY;
       break;
 
-    case "\"week\"":
-    case "\"w\"":
-    case "\"wk\"":
-    case "\"weekofyear\"":
-    case "\"woy\"":
-    case "\"wy\"":
     case "week":
     case "w":
     case "wk":
@@ -183,16 +159,11 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_week":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: \"" + inputTimeStr + "\"");
       }
       unit = TimeUnit.WEEK;
       break;
 
-    case "\"quarter\"":
-    case "\"q\"":
-    case "\"qtr\"":
-    case "\"qtrs\"":
-    case "\"quarters\"":
     case "quarter":
     case "q":
     case "qtr":
@@ -201,17 +172,11 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_quarter":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: \"" + inputTimeStr + "\"");
       }
       unit = TimeUnit.QUARTER;
       break;
 
-    case "\"hour\"":
-    case "\"h\"":
-    case "\"hh\"":
-    case "\"hr\"":
-    case "\"hours\"":
-    case "\"hrs\"":
     case "hour":
     case "h":
     case "hh":
@@ -222,12 +187,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       unit = TimeUnit.HOUR;
       break;
 
-    case "\"minute\"":
-    case "\"m\"":
-    case "\"mi\"":
-    case "\"min\"":
-    case "\"minutes\"":
-    case "\"mins\"":
     case "minute":
     case "m":
     case "mi":
@@ -238,11 +197,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       unit = TimeUnit.MINUTE;
       break;
 
-    case "\"second\"":
-    case "\"s\"":
-    case "\"sec\"":
-    case "\"seconds\"":
-    case "\"secs\"":
     case "second":
     case "s":
     case "sec":
@@ -252,10 +206,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       unit = TimeUnit.SECOND;
       break;
 
-    case "\"millisecond\"":
-    case "\"ms\"":
-    case "\"msec\"":
-    case "\"milliseconds\"":
     case "millisecond":
     case "ms":
     case "msec":
@@ -263,10 +213,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       unit = TimeUnit.MILLISECOND;
       break;
 
-    case "\"microsecond\"":
-    case "\"us\"":
-    case "\"usec\"":
-    case "\"microseconds\"":
     case "microsecond":
     case "us":
     case "usec":
@@ -276,14 +222,6 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       unit = TimeUnit.MICROSECOND;
       break;
 
-    case "\"nanosecond\"":
-    case "\"ns\"":
-    case "\"nsec\"":
-    case "\"nanosec\"":
-    case "\"nsecond\"":
-    case "\"nanoseconds\"":
-    case "\"nanosecs\"":
-    case "\"nseconds\"":
     case "nanosecond":
     case "ns":
     case "nsec":
@@ -297,13 +235,13 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       break;
 
     default:
-      throw new RuntimeException("Unsupported unit for " + fnName + ": " + inputTimeStr);
+      throw new RuntimeException("Unsupported unit for " + fnName + ": \"" + inputTimeStr + "\"");
     }
     return unit;
   }
 
   public static RelDataType deduceType(RelDataTypeFactory typeFactory,
-      TimeUnit timeUnit, RelDataType operandType1, RelDataType operandType2) {
+      TimeUnit timeUnit, RelDataType operandType1, RelDataType operandType2, String fnName) {
 
     // https://docs.snowflake.com/en/sql-reference/functions/timestampadd
     // Based on my reading of this:
@@ -342,8 +280,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case TIME_WITH_LOCAL_TIME_ZONE:
     case TIME:
       if (!timeUnitSmallerThanDay) {
-        throw new RuntimeException("When arg2 is a time,"
-            + " the specified time unit must be smaller than day.");
+        throw new RuntimeException("Unsupported unit for " + fnName + " with TIME input: " + timeUnit);
       }
       outputType = operandType2;
       break;
