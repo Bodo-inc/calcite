@@ -1995,7 +1995,11 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new SqlCurrentDateFunction();
 
   /** The <code>TIMEADD</code> function. */
-  public static final SqlFunction TIME_ADD =
+  public static final SqlFunction DATEADD =
+      new BodoSqlDateAddFunction();
+
+  /** The <code>TIMEADD</code> function. */
+  public static final SqlFunction TIMEADD =
       new BodoSqlTimestampAddFunction("TIMEADD");
 
   /** The <code>TIMESTAMPADD</code> function. */
@@ -2003,11 +2007,11 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new BodoSqlTimestampAddFunction("TIMESTAMPADD");
 
   /** The <code>DATEDIFF</code> function. */
-  public static final SqlFunction DATE_DIFF =
-      new BodoSqlTimestampDiffFunction("DATEDIFF");
+  public static final SqlFunction DATEDIFF =
+      new BodoSqlDateDiffFunction();
 
   /** The <code>TIMEDIFF</code> function. */
-  public static final SqlFunction TIME_DIFF =
+  public static final SqlFunction TIMEDIFF =
       new BodoSqlTimestampDiffFunction("TIMEDIFF");
 
   /** The <code>TIMESTAMPDIFF</code> function. */

@@ -21,9 +21,12 @@ import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.OperandTypes;
+import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
+
+import sun.reflect.generics.tree.ReturnType;
 
 /**
  * The <code>TIMESTAMPDIFF</code> function, which calculates the difference
@@ -68,7 +71,7 @@ public class BodoSqlTimestampDiffFunction extends SqlFunction {
 
   BodoSqlTimestampDiffFunction(String fnName) {
     super(fnName, SqlKind.TIMESTAMP_DIFF,
-        RETURN_TYPE_INFERENCE, null,
+        ReturnTypes.BIGINT, null,
         OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.DATETIME,
             SqlTypeFamily.DATETIME),
         SqlFunctionCategory.TIMEDATE);

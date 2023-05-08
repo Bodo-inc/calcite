@@ -127,7 +127,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_year":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported " + fnName + " unit for TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
       }
       unit = TimeUnit.YEAR;
       break;
@@ -145,7 +145,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_month":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported " + fnName + " unit for TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
       }
       unit = TimeUnit.MONTH;
       break;
@@ -163,7 +163,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_day":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported " + fnName + " unit for TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
       }
       unit = TimeUnit.DAY;
       break;
@@ -183,7 +183,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_week":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported " + fnName + " unit for TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
       }
       unit = TimeUnit.WEEK;
       break;
@@ -201,7 +201,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
     case "sql_tsi_quarter":
       if (isTime) {
         throw new RuntimeException(
-            "Unsupported " + fnName + " unit for TIME input: " + inputTimeStr);
+            "Unsupported unit for " + fnName + " with TIME input: " + inputTimeStr);
       }
       unit = TimeUnit.QUARTER;
       break;
@@ -297,7 +297,7 @@ public class BodoSqlTimestampAddFunction extends SqlFunction {
       break;
 
     default:
-      throw new RuntimeException("Unsupported " + fnName + " unit: " + inputTimeStr);
+      throw new RuntimeException("Unsupported unit for " + fnName + ": " + inputTimeStr);
     }
     return unit;
   }
