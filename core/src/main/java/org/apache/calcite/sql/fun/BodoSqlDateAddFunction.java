@@ -88,9 +88,9 @@ public class BodoSqlDateAddFunction extends SqlFunction {
                 RESOURCE.wrongTimeUnit(fnName, errMsg));
           }
         } else { // MySQL DATEADD
-          if (arg1Type.equals(OperandTypes.INTEGER)) {
+          if (arg1Type.getSqlTypeName().equals(SqlTypeName.INTEGER)) {
             // when the second argument is integer, it is equivalent to adding day interval
-            if (arg0Type.equals(OperandTypes.DATE)) {
+            if (arg0Type.getSqlTypeName().equals(SqlTypeName.DATE)) {
               ret = typeFactory.createSqlType(SqlTypeName.DATE);
             } else if (arg0Type instanceof TZAwareSqlType) {
               ret = arg0Type;
@@ -99,7 +99,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
             }
           } else {
             // if the first argument is date, the return type depends on the interval type
-            if (arg0Type.equals(OperandTypes.DATE)) {
+            if (arg0Type.getSqlTypeName().equals(SqlTypeName.DATE)) {
               Set<SqlTypeName> date_interval_type =
                   Sets.immutableEnumSet(SqlTypeName.INTERVAL_YEAR_MONTH,
                       SqlTypeName.INTERVAL_YEAR,
