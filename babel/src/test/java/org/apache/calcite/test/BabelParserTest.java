@@ -177,8 +177,8 @@ class BabelParserTest extends SqlParserTest {
     final String sql = "SELECT DATEADD(day, 1, t),\n"
         + " DATEDIFF(week, 2, t),\n"
         + " DATE_PART(year, t) FROM mytable";
-    final String expected = "SELECT `DATEADD`(DAY, 1, `T`),"
-        + " `DATEDIFF`(WEEK, 2, `T`), `DATE_PART`(YEAR, `T`)\n"
+    final String expected = "SELECT DATEADD(DAY, 1, `T`),"
+        + " DATEDIFF(WEEK, 2, `T`), `DATE_PART`(YEAR, `T`)\n"
         + "FROM `MYTABLE`";
 
     sql(sql).ok(expected);
