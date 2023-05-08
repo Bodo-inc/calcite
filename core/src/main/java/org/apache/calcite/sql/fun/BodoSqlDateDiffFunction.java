@@ -34,7 +34,7 @@ public class BodoSqlDateDiffFunction extends SqlFunction {
                 OperandTypes.DATETIME),
             OperandTypes.sequence(
                 "DATEDIFF(UNIT, TIMESTAMP/DATE/TIME, TIMESTAMP/DATE/TIME)",
-                OperandTypes.CHARACTER,
+                OperandTypes.ANY,
                 OperandTypes.DATETIME,
                 OperandTypes.DATETIME)),
         SqlFunctionCategory.TIMEDATE);

@@ -116,7 +116,7 @@ public class BodoSqlDateAddFunction extends SqlFunction {
         OperandTypes.or(
             OperandTypes.sequence(
                 "DATEADD(UNIT, VALUE, DATETIME)",
-                OperandTypes.STRING,
+                OperandTypes.ANY,
                 OperandTypes.INTEGER,
                 OperandTypes.DATETIME),
             OperandTypes.sequence(
