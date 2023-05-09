@@ -1430,9 +1430,10 @@ Algorithms for implicit conversion are subject to change across Calcite releases
 
 #### Explicit Type Conversion
 
-| Operator syntax | Description
-|:--------------- | :----------
-| CAST(value AS type) | Converts a value to a given type.
+| Operator syntax         | Description
+|:------------------------| :----------
+| CAST(value AS type)     | Converts a value to a given type.
+| TRY_CAST(value AS type) | Tries to convert a value to a given type, returns null if can't convert.
 
 Supported data types syntax:
 

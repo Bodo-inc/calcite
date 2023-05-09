@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.rel.type.RelDataType;
@@ -35,7 +34,7 @@ import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
- * Snowflake TRY_CAST function
+ * Snowflake TRY_CAST function.
  */
 public class BodoSqlTryCastFunction extends SqlFunction {
   //~ Constructors -----------------------------------------------------------
