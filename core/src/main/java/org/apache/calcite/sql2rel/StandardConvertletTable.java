@@ -636,7 +636,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         type = typeFactory.createTypeWithNullability(type, isn);
       }
     }
-    if (call.getOperator().equals("TRY_CAST")) {
+    if (call.getOperator().equals(SqlStdOperatorTable.TRY_CAST)) {
       return cx.getRexBuilder().makeTryCast(type, arg);
     }
     return cx.getRexBuilder().makeCast(type, arg);
