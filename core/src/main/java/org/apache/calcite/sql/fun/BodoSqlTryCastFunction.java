@@ -29,7 +29,10 @@ import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
+import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
+
+import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Snowflake TRY_CAST function
@@ -80,5 +83,45 @@ public class BodoSqlTryCastFunction extends SqlFunction {
 
   @Override public SqlOperandCountRange getOperandCountRange() {
     return SqlOperandCountRanges.of(2);
+  }
+
+  /**
+   * Makes sure that the number and types of arguments are allowable.
+   * Operators (such as "ROW" and "AS") which do not check their arguments can
+   * override this method.
+   */
+  @Override public boolean checkOperandTypes(
+      SqlCallBinding callBinding,
+      boolean throwOnFailure) {
+    final SqlNode left = callBinding.operand(0);
+    final SqlNode right = callBinding.operand(1);
+    if (SqlUtil.isNullLiteral(left, false)
+        || left instanceof SqlDynamicParam) {
+      return true;
+    }
+    RelDataType validatedNodeType =
+        callBinding.getValidator().getValidatedNodeType(left);
+    RelDataType returnType = SqlTypeUtil.deriveType(callBinding, right);
+    if (!SqlTypeUtil.canCastFrom(returnType, validatedNodeType, true)) {
+      if (throwOnFailure) {
+        throw callBinding.newError(
+            RESOURCE.cannotCastValue(validatedNodeType.toString(),
+                returnType.toString()));
+      }
+      return false;
+    }
+    if (SqlTypeUtil.areCharacterSetsMismatched(
+        validatedNodeType,
+        returnType)) {
+      if (throwOnFailure) {
+        // Include full type string to indicate character
+        // set mismatch.
+        throw callBinding.newError(
+            RESOURCE.cannotCastValue(validatedNodeType.getFullTypeString(),
+                returnType.getFullTypeString()));
+      }
+      return false;
+    }
+    return true;
   }
 }
