@@ -2036,8 +2036,17 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * <code>NOT NULL</code> constraint. When this expression is implemented, if
    * the value is NULL, an exception will be thrown.</p>
    */
-  public static final SqlFunction CAST = new SqlCastFunction("CAST");
-  public static final SqlFunction TRY_CAST = new SqlCastFunction("TRY_CAST");
+  public static final SqlFunction CAST = new SqlCastFunction();
+
+  /**
+   * The Snowflake <code>CAST</code> operator.
+   *
+   * <p>The SQL syntax is
+   *
+   * <blockquote><code>TRY_CAST(<i>expression</i> AS <i>type</i>)</code>
+   * </blockquote>
+   */
+  public static final SqlFunction TRY_CAST = new BodoSqlTryCastFunction();
 
   /**
    * The Snowflake <code>DATE</code> function.

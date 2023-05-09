@@ -240,8 +240,7 @@ public class RelMdColumnUniqueness
         // is nullable.  Check that the types are the same by making a
         // nullable copy of both types and then comparing them.
         RexCall call = (RexCall) projExpr;
-        if (call.getOperator() != SqlStdOperatorTable.CAST
-            && call.getOperator() != SqlStdOperatorTable.TRY_CAST) {
+        if (call.getOperator() != SqlStdOperatorTable.CAST) {
           continue;
         }
         RexNode castOperand = call.getOperands().get(0);

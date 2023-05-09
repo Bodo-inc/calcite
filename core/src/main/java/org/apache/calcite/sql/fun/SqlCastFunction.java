@@ -82,8 +82,8 @@ public class SqlCastFunction extends SqlFunction {
 
   //~ Constructors -----------------------------------------------------------
 
-  public SqlCastFunction(String fnName) {
-    super(fnName,
+  public SqlCastFunction() {
+    super("CAST",
         SqlKind.CAST,
         null,
         InferTypes.FIRST_KNOWN,
