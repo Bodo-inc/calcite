@@ -4033,18 +4033,18 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   }
 
   private RelDataType validateUsingCol(SqlIdentifier id, SqlNode leftOrRight) {
-      String name = id.names.get(id.names.size() - 1);
-      final SqlValidatorNamespace namespace = getNamespaceOrThrow(leftOrRight);
-      final RelDataType rowType = namespace.getRowType();
-      final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
-      final RelDataTypeField field = nameMatcher.field(rowType, name);
-      if (field != null) {
-        if (nameMatcher.frequency(rowType.getFieldNames(), name) > 1) {
-          throw newValidationError(id,
-              RESOURCE.columnInUsingNotUnique(id.toString()));
-        }
-        return field.getType();
+    String name = id.names.get(id.names.size() - 1);
+    final SqlValidatorNamespace namespace = getNamespaceOrThrow(leftOrRight);
+    final RelDataType rowType = namespace.getRowType();
+    final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+    final RelDataTypeField field = nameMatcher.field(rowType, name);
+    if (field != null) {
+      if (nameMatcher.frequency(rowType.getFieldNames(), name) > 1) {
+        throw newValidationError(id,
+            RESOURCE.columnInUsingNotUnique(id.toString()));
       }
+      return field.getType();
+    }
     throw newValidationError(id, RESOURCE.columnNotFound(id.toString()));
   }
 
