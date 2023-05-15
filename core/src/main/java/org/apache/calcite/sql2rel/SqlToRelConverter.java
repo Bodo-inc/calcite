@@ -6447,7 +6447,8 @@ public class SqlToRelConverter {
       }
       if (rex instanceof RexCall) {
         RexCall call = (RexCall) rex;
-        if (call.getOperator() == SqlStdOperatorTable.CAST) {
+        if (call.getOperator() == SqlStdOperatorTable.CAST
+            || call.getOperator() == SqlStdOperatorTable.TRY_CAST) {
           RexNode operand = call.getOperands().get(0);
           if (operand instanceof RexLiteral) {
             return true;
