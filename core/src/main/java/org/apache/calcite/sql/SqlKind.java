@@ -625,6 +625,11 @@ public enum SqlKind {
   CAST,
 
   /**
+   * The "TRY_CAST" operator.
+   */
+  TRY_CAST,
+
+  /**
    * The "NEXT VALUE OF sequence" operator.
    */
   NEXT_VALUE,

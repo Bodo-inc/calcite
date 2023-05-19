@@ -2039,6 +2039,16 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlFunction CAST = new SqlCastFunction();
 
   /**
+   * The Snowflake <code>CAST</code> operator.
+   *
+   * <p>The SQL syntax is
+   *
+   * <blockquote><code>TRY_CAST(<i>expression</i> AS <i>type</i>)</code>
+   * </blockquote>
+   */
+  public static final SqlFunction TRY_CAST = new BodoSqlTryCastFunction();
+
+  /**
    * The Snowflake <code>DATE</code> function.
    * The SQL syntaxs are
    *

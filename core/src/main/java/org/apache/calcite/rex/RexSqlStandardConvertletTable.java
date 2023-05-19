@@ -128,6 +128,7 @@ public class RexSqlStandardConvertletTable
     registerEquivOp(SqlStdOperatorTable.COALESCE);
 
     registerTypeAppendOp(SqlStdOperatorTable.CAST);
+    registerTypeAppendOp(SqlStdOperatorTable.TRY_CAST);
   }
 
   //~ Methods ----------------------------------------------------------------
