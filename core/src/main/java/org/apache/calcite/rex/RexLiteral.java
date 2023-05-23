@@ -836,12 +836,21 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
       long millis =
           SqlParserUtil.intervalToMillis(
               literal,
               castNonNull(type.getIntervalQualifier()),
               typeSystem);
       return new RexLiteral(BigDecimal.valueOf(millis), type, typeName);
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
+      long nanos =
+          SqlParserUtil.intervalToNanos(
+              literal,
+              castNonNull(type.getIntervalQualifier()),
+              typeSystem);
+      return new RexLiteral(BigDecimal.valueOf(nanos), type, typeName);
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:

@@ -99,6 +99,12 @@ public enum SqlTypeName {
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_SECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_MILLISECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_MICROSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_NANOSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   CHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.CHAR,
       SqlTypeFamily.CHARACTER),
   VARCHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.VARCHAR,
@@ -159,7 +165,8 @@ public enum SqlTypeName {
           INTERVAL_WEEK, INTERVAL_DAY, INTERVAL_DAY_HOUR, INTERVAL_DAY_MINUTE,
           INTERVAL_DAY_SECOND, INTERVAL_HOUR, INTERVAL_HOUR_MINUTE,
           INTERVAL_HOUR_SECOND, INTERVAL_MINUTE, INTERVAL_MINUTE_SECOND,
-          INTERVAL_SECOND, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+          INTERVAL_SECOND, INTERVAL_MILLISECOND, INTERVAL_MICROSECOND,
+          INTERVAL_NANOSECOND, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE,
           FLOAT, MULTISET, DISTINCT, STRUCTURED, ROW, CURSOR, COLUMN_LIST);
 
   public static final List<SqlTypeName> BOOLEAN_TYPES =
@@ -201,6 +208,11 @@ public enum SqlTypeName {
   public static final Set<SqlTypeName> WEEK_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_WEEK);
 
+  public static final Set<SqlTypeName> SUBSECOND_INTERVAL_TYPES =
+      Sets.immutableEnumSet(SqlTypeName.INTERVAL_MILLISECOND,
+          SqlTypeName.INTERVAL_MICROSECOND,
+          SqlTypeName.INTERVAL_NANOSECOND);
+
   public static final Set<SqlTypeName> DAY_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_DAY,
           SqlTypeName.INTERVAL_DAY_HOUR,
@@ -215,7 +227,10 @@ public enum SqlTypeName {
 
   public static final Set<SqlTypeName> INTERVAL_TYPES =
       Sets.immutableEnumSet(
-          Iterables.concat(YEAR_INTERVAL_TYPES, WEEK_INTERVAL_TYPES, DAY_INTERVAL_TYPES));
+          Iterables.concat(YEAR_INTERVAL_TYPES,
+              WEEK_INTERVAL_TYPES,
+              DAY_INTERVAL_TYPES,
+              SUBSECOND_INTERVAL_TYPES));
 
   private static final Map<Integer, SqlTypeName> JDBC_TYPE_TO_NAME =
       ImmutableMap.<Integer, SqlTypeName>builder()

@@ -498,6 +498,9 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
       case INTERVAL_MINUTE:
       case INTERVAL_MINUTE_SECOND:
       case INTERVAL_SECOND:
+      case INTERVAL_MILLISECOND:
+      case INTERVAL_MICROSECOND:
+      case INTERVAL_NANOSECOND:
         convert = RexImpTable.optimize2(
             operand,
             Expressions.call(
@@ -596,6 +599,9 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       switch (requireNonNull(sourceType.getSqlTypeName().getFamily(),
           () -> "null SqlTypeFamily for " + sourceType + ", SqlTypeName "
               + sourceType.getSqlTypeName())) {
@@ -791,6 +797,9 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       value2 = literal.getValueAs(Long.class);
       javaClass = long.class;
       break;
@@ -980,6 +989,9 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
       case INTERVAL_MINUTE:
       case INTERVAL_MINUTE_SECOND:
       case INTERVAL_SECOND:
+      case INTERVAL_MILLISECOND:
+      case INTERVAL_MICROSECOND:
+      case INTERVAL_NANOSECOND:
         // Scale to the given field.
         final BigDecimal multiplier = BigDecimal.ONE;
         final BigDecimal divider =
@@ -1128,6 +1140,9 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       javaClass = Long.class;
       break;
     default:

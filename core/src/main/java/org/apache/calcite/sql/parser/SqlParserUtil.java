@@ -374,13 +374,16 @@ public final class SqlParserUtil {
           intervalQualifier.getParserPosition(), typeSystem);
       assert ret != null;
     } catch (CalciteContextException e) {
-      throw new RuntimeException("while parsing day-to-second interval "
+      throw new RuntimeException("while parsing day-to-millisecond interval "
           + literal, e);
     }
 
     if (intervalQualifier.timeUnitRange.toString().equals("WEEK")) {
       long millisecondsInWeek = 604800000;
       return ret[0] * ret[2] * millisecondsInWeek;
+    }
+    if (intervalQualifier.timeUnitRange.toString().equals("MILLISECOND")) {
+      return ret[0] * ret[1];
     }
 
     long l = 0;
@@ -390,6 +393,46 @@ public final class SqlParserUtil {
     conv[2] = conv[3] * 60; // minute
     conv[1] = conv[2] * 60; // hour
     conv[0] = conv[1] * 24; // day
+    for (int i = 1; i < ret.length; i++) {
+      l += conv[i - 1] * ret[i];
+    }
+    return ret[0] * l;
+  }
+
+  /**
+   * Converts the interval value into a nanosecond representation.
+   *
+   * @param interval Interval
+   * @return a long value that represents nanosecond equivalent of the
+   * interval value.
+   */
+  public static long intervalToNanos(
+      SqlIntervalLiteral.IntervalValue interval, RelDataTypeSystem typeSystem) {
+    return intervalToNanos(
+        interval.getIntervalLiteral(),
+        interval.getIntervalQualifier(),
+        typeSystem);
+  }
+
+  public static long intervalToNanos(
+      String literal,
+      SqlIntervalQualifier intervalQualifier, RelDataTypeSystem typeSystem) {
+    Preconditions.checkArgument(!intervalQualifier.isYearMonth(),
+        "interval must be day time");
+    int[] ret;
+    try {
+      ret = intervalQualifier.evaluateIntervalLiteral(literal,
+          intervalQualifier.getParserPosition(), typeSystem);
+      assert ret != null;
+    } catch (CalciteContextException e) {
+      throw new RuntimeException("while parsing micro-to-nanosecond interval "
+          + literal, e);
+    }
+
+    long l = 0;
+    long[] conv = new long[4];
+    conv[3] = 1; // nanosecond
+    conv[2] = conv[3] * 1000; // second
     for (int i = 1; i < ret.length; i++) {
       l += conv[i - 1] * ret[i];
     }

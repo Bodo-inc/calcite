@@ -379,6 +379,7 @@ public class SqlLiteral extends SqlNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
       final SqlIntervalLiteral.IntervalValue valTime =
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
@@ -390,6 +391,21 @@ public class SqlLiteral extends SqlNode {
         return clazz.cast(valTime.getIntervalQualifier().timeUnitRange);
       } else if (clazz == SqlIntervalQualifier.class) {
         return clazz.cast(valTime.getIntervalQualifier());
+      }
+      break;
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
+      final SqlIntervalLiteral.IntervalValue valNano =
+          (SqlIntervalLiteral.IntervalValue) value;
+      if (clazz == Long.class) {
+        return clazz.cast(valNano.getSign()
+            * SqlParserUtil.intervalToNanos(valNano, typeSystem));
+      } else if (clazz == BigDecimal.class) {
+        return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class, typeSystem)));
+      } else if (clazz == TimeUnitRange.class) {
+        return clazz.cast(valNano.getIntervalQualifier().timeUnitRange);
+      } else if (clazz == SqlIntervalQualifier.class) {
+        return clazz.cast(valNano.getIntervalQualifier());
       }
       break;
     default:
