@@ -199,6 +199,9 @@ public class JavaTypeFactoryImpl
       case INTERVAL_MINUTE:
       case INTERVAL_MINUTE_SECOND:
       case INTERVAL_SECOND:
+      case INTERVAL_MILLISECOND:
+      case INTERVAL_MICROSECOND:
+      case INTERVAL_NANOSECOND:
         return type.isNullable() ? Long.class : long.class;
       case SMALLINT:
         return type.isNullable() ? Short.class : short.class;

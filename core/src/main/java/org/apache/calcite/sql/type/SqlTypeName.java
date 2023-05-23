@@ -856,6 +856,12 @@ public enum SqlTypeName {
       return TimeUnit.MINUTE;
     case INTERVAL_SECOND:
       return TimeUnit.SECOND;
+    case INTERVAL_MILLISECOND:
+      return TimeUnit.MILLISECOND;
+    case INTERVAL_MICROSECOND:
+      return TimeUnit.MICROSECOND;
+    case INTERVAL_NANOSECOND:
+      return TimeUnit.NANOSECOND;
     default:
       throw new AssertionError(this);
     }
@@ -886,6 +892,12 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
       return TimeUnit.SECOND;
+    case INTERVAL_MILLISECOND:
+      return TimeUnit.MILLISECOND;
+    case INTERVAL_MICROSECOND:
+      return TimeUnit.MICROSECOND;
+    case INTERVAL_NANOSECOND:
+      return TimeUnit.NANOSECOND;
     default:
       throw new AssertionError(this);
     }

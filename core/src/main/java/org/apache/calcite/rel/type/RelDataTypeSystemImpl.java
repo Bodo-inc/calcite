@@ -54,6 +54,9 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return SqlTypeName.MAX_INTERVAL_FRACTIONAL_SECOND_PRECISION;
     default:
       return -1;
@@ -85,6 +88,9 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return SqlTypeName.DEFAULT_INTERVAL_START_PRECISION;
     case BOOLEAN:
       return 1;
@@ -145,6 +151,9 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return SqlTypeName.MAX_INTERVAL_START_PRECISION;
     default:
       return getDefaultPrecision(typeName);

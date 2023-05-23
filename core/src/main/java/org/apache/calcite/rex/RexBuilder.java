@@ -590,6 +590,9 @@ public class RexBuilder {
         case INTERVAL_MINUTE:
         case INTERVAL_MINUTE_SECOND:
         case INTERVAL_SECOND:
+        case INTERVAL_MILLISECOND:
+        case INTERVAL_MICROSECOND:
+        case INTERVAL_NANOSECOND:
           assert value instanceof BigDecimal;
           typeName = type.getSqlTypeName();
           switch (typeName) {
@@ -1637,6 +1640,9 @@ public class RexBuilder {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return makeIntervalLiteral((BigDecimal) value,
           castNonNull(type.getIntervalQualifier()));
     case SYMBOL:
@@ -1729,6 +1735,9 @@ public class RexBuilder {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       if (o instanceof BigDecimal) {
         return o;
       }

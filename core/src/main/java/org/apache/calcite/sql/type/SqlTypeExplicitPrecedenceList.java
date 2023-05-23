@@ -104,6 +104,12 @@ public class SqlTypeExplicitPrecedenceList
               list(SqlTypeName.DAY_INTERVAL_TYPES))
           .put(SqlTypeName.INTERVAL_SECOND,
               list(SqlTypeName.DAY_INTERVAL_TYPES))
+          .put(SqlTypeName.INTERVAL_MILLISECOND,
+              list(SqlTypeName.SUBSECOND_INTERVAL_TYPES))
+          .put(SqlTypeName.INTERVAL_MICROSECOND,
+              list(SqlTypeName.SUBSECOND_INTERVAL_TYPES))
+          .put(SqlTypeName.INTERVAL_NANOSECOND,
+              list(SqlTypeName.SUBSECOND_INTERVAL_TYPES))
           .build();
 
   //~ Instance fields --------------------------------------------------------

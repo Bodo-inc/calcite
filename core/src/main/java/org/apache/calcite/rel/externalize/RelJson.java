@@ -332,6 +332,9 @@ public class RelJson {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       TimeUnit startUnit = sqlTypeName.getStartUnit();
       TimeUnit endUnit = sqlTypeName.getEndUnit();
       return typeFactory.createSqlIntervalType(

@@ -220,6 +220,9 @@ public class SqlLiteral extends SqlNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return value instanceof SqlIntervalLiteral.IntervalValue;
     case BINARY:
       return value instanceof BitString;
@@ -832,6 +835,9 @@ public class SqlLiteral extends SqlNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       SqlIntervalLiteral.IntervalValue intervalValue =
           (SqlIntervalLiteral.IntervalValue) requireNonNull(value, "value");
       return typeFactory.createSqlIntervalType(
