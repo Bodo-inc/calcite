@@ -321,6 +321,28 @@ public final class SqlParserUtil {
         case "secs":
           unit = TimeUnit.SECOND;
           break;
+        case "millisecond":
+        case "ms":
+        case "msec":
+        case "milliseconds":
+          unit = TimeUnit.MILLISECOND;
+          break;
+        case "microsecond":
+        case "us":
+        case "usec":
+        case "microseconds":
+          unit = TimeUnit.MICROSECOND;
+          break;
+        case "nanosecond":
+        case "ns":
+        case "nsec":
+        case "nanosec":
+        case "nsecond":
+        case "nanoseconds":
+        case "nanosecs":
+        case "nseconds":
+          unit = TimeUnit.NANOSECOND;
+          break;
         default:
           throw SqlUtil.newContextException(pos,
               RESOURCE.illegalIntervalLiteral(s, pos.toString()));

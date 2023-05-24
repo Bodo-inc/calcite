@@ -171,11 +171,14 @@ public class SqlIntervalQualifier extends SqlNode {
     case MINUTE_TO_SECOND:
       return SqlTypeName.INTERVAL_MINUTE_SECOND;
     case SECOND:
-    case MILLISECOND:
     case EPOCH:
-    case MICROSECOND:
-    case NANOSECOND:
       return SqlTypeName.INTERVAL_SECOND;
+    case MILLISECOND:
+      return SqlTypeName.INTERVAL_MILLISECOND;
+    case MICROSECOND:
+      return SqlTypeName.INTERVAL_MICROSECOND;
+    case NANOSECOND:
+      return SqlTypeName.INTERVAL_NANOSECOND;
     default:
       throw new AssertionError(timeUnitRange);
     }

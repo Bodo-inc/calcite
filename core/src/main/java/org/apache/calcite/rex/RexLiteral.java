@@ -356,6 +356,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       // The value of a DAY-TIME interval (whatever the start and end units,
       // even say HOUR TO MINUTE) is in milliseconds (perhaps fractional
       // milliseconds). The value of a YEAR-MONTH interval is in months.
@@ -714,6 +717,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       assert value instanceof BigDecimal;
       sb.append(value.toString());
       break;
@@ -1151,6 +1157,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       if (clazz == Integer.class) {
         return clazz.cast(((BigDecimal) value).intValue());
       } else if (clazz == Long.class) {
