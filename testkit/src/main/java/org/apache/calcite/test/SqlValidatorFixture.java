@@ -350,7 +350,7 @@ public class SqlValidatorFixture {
           long l =
               interval.getIntervalQualifier().isYearMonth()
                   ? SqlParserUtil.intervalToMonths(interval, typeSystem)
-                  : SqlParserUtil.intervalToMillis(interval, typeSystem);
+                  : SqlParserUtil.intervalToNanos(interval, typeSystem);
           assertThat(l, matcher);
         });
   }

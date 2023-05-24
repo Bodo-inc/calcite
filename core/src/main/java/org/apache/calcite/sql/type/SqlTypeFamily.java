@@ -60,7 +60,6 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
   INTERVAL_YEAR_MONTH,
   INTERVAL_DAY_TIME,
   INTERVAL_WEEK,
-  INTERVAL_SUBSECOND,
 
   // Secondary families.
 
@@ -160,10 +159,7 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
     case DATE:
     case TIME:
     case TIMESTAMP:
-      return ImmutableList.of(INTERVAL_DAY_TIME,
-          INTERVAL_WEEK,
-          INTERVAL_YEAR_MONTH,
-          INTERVAL_SUBSECOND);
+      return ImmutableList.of(INTERVAL_DAY_TIME, INTERVAL_WEEK, INTERVAL_YEAR_MONTH);
     default:
       return ImmutableList.of();
     }
@@ -194,8 +190,6 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
       return SqlTypeName.WEEK_INTERVAL_TYPES;
     case INTERVAL_DAY_TIME:
       return SqlTypeName.DAY_INTERVAL_TYPES;
-    case INTERVAL_SUBSECOND:
-      return SqlTypeName.SUBSECOND_INTERVAL_TYPES;
     case STRING:
       return SqlTypeName.STRING_TYPES;
     case APPROXIMATE_NUMERIC:
@@ -260,13 +254,10 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
       return factory.createSqlType(SqlTypeName.TIMESTAMP);
     case INTERVAL_DAY_TIME:
       return factory.createSqlIntervalType(
-          new SqlIntervalQualifier(TimeUnit.DAY, TimeUnit.SECOND, SqlParserPos.ZERO));
+          new SqlIntervalQualifier(TimeUnit.DAY, TimeUnit.NANOSECOND, SqlParserPos.ZERO));
     case INTERVAL_WEEK:
       return factory.createSqlIntervalType(
           new SqlIntervalQualifier(TimeUnit.WEEK, TimeUnit.WEEK, SqlParserPos.ZERO));
-    case INTERVAL_SUBSECOND:
-      return factory.createSqlIntervalType(
-          new SqlIntervalQualifier(TimeUnit.MILLISECOND, TimeUnit.NANOSECOND, SqlParserPos.ZERO));
     case INTERVAL_YEAR_MONTH:
       return factory.createSqlIntervalType(
           new SqlIntervalQualifier(TimeUnit.YEAR, TimeUnit.MONTH, SqlParserPos.ZERO));

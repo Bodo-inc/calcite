@@ -1065,6 +1065,24 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+  @Test void testSelectCurrentTimestampIntervalSubsecond() {
+    final String sql1 = "select CURRENT_TIMESTAMP + INTERVAL '5 MILLISECONDS' from emp";
+    sql(sql1).ok();
+    final String sql2 = "select CURRENT_TIMESTAMP + INTERVAL '5 MICROSECONDS' from emp";
+    sql(sql2).ok();
+    final String sql3 = "select CURRENT_TIMESTAMP + INTERVAL '5 NANOSECONDS' from emp";
+    sql(sql3).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalSubsecondSF() {
+    final String sql1 = "select CURRENT_TIMESTAMP + INTERVAL '5' MILLISECONDS from emp";
+    sql(sql1).ok();
+    final String sql2 = "select CURRENT_TIMESTAMP + INTERVAL '5' MICROSECONDS from emp";
+    sql(sql2).ok();
+    final String sql3 = "select CURRENT_TIMESTAMP + INTERVAL '5' NANOSECONDS from emp";
+    sql(sql3).ok();
+  }
+
   /** Tests referencing columns from a sub-query that has duplicate column
    * names. I think the standard says that this is illegal. We roll with it,
    * and rename the second column to "e0". */

@@ -100,11 +100,11 @@ public enum SqlTypeName {
   INTERVAL_SECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_MILLISECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
-      false, Types.OTHER, SqlTypeFamily.INTERVAL_SUBSECOND),
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_MICROSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
-      false, Types.OTHER, SqlTypeFamily.INTERVAL_SUBSECOND),
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_NANOSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
-      false, Types.OTHER, SqlTypeFamily.INTERVAL_SUBSECOND),
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   CHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.CHAR,
       SqlTypeFamily.CHARACTER),
   VARCHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.VARCHAR,
@@ -208,11 +208,6 @@ public enum SqlTypeName {
   public static final Set<SqlTypeName> WEEK_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_WEEK);
 
-  public static final Set<SqlTypeName> SUBSECOND_INTERVAL_TYPES =
-      Sets.immutableEnumSet(SqlTypeName.INTERVAL_MILLISECOND,
-          SqlTypeName.INTERVAL_MICROSECOND,
-          SqlTypeName.INTERVAL_NANOSECOND);
-
   public static final Set<SqlTypeName> DAY_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_DAY,
           SqlTypeName.INTERVAL_DAY_HOUR,
@@ -223,14 +218,14 @@ public enum SqlTypeName {
           SqlTypeName.INTERVAL_HOUR_SECOND,
           SqlTypeName.INTERVAL_MINUTE,
           SqlTypeName.INTERVAL_MINUTE_SECOND,
-          SqlTypeName.INTERVAL_SECOND);
+          SqlTypeName.INTERVAL_SECOND,
+          SqlTypeName.INTERVAL_MILLISECOND,
+          SqlTypeName.INTERVAL_MICROSECOND,
+          SqlTypeName.INTERVAL_NANOSECOND);
 
   public static final Set<SqlTypeName> INTERVAL_TYPES =
       Sets.immutableEnumSet(
-          Iterables.concat(YEAR_INTERVAL_TYPES,
-              WEEK_INTERVAL_TYPES,
-              DAY_INTERVAL_TYPES,
-              SUBSECOND_INTERVAL_TYPES));
+          Iterables.concat(YEAR_INTERVAL_TYPES, WEEK_INTERVAL_TYPES, DAY_INTERVAL_TYPES));
 
   private static final Map<Integer, SqlTypeName> JDBC_TYPE_TO_NAME =
       ImmutableMap.<Integer, SqlTypeName>builder()

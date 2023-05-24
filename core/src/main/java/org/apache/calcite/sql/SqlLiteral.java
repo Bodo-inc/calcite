@@ -387,7 +387,7 @@ public class SqlLiteral extends SqlNode {
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
         return clazz.cast(valTime.getSign()
-            * SqlParserUtil.intervalToMillis(valTime, typeSystem));
+            * SqlParserUtil.intervalToNanos(valTime, typeSystem));
       } else if (clazz == BigDecimal.class) {
         return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class, typeSystem)));
       } else if (clazz == TimeUnitRange.class) {
@@ -490,7 +490,7 @@ public class SqlLiteral extends SqlNode {
       case INTERVAL_DAY_TIME:
         final SqlIntervalLiteral.IntervalValue valTime =
             literal.getValueAs(SqlIntervalLiteral.IntervalValue.class);
-        return valTime.getSign() * SqlParserUtil.intervalToMillis(valTime, typeSystem);
+        return valTime.getSign() * SqlParserUtil.intervalToNanos(valTime, typeSystem);
       default:
         break;
       }

@@ -827,7 +827,7 @@ public class RexLiteral extends RexNode {
       return new RexLiteral(null, type, typeName);
     case INTERVAL_WEEK:
       long weekMillis =
-          SqlParserUtil.intervalToMillis(
+          SqlParserUtil.intervalToNanos(
               literal,
               castNonNull(type.getIntervalQualifier()),
               typeSystem);
@@ -844,7 +844,7 @@ public class RexLiteral extends RexNode {
     case INTERVAL_SECOND:
     case INTERVAL_MILLISECOND:
       long millis =
-          SqlParserUtil.intervalToMillis(
+          SqlParserUtil.intervalToNanos(
               literal,
               castNonNull(type.getIntervalQualifier()),
               typeSystem);
