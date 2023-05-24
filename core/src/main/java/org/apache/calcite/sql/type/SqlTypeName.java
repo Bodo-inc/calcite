@@ -399,6 +399,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return DEFAULT_INTERVAL_FRACTIONAL_SECOND_PRECISION;
     default:
       return -1;
@@ -795,6 +798,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return MIN_INTERVAL_START_PRECISION;
     default:
       return -1;
@@ -825,6 +831,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return MIN_INTERVAL_FRACTIONAL_SECOND_PRECISION;
     default:
       return -1;
