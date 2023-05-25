@@ -283,15 +283,16 @@ public class RexCall extends RexNode {
     if (this == o) {
       return true;
     }
-    // RANDOM() f unction calls are never equal
-    if (this.kind == SqlKind.RANDOM || o.kind == SqlKind.RANDOM) {
-      return false;
-    }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
     Pair<SqlOperator, List<RexNode>> x = getNormalized();
     RexCall rexCall = (RexCall) o;
+    // RANDOM() f unction calls are never equal
+    if (this.getOperator().getKind() == SqlKind.RANDOM ||
+        rexCall.getOperator().getKind()  == SqlKind.RANDOM) {
+      return false;
+    }
     Pair<SqlOperator, List<RexNode>> y = rexCall.getNormalized();
     return x.left.equals(y.left)
         && x.right.equals(y.right)
