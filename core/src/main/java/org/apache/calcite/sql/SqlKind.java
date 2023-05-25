@@ -400,6 +400,9 @@ public enum SqlKind {
   /** {@code SEPARATOR} expression. */
   SEPARATOR,
 
+  /** {@code RANDOM} function. */
+  RANDOM,
+
   /** {@code NULLIF} operator. */
   NULLIF,
 
