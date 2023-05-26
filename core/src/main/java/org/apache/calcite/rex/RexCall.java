@@ -304,7 +304,7 @@ public class RexCall extends RexNode {
       hash = RexNormalize.hashCode(this.op, this.operands);
       // RANDOM function calls should produce distinct hashes
       if (this.getOperator().getKind() == SqlKind.RANDOM) {
-        hash +=  ((Object)this).hashCode();
+        hash +=  ((Object) this).hashCode();
       }
     }
     return hash;
