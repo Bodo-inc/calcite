@@ -6977,7 +6977,7 @@ public class SqlToRelConverter {
       final ImmutableBitSet distinctKeys;
       try {
         // switch out of agg mode
-        bb.agg = null;
+
         for (SqlNode operand : call.getOperandList()) {
 
           // special case for COUNT(*):  delete the *

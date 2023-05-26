@@ -280,19 +280,19 @@ public class RexCall extends RexNode {
   }
 
   @Override public boolean equals(@Nullable Object o) {
-    if (this == o) {
-      return true;
-    }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Pair<SqlOperator, List<RexNode>> x = getNormalized();
     RexCall rexCall = (RexCall) o;
     // RANDOM() function calls are never equal
     if (this.getOperator().getKind() == SqlKind.RANDOM
         || rexCall.getOperator().getKind()  == SqlKind.RANDOM) {
       return false;
     }
+    if (this == o) {
+      return true;
+    }
+    Pair<SqlOperator, List<RexNode>> x = getNormalized();
     Pair<SqlOperator, List<RexNode>> y = rexCall.getNormalized();
     return x.left.equals(y.left)
         && x.right.equals(y.right)
