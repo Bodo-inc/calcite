@@ -193,7 +193,7 @@ public abstract class SqlCall extends SqlNode {
     SqlCall that = (SqlCall) node;
 
     // Automatically fail if the function is not deterministic
-    if (!this.getOperator.isDeterministic()) {
+    if (!this.getOperator().isDeterministic()) {
       return litmus.fail("{} != {} (non-deterministic function)", this, node);
     }
     // Compare operators by name, not identity, because they may not
