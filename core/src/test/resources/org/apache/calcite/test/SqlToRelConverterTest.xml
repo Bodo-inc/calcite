@@ -7913,24 +7913,90 @@ LogicalProject(CURRENT_TIMESTAMP=[CURRENT_TIMESTAMP])
 ]]>
     </Resource>
   </TestCase>
-  <TestCase name="testSelectCurrentTimestampIntervalWeek">
+  <TestCase name="testSelectCurrentTimestampIntervalMicrosecond">
     <Resource name="sql">
-      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '9' MICROSECONDS from emp]]>
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 3024000000000000:INTERVAL WEEK)])
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 9000:INTERVAL MICROSECOND)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
-  <TestCase name="testSelectCurrentTimestampIntervalWeekSF">
+  <TestCase name="testSelectCurrentTimestampIntervalMicrosecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '6 MICROSECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 6000:INTERVAL MICROSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalMillisecond">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' MILLISECONDS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 8000000:INTERVAL MILLISECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalMillisecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 MILLISECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 5000000:INTERVAL MILLISECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalNanosecond">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '10' NANOSECONDS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 10:INTERVAL NANOSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalNanosecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '7 NANOSECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 7:INTERVAL NANOSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalWeek">
     <Resource name="sql">
       <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' WEEKS from emp]]>
     </Resource>
     <Resource name="plan">
       <![CDATA[
 LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 4838400000000000:INTERVAL WEEK)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalWeekSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 3024000000000000:INTERVAL WEEK)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>

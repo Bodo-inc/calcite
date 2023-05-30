@@ -1055,32 +1055,44 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
-  @Test void testSelectCurrentTimestampIntervalWeek() {
+  @Test void testSelectCurrentTimestampIntervalWeekSF() {
     final String sql = "select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp";
     sql(sql).ok();
   }
 
-  @Test void testSelectCurrentTimestampIntervalWeekSF() {
+  @Test void testSelectCurrentTimestampIntervalWeek() {
     final String sql = "select CURRENT_TIMESTAMP + INTERVAL '8' WEEKS from emp";
     sql(sql).ok();
   }
 
-  @Test void testSelectCurrentTimestampIntervalSubsecond() {
-//    final String sql1 = "select CURRENT_TIMESTAMP + INTERVAL '5 SECONDS' from emp";
-//    sql(sql1).ok();
-//    final String sql2 = "select CURRENT_TIMESTAMP + INTERVAL '5 MICROSECONDS' from emp";
-//    sql(sql2).ok();
-    final String sql3 = "select CURRENT_TIMESTAMP + INTERVAL '5 NANOSECONDS' from emp";
-    sql(sql3).ok();
+  @Test void testSelectCurrentTimestampIntervalMillisecondSF() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '5 MILLISECONDS' from emp";
+    sql(sql).ok();
   }
 
-  @Test void testSelectCurrentTimestampIntervalSubsecondSF() {
-//    final String sql1 = "select CURRENT_TIMESTAMP + INTERVAL '5' MILLISECONDS from emp";
-//    sql(sql1).ok();
-    final String sql2 = "select CURRENT_TIMESTAMP + INTERVAL '5' MICROSECONDS from emp";
-    sql(sql2).ok();
-    final String sql3 = "select CURRENT_TIMESTAMP + INTERVAL '5' NANOSECONDS from emp";
-    sql(sql3).ok();
+  @Test void testSelectCurrentTimestampIntervalMicrosecondSF() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '6 MICROSECONDS' from emp";
+    sql(sql).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalNanosecondSF() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '7 NANOSECONDS' from emp";
+    sql(sql).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalMillisecond() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '8' MILLISECONDS from emp";
+    sql(sql).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalMicrosecond() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '9' MICROSECONDS from emp";
+    sql(sql).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalNanosecond() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '10' NANOSECONDS from emp";
+    sql(sql).ok();
   }
 
   /** Tests referencing columns from a sub-query that has duplicate column

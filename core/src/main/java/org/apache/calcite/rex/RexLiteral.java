@@ -559,7 +559,7 @@ public class RexLiteral extends RexNode {
     final List<TimeUnit> timeUnits = getTimeUnits(type.getSqlTypeName());
     final StringBuilder b = new StringBuilder();
     for (TimeUnit timeUnit : timeUnits) {
-      final BigDecimal[] result = v.divideAndRemainder(timeUnit.multiplier);
+      final BigDecimal[] result = v.divideAndRemainder(getMultiplier(timeUnit));
       if (b.length() > 0) {
         b.append(timeUnit.separator);
       }
@@ -577,6 +577,35 @@ public class RexLiteral extends RexNode {
       }
     }
     return b.toString();
+  }
+
+  private static BigDecimal getMultiplier(TimeUnit unit) {
+    switch (unit) {
+    case YEAR:
+      return BigDecimal.valueOf(12L);
+    case QUARTER:
+      return BigDecimal.valueOf(3L);
+    case MONTH:
+      return BigDecimal.valueOf(1L);
+    case WEEK:
+      return BigDecimal.valueOf(604800000000000L);
+    case DAY:
+      return BigDecimal.valueOf(86400000000000L);
+    case HOUR:
+      return BigDecimal.valueOf(3600000000000L);
+    case MINUTE:
+      return BigDecimal.valueOf(60000000000L);
+    case SECOND:
+      return BigDecimal.valueOf(1000000000L);
+    case MILLISECOND:
+      return BigDecimal.valueOf(1000000L);
+    case MICROSECOND:
+      return BigDecimal.valueOf(1000L);
+    case NANOSECOND:
+      return BigDecimal.valueOf(1L);
+    default:
+      return BigDecimal.valueOf(1L);
+    }
   }
 
   private static void pad(StringBuilder b, String s, int width) {
