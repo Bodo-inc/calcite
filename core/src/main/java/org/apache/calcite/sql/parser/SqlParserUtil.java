@@ -411,7 +411,7 @@ public final class SqlParserUtil {
       return (long) ret[0] * ret[2] * 1000;
     }
     if (intervalQualifier.timeUnitRange.toString().equals("NANOSECOND")) {
-      return (long) ret[0] * ret[1];
+      return (long) ret[0] * ret[3];
     }
 
     long l = 0;
