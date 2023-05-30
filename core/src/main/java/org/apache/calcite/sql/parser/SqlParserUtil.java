@@ -402,16 +402,16 @@ public final class SqlParserUtil {
 
     if (intervalQualifier.timeUnitRange.toString().equals("WEEK")) {
       long millisecondsInWeek = 604800000000000L;
-      return ret[0] * ret[2] * millisecondsInWeek;
+      return (long) ret[0] * ret[2] * millisecondsInWeek;
     }
     if (intervalQualifier.timeUnitRange.toString().equals("MILLISECOND")) {
-      return ret[0] * ret[1] * 1000000;
+      return (long) ret[0] * ret[1] * 1000000;
     }
     if (intervalQualifier.timeUnitRange.toString().equals("MICROSECOND")) {
-      return ret[0] * ret[2] * 1000;
+      return (long) ret[0] * ret[2] * 1000;
     }
     if (intervalQualifier.timeUnitRange.toString().equals("NANOSECOND")) {
-      return ret[0] * ret[1];
+      return (long) ret[0] * ret[1];
     }
 
     long l = 0;
