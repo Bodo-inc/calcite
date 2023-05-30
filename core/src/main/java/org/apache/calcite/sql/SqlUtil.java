@@ -1071,6 +1071,14 @@ public abstract class SqlUtil {
     }
   }
 
+  /** If a node is "AS", returns the alias name; otherwise returns null */
+  public static @Nullable String getAliasedString(@PolyNull SqlNode node) {
+    if (node != null && node.getKind() == SqlKind.AS) {
+      return ((SqlCall) node).operand(1).toString();
+    }
+    return null;
+  }
+
   /** If a node is "AS", returns the underlying expression; otherwise returns
    * the node. Returns null if and only if the node is null. */
   public static @PolyNull SqlNode stripAs(@PolyNull SqlNode node) {
