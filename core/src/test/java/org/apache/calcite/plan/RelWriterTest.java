@@ -1043,7 +1043,7 @@ class RelWriterTest {
     String relJson = jsonWriter.asString();
     String s = deserializeAndDumpToTextFormat(getSchema(rel), relJson);
     final String expected = ""
-        + "LogicalProject($f0=[TUMBLE_END($4, 86400000000000:INTERVAL DAY)])\n"
+        + "LogicalProject($f0=[TUMBLE_END($4, 86400000:INTERVAL DAY)])\n"
         + "  LogicalTableScan(table=[[scott, EMP]])\n";
     assertThat(s, isLinux(expected));
   }
