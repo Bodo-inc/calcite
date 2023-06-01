@@ -43,6 +43,8 @@ public class SqlUpdate extends SqlCall {
   @Nullable SqlSelect sourceSelect;
   @Nullable SqlIdentifier alias;
 
+  @Nullable SqlNodeList fromList;
+
   //~ Constructors -----------------------------------------------------------
 
   public SqlUpdate(SqlParserPos pos,
@@ -60,6 +62,7 @@ public class SqlUpdate extends SqlCall {
     this.sourceSelect = sourceSelect;
     assert sourceExpressionList.size() == targetColumnList.size();
     this.alias = alias;
+    this.fromList = null;
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -138,6 +141,14 @@ public class SqlUpdate extends SqlCall {
    */
   public @Nullable SqlNode getCondition() {
     return condition;
+  }
+
+  public @Nullable SqlNodeList getFromList() {
+    return fromList;
+  }
+
+  public void setFromList(@Nullable SqlNodeList list) {
+    this.fromList = list;
   }
 
   /**
