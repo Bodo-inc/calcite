@@ -221,6 +221,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
+import static org.apache.calcite.sql.SqlUtil.getAliasedString;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import static java.util.Objects.requireNonNull;
@@ -4009,7 +4010,10 @@ public class SqlToRelConverter {
     List<SqlNode> expandedSelectList = selectScope.getExpandedSelectList();
     for (SqlNode selectItem : requireNonNull(expandedSelectList, "expandedSelectList")) {
       ++ordinal;
-      if (converted.equalsDeep(stripAs(selectItem), Litmus.IGNORE)) {
+      String aliasedString = getAliasedString(selectItem);
+      // Check if the aliases are equal just in case, due to edge cases like RANDOM()
+      if (converted.equalsDeep(stripAs(selectItem), Litmus.IGNORE)
+          || (aliasedString != null && aliasedString.equals(orderItem.toString()))) {
         return new RelFieldCollation(ordinal, direction, nullDirection);
       }
     }
