@@ -43,7 +43,7 @@ public class SqlUpdate extends SqlCall {
   @Nullable SqlSelect sourceSelect;
   @Nullable SqlIdentifier alias;
 
-  @Nullable SqlNodeList fromList;
+  @Nullable SqlNode fromClause;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -143,12 +143,12 @@ public class SqlUpdate extends SqlCall {
     return condition;
   }
 
-  public @Nullable SqlNodeList getFromList() {
-    return fromList;
+  public @Nullable SqlNode getFromClause() {
+    return fromClause;
   }
 
-  public void setFromList(@Nullable SqlNodeList list) {
-    this.fromList = list;
+  public void setFromClause(@Nullable SqlNode from) {
+    this.fromClause = from;
   }
 
   /**
