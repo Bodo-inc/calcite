@@ -62,7 +62,7 @@ public class SqlUpdate extends SqlCall {
     this.sourceSelect = sourceSelect;
     assert sourceExpressionList.size() == targetColumnList.size();
     this.alias = alias;
-    this.fromList = null;
+    this.fromClause = null;
   }
 
   //~ Methods ----------------------------------------------------------------
