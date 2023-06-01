@@ -289,7 +289,7 @@ public class RexCall extends RexNode {
     RexCall rexCall = (RexCall) o;
     // Nondeterministic function calls are not equal
     if (!this.getOperator().isDeterministic()
-        || !rexCall.getOperator().getKind().isDeterministic()) {
+        || !rexCall.getOperator().isDeterministic()) {
       return false;
     }
     Pair<SqlOperator, List<RexNode>> x = getNormalized();
