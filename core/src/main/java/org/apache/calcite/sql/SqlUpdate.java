@@ -190,6 +190,10 @@ public class SqlUpdate extends SqlCall {
     }
     writer.endList(setFrame);
     SqlNode condition = this.condition;
+    if (fromClause != null) {
+      writer.sep("FROM");
+      fromClause.unparse(writer, opLeft, opRight);
+    }
     if (condition != null) {
       writer.sep("WHERE");
       condition.unparse(writer, opLeft, opRight);
