@@ -2135,23 +2135,23 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     expr("INTERVAL '-5-4' YEAR TO MONTH").assertInterval(is(-64L));
   }
 
-  @Test void testIntervalMillisConversion() {
-    expr("INTERVAL '1' DAY").assertInterval(is(86_400_000L));
-    expr("INTERVAL '1' HOUR").assertInterval(is(3_600_000L));
-    expr("INTERVAL '1' MINUTE").assertInterval(is(60_000L));
-    expr("INTERVAL '1' SECOND").assertInterval(is(1_000L));
-    expr("INTERVAL '1:05' HOUR TO MINUTE").assertInterval(is(3_900_000L));
-    expr("INTERVAL '1:05' MINUTE TO SECOND").assertInterval(is(65_000L));
-    expr("INTERVAL '1 1' DAY TO HOUR").assertInterval(is(90_000_000L));
-    expr("INTERVAL '1 1:05' DAY TO MINUTE").assertInterval(is(90_300_000L));
-    expr("INTERVAL '1 1:05:03' DAY TO SECOND").assertInterval(is(90_303_000L));
+  @Test void testIntervalNanosConversion() {
+    expr("INTERVAL '1' DAY").assertInterval(is(86_400_000_000_000L));
+    expr("INTERVAL '1' HOUR").assertInterval(is(3_600_000_000_000L));
+    expr("INTERVAL '1' MINUTE").assertInterval(is(60_000_000_000L));
+    expr("INTERVAL '1' SECOND").assertInterval(is(1_000_000_000L));
+    expr("INTERVAL '1:05' HOUR TO MINUTE").assertInterval(is(3_900_000_000_000L));
+    expr("INTERVAL '1:05' MINUTE TO SECOND").assertInterval(is(65_000_000_000L));
+    expr("INTERVAL '1 1' DAY TO HOUR").assertInterval(is(90_000_000_000_000L));
+    expr("INTERVAL '1 1:05' DAY TO MINUTE").assertInterval(is(90_300_000_000_000L));
+    expr("INTERVAL '1 1:05:03' DAY TO SECOND").assertInterval(is(90_303_000_000_000L));
     expr("INTERVAL '1 1:05:03.12345' DAY TO SECOND")
-        .assertInterval(is(90_303_123L));
-    expr("INTERVAL '1.12345' SECOND").assertInterval(is(1_123L));
-    expr("INTERVAL '1:05.12345' MINUTE TO SECOND").assertInterval(is(65_123L));
-    expr("INTERVAL '1:05:03' HOUR TO SECOND").assertInterval(is(3903000L));
+        .assertInterval(is(90_303_123_000_000L));
+    expr("INTERVAL '1.12345' SECOND").assertInterval(is(1_123_000_000L));
+    expr("INTERVAL '1:05.12345' MINUTE TO SECOND").assertInterval(is(65_123_000_000L));
+    expr("INTERVAL '1:05:03' HOUR TO SECOND").assertInterval(is(3903000_000_000L));
     expr("INTERVAL '1:05:03.12345' HOUR TO SECOND")
-        .assertInterval(is(3_903_123L));
+        .assertInterval(is(3_903_123_000_000L));
   }
 
   /**
