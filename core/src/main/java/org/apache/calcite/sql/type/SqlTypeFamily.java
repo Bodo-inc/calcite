@@ -254,7 +254,7 @@ public enum SqlTypeFamily implements RelDataTypeFamily {
       return factory.createSqlType(SqlTypeName.TIMESTAMP);
     case INTERVAL_DAY_TIME:
       return factory.createSqlIntervalType(
-          new SqlIntervalQualifier(TimeUnit.DAY, TimeUnit.NANOSECOND, SqlParserPos.ZERO));
+          new SqlIntervalQualifier(TimeUnit.DAY, TimeUnit.SECOND, SqlParserPos.ZERO));
     case INTERVAL_WEEK:
       return factory.createSqlIntervalType(
           new SqlIntervalQualifier(TimeUnit.WEEK, TimeUnit.WEEK, SqlParserPos.ZERO));

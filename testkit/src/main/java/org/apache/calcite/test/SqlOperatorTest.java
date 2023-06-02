@@ -105,11 +105,9 @@ import static org.apache.calcite.sql.test.SqlOperatorFixture.BAD_DATETIME_MESSAG
 import static org.apache.calcite.sql.test.SqlOperatorFixture.DIVISION_BY_ZERO_MESSAGE;
 import static org.apache.calcite.sql.test.SqlOperatorFixture.INVALID_ARGUMENTS_NUMBER;
 import static org.apache.calcite.sql.test.SqlOperatorFixture.INVALID_CHAR_MESSAGE;
-import static org.apache.calcite.sql.test.SqlOperatorFixture.INVALID_EXTRACT_UNIT_CONVERTLET_ERROR;
 import static org.apache.calcite.sql.test.SqlOperatorFixture.INVALID_EXTRACT_UNIT_VALIDATION_ERROR;
 import static org.apache.calcite.sql.test.SqlOperatorFixture.LITERAL_OUT_OF_RANGE_MESSAGE;
 import static org.apache.calcite.sql.test.SqlOperatorFixture.OUT_OF_RANGE_MESSAGE;
-import static org.apache.calcite.sql.test.SqlOperatorFixture.STRING_TRUNC_MESSAGE;
 import static org.apache.calcite.util.DateTimeStringUtils.getDateFormatter;
 
 import static org.hamcrest.CoreMatchers.equalTo;
