@@ -43,7 +43,7 @@ public class SqlUpdate extends SqlCall {
   @Nullable SqlSelect sourceSelect;
   @Nullable SqlIdentifier alias;
 
-  @Nullable SqlNode fromClause;
+  @Nullable SqlNode from;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -62,7 +62,7 @@ public class SqlUpdate extends SqlCall {
     this.sourceSelect = sourceSelect;
     assert sourceExpressionList.size() == targetColumnList.size();
     this.alias = alias;
-    this.fromClause = null;
+    this.from = null;
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -102,6 +102,9 @@ public class SqlUpdate extends SqlCall {
       break;
     case 5:
       alias = (SqlIdentifier) operand;
+      break;
+    case 6:
+      from = from;
       break;
     default:
       throw new AssertionError(i);
@@ -143,12 +146,12 @@ public class SqlUpdate extends SqlCall {
     return condition;
   }
 
-  public @Nullable SqlNode getFromClause() {
-    return fromClause;
+  public @Nullable SqlNode getFrom() {
+    return from;
   }
 
-  public void setFromClause(@Nullable SqlNode from) {
-    this.fromClause = from;
+  public void setFrom(@Nullable SqlNode from) {
+    this.from = from;
   }
 
   /**
@@ -190,9 +193,9 @@ public class SqlUpdate extends SqlCall {
     }
     writer.endList(setFrame);
     SqlNode condition = this.condition;
-    if (fromClause != null) {
+    if (from != null) {
       writer.sep("FROM");
-      fromClause.unparse(writer, opLeft, opRight);
+      from.unparse(writer, opLeft, opRight);
     }
     if (condition != null) {
       writer.sep("WHERE");
