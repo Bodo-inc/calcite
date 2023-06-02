@@ -104,7 +104,7 @@ public class SqlUpdate extends SqlCall {
       alias = (SqlIdentifier) operand;
       break;
     case 6:
-      from = from;
+      from = operand;
       break;
     default:
       throw new AssertionError(i);
