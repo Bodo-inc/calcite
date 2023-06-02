@@ -1037,10 +1037,11 @@ public abstract class SqlOperator {
 
   /**
    * Returns whether a call to this operator is guaranteed to always return
-   * the same result given the same operands; true is assumed by default.
+   * the same result given the same operands; true is assumed by default
+   * unless the function is RANDOM.
    */
   public boolean isDeterministic() {
-    return true;
+    return kind != SqlKind.RANDOM;
   }
 
   /**
