@@ -479,6 +479,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
         break;
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:
+      case INTERVAL_QUARTER:
       case INTERVAL_MONTH:
         convert = RexImpTable.optimize2(
             operand,
@@ -584,6 +585,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
       break;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -774,6 +776,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
     case TIME_WITH_LOCAL_TIME_ZONE:
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       value2 = literal.getValueAs(Integer.class);
       javaClass = int.class;
@@ -968,6 +971,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
       switch (sourceType.getSqlTypeName()) {
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:
+      case INTERVAL_QUARTER:
       case INTERVAL_MONTH:
       case INTERVAL_WEEK:
       case INTERVAL_DAY:
@@ -1112,6 +1116,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
     case TIME_WITH_LOCAL_TIME_ZONE:
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       javaClass = Integer.class;
       break;

@@ -578,6 +578,7 @@ public class RexBuilder {
         switch (typeName) {
         case INTERVAL_YEAR:
         case INTERVAL_YEAR_MONTH:
+        case INTERVAL_QUARTER:
         case INTERVAL_MONTH:
         case INTERVAL_WEEK:
         case INTERVAL_DAY:
@@ -1625,6 +1626,7 @@ public class RexBuilder {
       return makeTimestampWithLocalTimeZoneLiteral((TimestampString) value, type.getPrecision());
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -1717,6 +1719,7 @@ public class RexBuilder {
     case DECIMAL:
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:

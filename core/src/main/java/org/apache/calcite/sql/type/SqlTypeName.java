@@ -75,6 +75,8 @@ public enum SqlTypeName {
       SqlTypeFamily.INTERVAL_YEAR_MONTH),
   INTERVAL_YEAR_MONTH(PrecScale.NO_NO, false, Types.OTHER,
       SqlTypeFamily.INTERVAL_YEAR_MONTH),
+  INTERVAL_QUARTER(PrecScale.NO_NO, false, Types.OTHER,
+      SqlTypeFamily.INTERVAL_YEAR_MONTH),
   INTERVAL_MONTH(PrecScale.NO_NO, false, Types.OTHER,
       SqlTypeFamily.INTERVAL_YEAR_MONTH),
   INTERVAL_WEEK(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
@@ -155,7 +157,7 @@ public enum SqlTypeName {
       ImmutableList.of(
           BOOLEAN, INTEGER, VARCHAR, DATE, TIME, TIMESTAMP, NULL, DECIMAL,
           ANY, CHAR, BINARY, VARBINARY, TINYINT, SMALLINT, BIGINT, REAL,
-          DOUBLE, SYMBOL, INTERVAL_YEAR, INTERVAL_YEAR_MONTH, INTERVAL_MONTH,
+          DOUBLE, SYMBOL, INTERVAL_YEAR, INTERVAL_YEAR_MONTH, INTERVAL_QUARTER, INTERVAL_MONTH,
           INTERVAL_WEEK, INTERVAL_DAY, INTERVAL_DAY_HOUR, INTERVAL_DAY_MINUTE,
           INTERVAL_DAY_SECOND, INTERVAL_HOUR, INTERVAL_HOUR_MINUTE,
           INTERVAL_HOUR_SECOND, INTERVAL_MINUTE, INTERVAL_MINUTE_SECOND,
@@ -196,6 +198,7 @@ public enum SqlTypeName {
   public static final Set<SqlTypeName> YEAR_INTERVAL_TYPES =
       Sets.immutableEnumSet(SqlTypeName.INTERVAL_YEAR,
           SqlTypeName.INTERVAL_YEAR_MONTH,
+          SqlTypeName.INTERVAL_QUARTER,
           SqlTypeName.INTERVAL_MONTH);
 
   public static final Set<SqlTypeName> WEEK_INTERVAL_TYPES =
@@ -372,6 +375,7 @@ public enum SqlTypeName {
       return 0;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -768,6 +772,7 @@ public enum SqlTypeName {
       return 1;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -798,6 +803,7 @@ public enum SqlTypeName {
     // TODO: Minimum numeric scale for decimal
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -823,6 +829,8 @@ public enum SqlTypeName {
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
       return TimeUnit.YEAR;
+    case INTERVAL_QUARTER:
+      return TimeUnit.QUARTER;
     case INTERVAL_MONTH:
       return TimeUnit.MONTH;
     case INTERVAL_WEEK:
@@ -852,6 +860,8 @@ public enum SqlTypeName {
     switch (this) {
     case INTERVAL_YEAR:
       return TimeUnit.YEAR;
+    case INTERVAL_QUARTER:
+      return TimeUnit.QUARTER;
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
       return TimeUnit.MONTH;

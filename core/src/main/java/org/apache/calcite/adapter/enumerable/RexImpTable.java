@@ -2437,6 +2437,7 @@ public class RexImpTable {
         switch (sqlTypeName) {
         case INTERVAL_YEAR:
         case INTERVAL_YEAR_MONTH:
+        case INTERVAL_QUARTER:
         case INTERVAL_MONTH:
         case INTERVAL_WEEK:
         case INTERVAL_DAY:
@@ -2496,6 +2497,7 @@ public class RexImpTable {
               Expressions.constant(TimeUnit.SECOND.multiplier.longValue()));
         case INTERVAL_YEAR:
         case INTERVAL_YEAR_MONTH:
+        case INTERVAL_QUARTER:
         case INTERVAL_MONTH:
         case INTERVAL_WEEK:
         case INTERVAL_DAY:
@@ -2951,6 +2953,7 @@ public class RexImpTable {
           switch (typeName) {
           case INTERVAL_YEAR:
           case INTERVAL_YEAR_MONTH:
+          case INTERVAL_QUARTER:
           case INTERVAL_MONTH:
             return Expressions.call(BuiltInMethod.SUBTRACT_MONTHS.method,
                 trop0, trop1);

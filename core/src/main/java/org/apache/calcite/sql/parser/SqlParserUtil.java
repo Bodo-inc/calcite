@@ -275,6 +275,13 @@ public final class SqlParserUtil {
         case "yrs":
           unit = TimeUnit.YEAR;
           break;
+        case "quarter":
+        case "q":
+        case "qtr":
+        case "qtrs":
+        case "quarters":
+          unit = TimeUnit.QUARTER;
+          break;
         case "month":
         case "months":
         case "mm":
@@ -425,6 +432,11 @@ public final class SqlParserUtil {
     } catch (CalciteContextException e) {
       throw new RuntimeException("Error while parsing year-to-month interval "
           + literal, e);
+    }
+
+    if (intervalQualifier.timeUnitRange.toString().equals("QUARTER")) {
+      long monthsInQuarter = 3;
+      return ret[0] * ret[2] * monthsInQuarter;
     }
 
     long l = 0;

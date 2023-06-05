@@ -299,6 +299,7 @@ public class RelMdSize implements MetadataHandler<BuiltInMetadata.Size> {
     case TIME_WITH_LOCAL_TIME_ZONE:
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       return 4d;
     case BIGINT:
@@ -363,6 +364,7 @@ public class RelMdSize implements MetadataHandler<BuiltInMetadata.Size> {
     case TIME_WITH_LOCAL_TIME_ZONE:
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       return 4d;
     case BIGINT:
