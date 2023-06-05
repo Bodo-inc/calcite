@@ -396,10 +396,12 @@ public final class SqlParserUtil {
           intervalQualifier.getParserPosition(), typeSystem);
       assert ret != null;
     } catch (CalciteContextException e) {
-      throw new RuntimeException("while parsing day-to-millisecond interval "
+      throw new RuntimeException("while parsing day-to-nanosecond interval "
           + literal, e);
     }
 
+    // these intervals are using different fillIntervalValueArray functions
+    // the return arrays have different length
     if (intervalQualifier.timeUnitRange.toString().equals("WEEK")) {
       long millisecondsInWeek = 604800000000000L;
       return (long) ret[0] * ret[2] * millisecondsInWeek;
