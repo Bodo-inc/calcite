@@ -344,6 +344,7 @@ public class RexLiteral extends RexNode {
       return value instanceof TimestampString;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -702,6 +703,7 @@ public class RexLiteral extends RexNode {
       break;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -844,6 +846,7 @@ public class RexLiteral extends RexNode {
       return new RexLiteral(BigDecimal.valueOf(millis), type, typeName);
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       long months =
           SqlParserUtil.intervalToMonths(
@@ -1130,6 +1133,7 @@ public class RexLiteral extends RexNode {
       break;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:

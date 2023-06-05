@@ -7913,6 +7913,28 @@ LogicalProject(CURRENT_TIMESTAMP=[CURRENT_TIMESTAMP])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalQuarter">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '4' QUARTERS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 12:INTERVAL QUARTER)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalQuarterSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '9 QUARTERS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 27:INTERVAL QUARTER)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testSelectCurrentTimestampIntervalWeek">
     <Resource name="sql">
       <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
