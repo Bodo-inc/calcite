@@ -3088,7 +3088,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @param checkUpdate if true, validate that the update feature is supported
    *                    if validating the update statement
    */
-  private void registerQuery(
+  protected void registerQuery(
       SqlValidatorScope parentScope,
       @Nullable SqlValidatorScope usingScope,
       SqlNode node,
