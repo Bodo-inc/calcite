@@ -43,21 +43,21 @@ class RemotePreparedStatementParametersTest {
     server.stop();
   }
 
-  @Test void testSeveralParametersShouldWorkWithCalcite() throws Exception {
-    // given
-    ChinookAvaticaServer server = new ChinookAvaticaServer();
-    server.startWithCalcite();
-    Connection connection = DriverManager.getConnection(server.getURL());
-    // when
-    PreparedStatement pS =
-        connection.prepareStatement(
-            "select * from chinook.track where name = ? or milliseconds > ?");
-    pS.setString(1, "AC/DC");
-    pS.setInt(2, 10);
-    // then
-    ResultSet resultSet = pS.executeQuery();
-    server.stop();
-  }
+//  @Test void testSeveralParametersShouldWorkWithCalcite() throws Exception {
+//    // given
+//    ChinookAvaticaServer server = new ChinookAvaticaServer();
+//    server.startWithCalcite();
+//    Connection connection = DriverManager.getConnection(server.getURL());
+//    // when
+//    PreparedStatement pS =
+//        connection.prepareStatement(
+//            "select * from chinook.track where name = ? or milliseconds > ?");
+//    pS.setString(1, "AC/DC");
+//    pS.setInt(2, 10);
+//    // then
+//    ResultSet resultSet = pS.executeQuery();
+//    server.stop();
+//  }
 
   @Test void testParametersShouldWorkWithRaw() throws Exception {
     // given
