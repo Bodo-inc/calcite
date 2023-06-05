@@ -5773,7 +5773,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @param table          Table
    * @param requiredAccess Access requested on table
    */
-  private void validateAccess(
+  protected void validateAccess(
       SqlNode node,
       @Nullable SqlValidatorTable table,
       SqlAccessEnum requiredAccess) {
