@@ -1926,7 +1926,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // Rewrite A=B, C=D from updates to equality expressipns
       // so that the SELECT validation can check for type safety
       SqlNode target = targetCols.get(ordinal);
-      exp = new SqlBasicCall(SqlStdOperatorTable.EQUALS, Arrays.asList(target, exp), SqlParserPos.ZERO);
+      List<SqlNode> args = new ArrayList<SqlNode>();
+      args.add(target);
+      args.add(exp);
+      exp = new SqlBasicCall(SqlStdOperatorTable.EQUALS, args, SqlParserPos.ZERO);
       // Force unique aliases to avoid a duplicate for Y with
       // SET X=Y
       String alias = SqlUtil.deriveAliasFromOrdinal(ordinal);
