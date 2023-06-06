@@ -1162,7 +1162,7 @@ public class SqlIntervalQualifier extends SqlNode {
       SqlParserPos pos) {
     BigDecimal millisecond;
 
-    // validate as MINUTE(startPrecision), e.g. 'MM'
+    // validate as Millisecond(startPrecision)
     String intervalPattern = "(\\d+)";
 
     Matcher m = Pattern.compile(intervalPattern).matcher(value);
@@ -1197,7 +1197,7 @@ public class SqlIntervalQualifier extends SqlNode {
       SqlParserPos pos) {
     BigDecimal microsecond;
 
-    // validate as MINUTE(startPrecision), e.g. 'MM'
+    // validate as Microsecond(startPrecision)
     String intervalPattern = "(\\d+)";
 
     Matcher m = Pattern.compile(intervalPattern).matcher(value);
@@ -1232,7 +1232,7 @@ public class SqlIntervalQualifier extends SqlNode {
       SqlParserPos pos) {
     BigDecimal nanosecond;
 
-    // validate as MINUTE(startPrecision), e.g. 'MM'
+    // validate as Nanosecond(startPrecision)
     String intervalPattern = "(\\d+)";
 
     Matcher m = Pattern.compile(intervalPattern).matcher(value);
