@@ -1921,7 +1921,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     int ordinal = 0;
+    SqlNodeList targetCols = call.getTargetColumnList();
     for (SqlNode exp : call.getSourceExpressionList()) {
+      // Rewrite A=B, C=D from updates to equality expressipns
+      // so that the SELECT validation can check for type safety
+      SqlNode target = targetCols.get(ordinal);
+      exp = new SqlBasicCall(SqlStdOperatorTable.EQUALS, List.of(target, exp), SqlParserPos.ZERO);
       // Force unique aliases to avoid a duplicate for Y with
       // SET X=Y
       String alias = SqlUtil.deriveAliasFromOrdinal(ordinal);
@@ -1930,11 +1935,23 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
     SqlNode sourceTable = call.getTargetTable();
     SqlIdentifier alias = call.getAlias();
+    SqlNode from = call.getFrom();
     if (alias != null) {
       sourceTable =
           SqlValidatorUtil.addAlias(
               sourceTable,
               alias.getSimple());
+    }
+    if (from != null) {
+      sourceTable = new SqlJoin(
+          SqlParserPos.ZERO,
+          sourceTable,
+          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          JoinType.CROSS.symbol(SqlParserPos.ZERO),
+          from,
+          JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
+          null
+      );
     }
     return new SqlSelect(SqlParserPos.ZERO, null, selectList, sourceTable,
         call.getCondition(), null, null, null, null, null, null, null, null);
