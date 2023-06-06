@@ -1150,105 +1150,43 @@ public class SqlIntervalQualifier extends SqlNode {
   }
 
   /**
-   * Validates an INTERVAL literal against an MILLISECOND interval qualifier.
+   * Validates an INTERVAL literal against an MILLISECOND, MICROSECOND
+   * and NANOSECOND interval qualifier.
    *
    * @throws org.apache.calcite.runtime.CalciteContextException if the interval
    * value is illegal
    */
-  private int[] evaluateIntervalLiteralAsMillisecond(
+  private int[] evaluateIntervalLiteralAsSubsecond(
       RelDataTypeSystem typeSystem, int sign,
       String value,
       String originalValue,
-      SqlParserPos pos) {
-    BigDecimal millisecond;
+      SqlParserPos pos,
+      TimeUnit unit) {
+    BigDecimal subsecond;
 
-    // validate as Millisecond(startPrecision)
+    // validate as Milli/Micro/Nanosecond(startPrecision)
     String intervalPattern = "(\\d+)";
 
     Matcher m = Pattern.compile(intervalPattern).matcher(value);
     if (m.matches()) {
       // Break out  field values
       try {
-        millisecond = parseField(m, 1);
+        subsecond = parseField(m, 1);
       } catch (NumberFormatException e) {
         throw invalidValueException(pos, originalValue);
       }
 
       // Validate individual fields
-      checkLeadFieldInRange(typeSystem, sign, millisecond, TimeUnit.MILLISECOND, pos);
+      checkLeadFieldInRange(typeSystem, sign, subsecond, unit, pos);
 
       // package values up for return
-      return fillIntervalValueArray(sign, millisecond, ZERO, ZERO);
-    } else {
-      throw invalidValueException(pos, originalValue);
-    }
-  }
-
-  /**
-   * Validates an INTERVAL literal against an MICROSECOND interval qualifier.
-   *
-   * @throws org.apache.calcite.runtime.CalciteContextException if the interval
-   * value is illegal
-   */
-  private int[] evaluateIntervalLiteralAsMicrosecond(
-      RelDataTypeSystem typeSystem, int sign,
-      String value,
-      String originalValue,
-      SqlParserPos pos) {
-    BigDecimal microsecond;
-
-    // validate as Microsecond(startPrecision)
-    String intervalPattern = "(\\d+)";
-
-    Matcher m = Pattern.compile(intervalPattern).matcher(value);
-    if (m.matches()) {
-      // Break out  field values
-      try {
-        microsecond = parseField(m, 1);
-      } catch (NumberFormatException e) {
-        throw invalidValueException(pos, originalValue);
+      if (unit.equals(TimeUnit.MILLISECOND)) {
+        return fillIntervalValueArray(sign, subsecond, ZERO, ZERO);
+      } else if (unit.equals(TimeUnit.MICROSECOND)) {
+        return fillIntervalValueArray(sign, ZERO, subsecond, ZERO);
+      } else {
+        return fillIntervalValueArray(sign, ZERO, ZERO, subsecond);
       }
-
-      // Validate individual fields
-      checkLeadFieldInRange(typeSystem, sign, microsecond, TimeUnit.MICROSECOND, pos);
-
-      // package values up for return
-      return fillIntervalValueArray(sign, ZERO, microsecond, ZERO);
-    } else {
-      throw invalidValueException(pos, originalValue);
-    }
-  }
-
-  /**
-   * Validates an INTERVAL literal against an NANOSECOND interval qualifier.
-   *
-   * @throws org.apache.calcite.runtime.CalciteContextException if the interval
-   * value is illegal
-   */
-  private int[] evaluateIntervalLiteralAsNanosecond(
-      RelDataTypeSystem typeSystem, int sign,
-      String value,
-      String originalValue,
-      SqlParserPos pos) {
-    BigDecimal nanosecond;
-
-    // validate as Nanosecond(startPrecision)
-    String intervalPattern = "(\\d+)";
-
-    Matcher m = Pattern.compile(intervalPattern).matcher(value);
-    if (m.matches()) {
-      // Break out  field values
-      try {
-        nanosecond = parseField(m, 1);
-      } catch (NumberFormatException e) {
-        throw invalidValueException(pos, originalValue);
-      }
-
-      // Validate individual fields
-      checkLeadFieldInRange(typeSystem, sign, nanosecond, TimeUnit.NANOSECOND, pos);
-
-      // package values up for return
-      return fillIntervalValueArray(sign, ZERO, ZERO, nanosecond);
     } else {
       throw invalidValueException(pos, originalValue);
     }
@@ -1331,14 +1269,10 @@ public class SqlIntervalQualifier extends SqlNode {
       return evaluateIntervalLiteralAsSecond(typeSystem, sign, value, value0,
           pos);
     case MILLISECOND:
-      return evaluateIntervalLiteralAsMillisecond(typeSystem, sign, value, value0,
-          pos);
     case MICROSECOND:
-      return evaluateIntervalLiteralAsMicrosecond(typeSystem, sign, value, value0,
-          pos);
     case NANOSECOND:
-      return evaluateIntervalLiteralAsNanosecond(typeSystem, sign, value, value0,
-          pos);
+      return evaluateIntervalLiteralAsSubsecond(typeSystem, sign, value, value0,
+          pos, timeUnitRange.startUnit);
     default:
       throw invalidValueException(pos, value0);
     }
