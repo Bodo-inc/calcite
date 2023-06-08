@@ -36,7 +36,6 @@ import java.util.List;
  */
 public final class LogicalTableModify extends TableModify {
   //~ Constructors -----------------------------------------------------------
-
   /**
    * Creates a LogicalTableModify.
    *

@@ -71,7 +71,8 @@ public abstract class TableModify extends SingleRel {
     DELETE(0),
     INSERT(1),
     UPDATE(2),
-    MERGE(3);
+    MERGE(3),
+    INSERT_OVERWRITE(4);
 
     private final int value;
     private static final Operation[] VALUEMAP;
@@ -81,15 +82,16 @@ public abstract class TableModify extends SingleRel {
     }
 
     static {
-      VALUEMAP = new Operation[4];
+      VALUEMAP = new Operation[5];
       VALUEMAP[0] = INSERT;
       VALUEMAP[1] = UPDATE;
       VALUEMAP[2] = DELETE;
       VALUEMAP[3] = MERGE;
+      VALUEMAP[4] = INSERT_OVERWRITE;
     }
 
     public static @Nullable Operation valueOf(int value) {
-      if (0 <= value && value <= 3) {
+      if (0 <= value && value <= 4) {
         return VALUEMAP[value];
       } else {
         return null;
@@ -223,6 +225,9 @@ public abstract class TableModify extends SingleRel {
 
   public boolean isInsert() {
     return operation == Operation.INSERT;
+  }
+  public boolean isInsertOverwrite() {
+    return operation == Operation.INSERT_OVERWRITE;
   }
 
   public boolean isUpdate() {

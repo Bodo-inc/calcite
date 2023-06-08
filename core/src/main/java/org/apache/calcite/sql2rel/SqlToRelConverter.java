@@ -4144,13 +4144,13 @@ public class SqlToRelConverter {
         convertQueryRecursive(call.getSource(), true, targetRowType).project();
     RelNode massagedRel = convertColumnList(call, sourceRel);
 
-    return createModify(targetTable, massagedRel);
+    return createModify(targetTable, massagedRel, call.isOverwrite());
   }
 
   /**
    * Creates a relational expression to modify a table or modifiable view.
    */
-  private RelNode createModify(RelOptTable targetTable, RelNode source) {
+  private RelNode createModify(RelOptTable targetTable, RelNode source, boolean overwrite) {
     final ModifiableTable modifiableTable =
         targetTable.unwrap(ModifiableTable.class);
     if (modifiableTable != null
@@ -4169,10 +4169,16 @@ public class SqlToRelConverter {
               modifiableView.getTablePath());
       final RelNode newSource =
           createSource(targetTable, source, modifiableView, delegateRowType);
-      return createModify(delegateRelOptTable, newSource);
+      return createModify(delegateRelOptTable, newSource, overwrite);
+    }
+
+    LogicalTableModify.Operation tableModifyOp = LogicalTableModify.Operation.INSERT;
+
+    if (overwrite) {
+      tableModifyOp = LogicalTableModify.Operation.INSERT_OVERWRITE;
     }
     return LogicalTableModify.create(targetTable, catalogReader, source,
-        LogicalTableModify.Operation.INSERT, null, null, false);
+        tableModifyOp, null, null, false);
   }
 
   /**
