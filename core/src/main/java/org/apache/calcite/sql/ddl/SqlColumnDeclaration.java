@@ -48,7 +48,7 @@ public class SqlColumnDeclaration extends SqlCall {
   public final ColumnStrategy strategy;
 
   /** Creates a SqlColumnDeclaration; use {@link SqlDdlNodes#column}. */
-  SqlColumnDeclaration(SqlParserPos pos, SqlIdentifier name,
+  protected SqlColumnDeclaration(SqlParserPos pos, SqlIdentifier name,
       SqlDataTypeSpec dataType, @Nullable SqlNode expression,
       ColumnStrategy strategy) {
     super(pos);
