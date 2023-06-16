@@ -43,7 +43,6 @@ public class SqlUpdate extends SqlCall {
   @Nullable SqlSelect sourceSelect;
   @Nullable SqlIdentifier alias;
 
-  @Nullable SqlNode fromClause;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -62,7 +61,6 @@ public class SqlUpdate extends SqlCall {
     this.sourceSelect = sourceSelect;
     assert sourceExpressionList.size() == targetColumnList.size();
     this.alias = alias;
-    this.fromClause = null;
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -141,14 +139,6 @@ public class SqlUpdate extends SqlCall {
    */
   public @Nullable SqlNode getCondition() {
     return condition;
-  }
-
-  public @Nullable SqlNode getFromClause() {
-    return fromClause;
-  }
-
-  public void setFromClause(@Nullable SqlNode from) {
-    this.fromClause = from;
   }
 
   /**
