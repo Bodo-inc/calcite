@@ -317,6 +317,9 @@ public class RelMdSize implements MetadataHandler<BuiltInMetadata.Size> {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return 8d;
     case BINARY:
       return (double) type.getPrecision();
@@ -380,6 +383,9 @@ public class RelMdSize implements MetadataHandler<BuiltInMetadata.Size> {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return 8d;
     case BINARY:
     case VARBINARY:

@@ -2801,7 +2801,7 @@ group by hop(rowtime, interval '1' hour, interval '3' hour)]]>
 LogicalDelta
   LogicalProject(ROWTIME=[$0], C=[$1])
     LogicalAggregate(group=[{0}], C=[COUNT()])
-      LogicalProject($f0=[$HOP($0, 3600000:INTERVAL HOUR, 10800000:INTERVAL HOUR)])
+      LogicalProject($f0=[$HOP($0, 3600000000000:INTERVAL HOUR, 10800000000000:INTERVAL HOUR)])
         LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
     </Resource>
@@ -3482,7 +3482,7 @@ ProjectRel(EXPR$0=[$0])
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalProject(H=[*($3, 3600000:INTERVAL HOUR)])
+LogicalProject(H=[*($3, 3600000000000:INTERVAL HOUR)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -3495,7 +3495,7 @@ from emp]]>
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalProject(EXPR$0=[*($0, 3660000:INTERVAL HOUR TO MINUTE)])
+LogicalProject(EXPR$0=[*($0, 3660000000000:INTERVAL HOUR TO MINUTE)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -7913,24 +7913,90 @@ LogicalProject(CURRENT_TIMESTAMP=[CURRENT_TIMESTAMP])
 ]]>
     </Resource>
   </TestCase>
-  <TestCase name="testSelectCurrentTimestampIntervalWeek">
+  <TestCase name="testSelectCurrentTimestampIntervalMicrosecond">
     <Resource name="sql">
-      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '9' MICROSECONDS from emp]]>
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 3024000000:INTERVAL WEEK)])
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 9000:INTERVAL MICROSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalMicrosecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '6 MICROSECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 6000:INTERVAL MICROSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalMillisecond">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' MILLISECONDS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 8000000:INTERVAL MILLISECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalMillisecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 MILLISECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 5000000:INTERVAL MILLISECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalNanosecond">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '10' NANOSECONDS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 10:INTERVAL NANOSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalNanosecondSF">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '7 NANOSECONDS' from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 7:INTERVAL NANOSECOND)])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testSelectCurrentTimestampIntervalWeek">
+    <Resource name="sql">
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' WEEKS from emp]]>
+    </Resource>
+    <Resource name="plan">
+      <![CDATA[
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 4838400000000000:INTERVAL WEEK)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
   </TestCase>
   <TestCase name="testSelectCurrentTimestampIntervalWeekSF">
     <Resource name="sql">
-      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '8' WEEKS from emp]]>
+      <![CDATA[select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp]]>
     </Resource>
     <Resource name="plan">
       <![CDATA[
-LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 4838400000:INTERVAL WEEK)])
+LogicalProject(EXPR$0=[+(CURRENT_TIMESTAMP, 3024000000000000:INTERVAL WEEK)])
   LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
     </Resource>
@@ -8415,7 +8481,7 @@ LogicalProject(**=[$0])
     <Resource name="plan">
       <![CDATA[
 LogicalDelta
-  LogicalProject(C=[COUNT(DISTINCT $2) OVER (PARTITION BY $1 ORDER BY $0 RANGE 1000:INTERVAL SECOND PRECEDING)], C2=[COUNT(DISTINCT $2) OVER (PARTITION BY $1 ORDER BY $0 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)], C3=[COUNT($2) OVER (PARTITION BY $1 ORDER BY $0 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])
+  LogicalProject(C=[COUNT(DISTINCT $2) OVER (PARTITION BY $1 ORDER BY $0 RANGE 1000000000:INTERVAL SECOND PRECEDING)], C2=[COUNT(DISTINCT $2) OVER (PARTITION BY $1 ORDER BY $0 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)], C3=[COUNT($2) OVER (PARTITION BY $1 ORDER BY $0 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])
     LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
     </Resource>
@@ -8552,7 +8618,7 @@ group by session(rowtime, interval '1' hour)]]>
 LogicalDelta
   LogicalProject(ROWTIME=[$0], EXPR$1=[$0], C=[$1])
     LogicalAggregate(group=[{0}], C=[COUNT()])
-      LogicalProject($f0=[$SESSION($0, 3600000:INTERVAL HOUR)])
+      LogicalProject($f0=[$SESSION($0, 3600000000000:INTERVAL HOUR)])
         LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
     </Resource>
@@ -8925,7 +8991,7 @@ from orders]]>
     <Resource name="plan">
       <![CDATA[
 LogicalDelta
-  LogicalProject(ROWTIME=[$0], PRODUCTID=[$1], ORDERID=[$2], C=[COUNT() OVER (PARTITION BY $1 ORDER BY $0 RANGE 1000:INTERVAL SECOND PRECEDING)])
+  LogicalProject(ROWTIME=[$0], PRODUCTID=[$1], ORDERID=[$2], C=[COUNT() OVER (PARTITION BY $1 ORDER BY $0 RANGE 1000000000:INTERVAL SECOND PRECEDING)])
     LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
     </Resource>
@@ -9081,7 +9147,7 @@ from table(hop(table Shipments, descriptor(rowtime), INTERVAL '1' MINUTE, INTERV
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 120000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE, 120000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9095,7 +9161,7 @@ from table(hop(table Shipments, descriptor(rowtime), INTERVAL '1' MINUTE, INTERV
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 300000:INTERVAL MINUTE, 180000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE, 300000000000:INTERVAL MINUTE, 180000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9114,7 +9180,7 @@ hop(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 120000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE, 120000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9133,7 +9199,7 @@ hop(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 120000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE, 120000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9147,7 +9213,7 @@ from table(hop((select * from Shipments), descriptor(rowtime), INTERVAL '1' MINU
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 120000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE, 120000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9161,7 +9227,7 @@ from table(session(table Shipments, descriptor(rowtime), descriptor(orderId), IN
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9175,7 +9241,7 @@ from table(session(table Orders, descriptor(rowtime), descriptor(orderId, produc
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ROWTIME=[$0], PRODUCTID=[$1], ORDERID=[$2], window_start=[$3], window_end=[$4])
-  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($0), DESCRIPTOR($2, $1), 600000:INTERVAL MINUTE)], rowType=[RecordType(TIMESTAMP(0) ROWTIME, INTEGER PRODUCTID, INTEGER ORDERID, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($0), DESCRIPTOR($2, $1), 600000000000:INTERVAL MINUTE)], rowType=[RecordType(TIMESTAMP(0) ROWTIME, INTEGER PRODUCTID, INTEGER ORDERID, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ROWTIME=[$0], PRODUCTID=[$1], ORDERID=[$2])
       LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
@@ -9194,7 +9260,7 @@ session(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9213,7 +9279,7 @@ session(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9227,7 +9293,7 @@ from table(session((select * from Shipments), descriptor(rowtime), descriptor(or
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[SESSION(DESCRIPTOR($1), DESCRIPTOR($0), 600000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9241,7 +9307,7 @@ from table(tumble(table Shipments, descriptor(rowtime), INTERVAL '1' MINUTE))]]>
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9258,10 +9324,10 @@ on a.orderid = b.orderid]]>
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3], ORDERID0=[$4], ROWTIME0=[$5], window_start0=[$6], window_end0=[$7])
   LogicalJoin(condition=[=($0, $4)], joinType=[inner])
-    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
       LogicalProject(ORDERID=[$0], ROWTIME=[$1])
         LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
-    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
       LogicalProject(ORDERID=[$0], ROWTIME=[$1])
         LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9276,7 +9342,7 @@ from table(tumble(table Shipments, descriptor(rowtime),
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 600000:INTERVAL MINUTE, 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 600000000000:INTERVAL MINUTE, 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9294,7 +9360,7 @@ tumble(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9312,7 +9378,7 @@ tumble(
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9326,7 +9392,7 @@ from table(tumble((select * from Shipments), descriptor(rowtime), INTERVAL '1' M
     <Resource name="plan">
       <![CDATA[
 LogicalProject(ORDERID=[$0], ROWTIME=[$1], window_start=[$2], window_end=[$3])
-  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
+  LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 60000000000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER ORDERID, TIMESTAMP(0) ROWTIME, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end)])
     LogicalProject(ORDERID=[$0], ROWTIME=[$1])
       LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
@@ -9472,9 +9538,9 @@ GROUP BY TUMBLE(rowtime, INTERVAL '1' MINUTE)]]>
     <Resource name="plan">
       <![CDATA[
 LogicalDelta
-  LogicalProject(S=[$0], E=[+($0, 60000:INTERVAL MINUTE)])
+  LogicalProject(S=[$0], E=[+($0, 60000000000:INTERVAL MINUTE)])
     LogicalAggregate(group=[{0}])
-      LogicalProject($f0=[$TUMBLE($1, 60000:INTERVAL MINUTE)])
+      LogicalProject($f0=[$TUMBLE($1, 60000000000:INTERVAL MINUTE)])
         LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
     </Resource>
@@ -9488,9 +9554,9 @@ group by tumble(rowtime, interval '2' hour), productId]]>
     <Resource name="plan">
       <![CDATA[
 LogicalDelta
-  LogicalProject(ROWTIME=[+($0, 7200000:INTERVAL HOUR)], PRODUCTID=[$1])
+  LogicalProject(ROWTIME=[+($0, 7200000000000:INTERVAL HOUR)], PRODUCTID=[$1])
     LogicalAggregate(group=[{0, 1}])
-      LogicalProject($f0=[$TUMBLE($0, 7200000:INTERVAL HOUR)], PRODUCTID=[$1])
+      LogicalProject($f0=[$TUMBLE($0, 7200000000000:INTERVAL HOUR)], PRODUCTID=[$1])
         LogicalTableScan(table=[[CATALOG, SALES, ORDERS]])
 ]]>
     </Resource>
@@ -9505,9 +9571,9 @@ group by tumble(rowtime, interval '2' hour), orderId]]>
     <Resource name="plan">
       <![CDATA[
 LogicalDelta
-  LogicalProject(ROWTIME=[+($0, 7200000:INTERVAL HOUR)], ORDERID=[$1])
+  LogicalProject(ROWTIME=[+($0, 7200000000000:INTERVAL HOUR)], ORDERID=[$1])
     LogicalAggregate(group=[{0, 1}])
-      LogicalProject($f0=[$TUMBLE($1, 7200000:INTERVAL HOUR)], ORDERID=[$0])
+      LogicalProject($f0=[$TUMBLE($1, 7200000000000:INTERVAL HOUR)], ORDERID=[$0])
         LogicalTableScan(table=[[CATALOG, SALES, SHIPMENTS]])
 ]]>
     </Resource>

@@ -171,11 +171,14 @@ public class SqlIntervalQualifier extends SqlNode {
     case MINUTE_TO_SECOND:
       return SqlTypeName.INTERVAL_MINUTE_SECOND;
     case SECOND:
-    case MILLISECOND:
     case EPOCH:
-    case MICROSECOND:
-    case NANOSECOND:
       return SqlTypeName.INTERVAL_SECOND;
+    case MILLISECOND:
+      return SqlTypeName.INTERVAL_MILLISECOND;
+    case MICROSECOND:
+      return SqlTypeName.INTERVAL_MICROSECOND;
+    case NANOSECOND:
+      return SqlTypeName.INTERVAL_NANOSECOND;
     default:
       throw new AssertionError(timeUnitRange);
     }
@@ -471,6 +474,21 @@ public class SqlIntervalQualifier extends SqlNode {
     ret[3] = minute.intValue();
     ret[4] = second.intValue();
     ret[5] = secondFrac.intValue();
+
+    return ret;
+  }
+
+  private static int[] fillIntervalValueArray(
+      int sign,
+      BigDecimal millisecond,
+      BigDecimal microsecond,
+      BigDecimal nanosecond) {
+    int[] ret = new int[4];
+
+    ret[0] = sign;
+    ret[1] = millisecond.intValue();
+    ret[2] = microsecond.intValue();
+    ret[3] = nanosecond.intValue();
 
     return ret;
   }
@@ -1132,6 +1150,49 @@ public class SqlIntervalQualifier extends SqlNode {
   }
 
   /**
+   * Validates an INTERVAL literal against an MILLISECOND, MICROSECOND
+   * and NANOSECOND interval qualifier.
+   *
+   * @throws org.apache.calcite.runtime.CalciteContextException if the interval
+   * value is illegal
+   */
+  private int[] evaluateIntervalLiteralAsSubsecond(
+      RelDataTypeSystem typeSystem, int sign,
+      String value,
+      String originalValue,
+      SqlParserPos pos,
+      TimeUnit unit) {
+    BigDecimal subsecond;
+
+    // validate as Milli/Micro/Nanosecond(startPrecision)
+    String intervalPattern = "(\\d+)";
+
+    Matcher m = Pattern.compile(intervalPattern).matcher(value);
+    if (m.matches()) {
+      // Break out  field values
+      try {
+        subsecond = parseField(m, 1);
+      } catch (NumberFormatException e) {
+        throw invalidValueException(pos, originalValue);
+      }
+
+      // Validate individual fields
+      checkLeadFieldInRange(typeSystem, sign, subsecond, unit, pos);
+
+      // package values up for return
+      if (unit.equals(TimeUnit.MILLISECOND)) {
+        return fillIntervalValueArray(sign, subsecond, ZERO, ZERO);
+      } else if (unit.equals(TimeUnit.MICROSECOND)) {
+        return fillIntervalValueArray(sign, ZERO, subsecond, ZERO);
+      } else {
+        return fillIntervalValueArray(sign, ZERO, ZERO, subsecond);
+      }
+    } else {
+      throw invalidValueException(pos, originalValue);
+    }
+  }
+
+  /**
    * Validates an INTERVAL literal according to the rules specified by the
    * interval qualifier. The assumption is made that the interval qualifier has
    * been validated prior to calling this method. Evaluating against an
@@ -1207,6 +1268,11 @@ public class SqlIntervalQualifier extends SqlNode {
     case SECOND:
       return evaluateIntervalLiteralAsSecond(typeSystem, sign, value, value0,
           pos);
+    case MILLISECOND:
+    case MICROSECOND:
+    case NANOSECOND:
+      return evaluateIntervalLiteralAsSubsecond(typeSystem, sign, value, value0,
+          pos, timeUnitRange.startUnit);
     default:
       throw invalidValueException(pos, value0);
     }

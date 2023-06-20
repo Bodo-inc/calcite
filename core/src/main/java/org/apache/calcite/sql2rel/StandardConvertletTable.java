@@ -1093,6 +1093,9 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         case INTERVAL_MINUTE:
         case INTERVAL_MINUTE_SECOND:
         case INTERVAL_SECOND:
+        case INTERVAL_MILLISECOND:
+        case INTERVAL_MICROSECOND:
+        case INTERVAL_NANOSECOND:
           operands = ImmutableList.of(operands.get(1), operands.get(0));
           break;
         default:

@@ -356,6 +356,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       // The value of a DAY-TIME interval (whatever the start and end units,
       // even say HOUR TO MINUTE) is in milliseconds (perhaps fractional
       // milliseconds). The value of a YEAR-MONTH interval is in months.
@@ -556,7 +559,7 @@ public class RexLiteral extends RexNode {
     final List<TimeUnit> timeUnits = getTimeUnits(type.getSqlTypeName());
     final StringBuilder b = new StringBuilder();
     for (TimeUnit timeUnit : timeUnits) {
-      final BigDecimal[] result = v.divideAndRemainder(timeUnit.multiplier);
+      final BigDecimal[] result = v.divideAndRemainder(getMultiplier(timeUnit));
       if (b.length() > 0) {
         b.append(timeUnit.separator);
       }
@@ -574,6 +577,35 @@ public class RexLiteral extends RexNode {
       }
     }
     return b.toString();
+  }
+
+  private static BigDecimal getMultiplier(TimeUnit unit) {
+    switch (unit) {
+    case YEAR:
+      return BigDecimal.valueOf(12L);
+    case QUARTER:
+      return BigDecimal.valueOf(3L);
+    case MONTH:
+      return BigDecimal.valueOf(1L);
+    case WEEK:
+      return BigDecimal.valueOf(604800000000000L);
+    case DAY:
+      return BigDecimal.valueOf(86400000000000L);
+    case HOUR:
+      return BigDecimal.valueOf(3600000000000L);
+    case MINUTE:
+      return BigDecimal.valueOf(60000000000L);
+    case SECOND:
+      return BigDecimal.valueOf(1000000000L);
+    case MILLISECOND:
+      return BigDecimal.valueOf(1000000L);
+    case MICROSECOND:
+      return BigDecimal.valueOf(1000L);
+    case NANOSECOND:
+      return BigDecimal.valueOf(1L);
+    default:
+      return BigDecimal.valueOf(1L);
+    }
   }
 
   private static void pad(StringBuilder b, String s, int width) {
@@ -714,6 +746,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       assert value instanceof BigDecimal;
       sb.append(value.toString());
       break;
@@ -820,12 +855,12 @@ public class RexLiteral extends RexNode {
     case NULL:
       return new RexLiteral(null, type, typeName);
     case INTERVAL_WEEK:
-      long weekMillis =
-          SqlParserUtil.intervalToMillis(
+      long weekNanos =
+          SqlParserUtil.intervalToNanos(
               literal,
               castNonNull(type.getIntervalQualifier()),
               typeSystem);
-      return new RexLiteral(BigDecimal.valueOf(weekMillis), type, typeName);
+      return new RexLiteral(BigDecimal.valueOf(weekNanos), type, typeName);
     case INTERVAL_DAY:
     case INTERVAL_DAY_HOUR:
     case INTERVAL_DAY_MINUTE:
@@ -836,12 +871,15 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
-      long millis =
-          SqlParserUtil.intervalToMillis(
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
+      long nanos =
+          SqlParserUtil.intervalToNanos(
               literal,
               castNonNull(type.getIntervalQualifier()),
               typeSystem);
-      return new RexLiteral(BigDecimal.valueOf(millis), type, typeName);
+      return new RexLiteral(BigDecimal.valueOf(nanos), type, typeName);
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
     case INTERVAL_MONTH:
@@ -1142,6 +1180,9 @@ public class RexLiteral extends RexNode {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       if (clazz == Integer.class) {
         return clazz.cast(((BigDecimal) value).intValue());
       } else if (clazz == Long.class) {

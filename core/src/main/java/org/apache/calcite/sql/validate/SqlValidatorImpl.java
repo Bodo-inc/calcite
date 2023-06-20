@@ -3746,6 +3746,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       if (literal instanceof SqlIntervalLiteral) {
         SqlIntervalLiteral.IntervalValue interval =
             literal.getValueAs(SqlIntervalLiteral.IntervalValue.class);

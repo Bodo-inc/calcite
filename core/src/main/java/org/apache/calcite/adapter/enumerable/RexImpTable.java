@@ -2449,6 +2449,9 @@ public class RexImpTable {
         case INTERVAL_MINUTE:
         case INTERVAL_MINUTE_SECOND:
         case INTERVAL_SECOND:
+        case INTERVAL_MILLISECOND:
+        case INTERVAL_MICROSECOND:
+        case INTERVAL_NANOSECOND:
           break;
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
           operand = Expressions.call(
@@ -2508,6 +2511,9 @@ public class RexImpTable {
         case INTERVAL_MINUTE:
         case INTERVAL_MINUTE_SECOND:
         case INTERVAL_SECOND:
+        case INTERVAL_MILLISECOND:
+        case INTERVAL_MICROSECOND:
+        case INTERVAL_NANOSECOND:
           // no convertlet conversion, pass it as extract
           throw new AssertionError("unexpected " + sqlTypeName);
         default:
@@ -2889,6 +2895,9 @@ public class RexImpTable {
           case INTERVAL_MINUTE:
           case INTERVAL_MINUTE_SECOND:
           case INTERVAL_SECOND:
+          case INTERVAL_MILLISECOND:
+          case INTERVAL_MICROSECOND:
+          case INTERVAL_NANOSECOND:
             trop1 = Expressions.convert_(
                 Expressions.divide(trop1,
                     Expressions.constant(DateTimeUtils.MILLIS_PER_DAY)),
@@ -2938,6 +2947,9 @@ public class RexImpTable {
       case INTERVAL_MINUTE:
       case INTERVAL_MINUTE_SECOND:
       case INTERVAL_SECOND:
+      case INTERVAL_MILLISECOND:
+      case INTERVAL_MICROSECOND:
+      case INTERVAL_NANOSECOND:
         switch (call.getKind()) {
         case MINUS:
           return normalize(typeName, Expressions.subtract(trop0, trop1));

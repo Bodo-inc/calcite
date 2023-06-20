@@ -150,6 +150,9 @@ public class SqlNodeToRexConverterImpl implements SqlNodeToRexConverter {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       SqlIntervalQualifier sqlIntervalQualifier =
           literal.getValueAs(SqlIntervalQualifier.class, typeSystem);
       return rexBuilder.makeIntervalLiteral(

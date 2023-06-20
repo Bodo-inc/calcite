@@ -99,6 +99,12 @@ public enum SqlTypeName {
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   INTERVAL_SECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
       false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_MILLISECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_MICROSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
+  INTERVAL_NANOSECOND(PrecScale.NO_NO | PrecScale.YES_NO | PrecScale.YES_YES,
+      false, Types.OTHER, SqlTypeFamily.INTERVAL_DAY_TIME),
   CHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.CHAR,
       SqlTypeFamily.CHARACTER),
   VARCHAR(PrecScale.NO_NO | PrecScale.YES_NO, false, Types.VARCHAR,
@@ -159,7 +165,8 @@ public enum SqlTypeName {
           INTERVAL_WEEK, INTERVAL_DAY, INTERVAL_DAY_HOUR, INTERVAL_DAY_MINUTE,
           INTERVAL_DAY_SECOND, INTERVAL_HOUR, INTERVAL_HOUR_MINUTE,
           INTERVAL_HOUR_SECOND, INTERVAL_MINUTE, INTERVAL_MINUTE_SECOND,
-          INTERVAL_SECOND, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+          INTERVAL_SECOND, INTERVAL_MILLISECOND, INTERVAL_MICROSECOND,
+          INTERVAL_NANOSECOND, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE,
           FLOAT, MULTISET, DISTINCT, STRUCTURED, ROW, CURSOR, COLUMN_LIST);
 
   public static final List<SqlTypeName> BOOLEAN_TYPES =
@@ -211,7 +218,10 @@ public enum SqlTypeName {
           SqlTypeName.INTERVAL_HOUR_SECOND,
           SqlTypeName.INTERVAL_MINUTE,
           SqlTypeName.INTERVAL_MINUTE_SECOND,
-          SqlTypeName.INTERVAL_SECOND);
+          SqlTypeName.INTERVAL_SECOND,
+          SqlTypeName.INTERVAL_MILLISECOND,
+          SqlTypeName.INTERVAL_MICROSECOND,
+          SqlTypeName.INTERVAL_NANOSECOND);
 
   public static final Set<SqlTypeName> INTERVAL_TYPES =
       Sets.immutableEnumSet(
@@ -384,6 +394,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return DEFAULT_INTERVAL_FRACTIONAL_SECOND_PRECISION;
     default:
       return -1;
@@ -780,6 +793,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return MIN_INTERVAL_START_PRECISION;
     default:
       return -1;
@@ -810,6 +826,9 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE:
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
+    case INTERVAL_MILLISECOND:
+    case INTERVAL_MICROSECOND:
+    case INTERVAL_NANOSECOND:
       return MIN_INTERVAL_FRACTIONAL_SECOND_PRECISION;
     default:
       return -1;
@@ -841,6 +860,12 @@ public enum SqlTypeName {
       return TimeUnit.MINUTE;
     case INTERVAL_SECOND:
       return TimeUnit.SECOND;
+    case INTERVAL_MILLISECOND:
+      return TimeUnit.MILLISECOND;
+    case INTERVAL_MICROSECOND:
+      return TimeUnit.MICROSECOND;
+    case INTERVAL_NANOSECOND:
+      return TimeUnit.NANOSECOND;
     default:
       throw new AssertionError(this);
     }
@@ -871,6 +896,12 @@ public enum SqlTypeName {
     case INTERVAL_MINUTE_SECOND:
     case INTERVAL_SECOND:
       return TimeUnit.SECOND;
+    case INTERVAL_MILLISECOND:
+      return TimeUnit.MILLISECOND;
+    case INTERVAL_MICROSECOND:
+      return TimeUnit.MICROSECOND;
+    case INTERVAL_NANOSECOND:
+      return TimeUnit.NANOSECOND;
     default:
       throw new AssertionError(this);
     }

@@ -321,6 +321,28 @@ public final class SqlParserUtil {
         case "secs":
           unit = TimeUnit.SECOND;
           break;
+        case "millisecond":
+        case "ms":
+        case "msec":
+        case "milliseconds":
+          unit = TimeUnit.MILLISECOND;
+          break;
+        case "microsecond":
+        case "us":
+        case "usec":
+        case "microseconds":
+          unit = TimeUnit.MICROSECOND;
+          break;
+        case "nanosecond":
+        case "ns":
+        case "nsec":
+        case "nanosec":
+        case "nsecond":
+        case "nanoseconds":
+        case "nanosecs":
+        case "nseconds":
+          unit = TimeUnit.NANOSECOND;
+          break;
         default:
           throw SqlUtil.newContextException(pos,
               RESOURCE.illegalIntervalLiteral(s, pos.toString()));
@@ -355,15 +377,15 @@ public final class SqlParserUtil {
    * @return a long value that represents millisecond equivalent of the
    * interval value.
    */
-  public static long intervalToMillis(
+  public static long intervalToNanos(
       SqlIntervalLiteral.IntervalValue interval, RelDataTypeSystem typeSystem) {
-    return intervalToMillis(
+    return intervalToNanos(
         interval.getIntervalLiteral(),
         interval.getIntervalQualifier(),
         typeSystem);
   }
 
-  public static long intervalToMillis(
+  public static long intervalToNanos(
       String literal,
       SqlIntervalQualifier intervalQualifier, RelDataTypeSystem typeSystem) {
     Preconditions.checkArgument(!intervalQualifier.isYearMonth(),
@@ -374,18 +396,29 @@ public final class SqlParserUtil {
           intervalQualifier.getParserPosition(), typeSystem);
       assert ret != null;
     } catch (CalciteContextException e) {
-      throw new RuntimeException("while parsing day-to-second interval "
+      throw new RuntimeException("while parsing day-to-nanosecond interval "
           + literal, e);
     }
 
+    // these intervals are using different fillIntervalValueArray functions
+    // the return arrays have different length
     if (intervalQualifier.timeUnitRange.toString().equals("WEEK")) {
-      long millisecondsInWeek = 604800000;
-      return ret[0] * ret[2] * millisecondsInWeek;
+      long millisecondsInWeek = 604800000000000L;
+      return (long) ret[0] * ret[2] * millisecondsInWeek;
+    }
+    if (intervalQualifier.timeUnitRange.toString().equals("MILLISECOND")) {
+      return (long) ret[0] * ret[1] * 1000000;
+    }
+    if (intervalQualifier.timeUnitRange.toString().equals("MICROSECOND")) {
+      return (long) ret[0] * ret[2] * 1000;
+    }
+    if (intervalQualifier.timeUnitRange.toString().equals("NANOSECOND")) {
+      return (long) ret[0] * ret[3];
     }
 
     long l = 0;
     long[] conv = new long[5];
-    conv[4] = 1; // millisecond
+    conv[4] = 1000000; // millisecond
     conv[3] = conv[4] * 1000; // second
     conv[2] = conv[3] * 60; // minute
     conv[1] = conv[2] * 60; // hour

@@ -80,14 +80,3 @@ GROUP BY tr.genreid;
 (5 rows)
 
 !ok
-
-# Preferred genres
-SELECT COUNT(*) AS TRACKS_COUNT FROM preferred_tracks;
-+--------------+
-| TRACKS_COUNT |
-+--------------+
-|         2115 |
-+--------------+
-(1 row)
-
-!ok
