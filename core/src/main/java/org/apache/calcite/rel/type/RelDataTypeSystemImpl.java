@@ -42,6 +42,7 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
       return getMaxNumericScale();
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -73,6 +74,7 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
       return getMaxNumericPrecision();
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -133,6 +135,7 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
       return SqlTypeName.MAX_DATETIME_PRECISION;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -186,6 +189,7 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
       return isPrefix ? "INTERVAL '" : "' DAY";
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       return isPrefix ? "INTERVAL '" : "' YEAR TO MONTH";
     case TIME:

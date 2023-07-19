@@ -183,6 +183,7 @@ public class JavaTypeFactoryImpl
       case INTEGER:
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:
+      case INTERVAL_QUARTER:
       case INTERVAL_MONTH:
         return type.isNullable() ? Integer.class : int.class;
       case TIMESTAMP:

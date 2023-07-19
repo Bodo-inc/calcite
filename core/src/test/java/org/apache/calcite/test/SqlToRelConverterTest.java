@@ -1055,6 +1055,16 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
     sql(sql).ok();
   }
 
+  @Test void testSelectCurrentTimestampIntervalQuarterSF() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '9 QUARTERS' from emp";
+    sql(sql).ok();
+  }
+
+  @Test void testSelectCurrentTimestampIntervalQuarter() {
+    final String sql = "select CURRENT_TIMESTAMP + INTERVAL '4' QUARTERS from emp";
+    sql(sql).ok();
+  }
+
   @Test void testSelectCurrentTimestampIntervalWeek() {
     final String sql = "select CURRENT_TIMESTAMP + INTERVAL '5 WEEKS' from emp";
     sql(sql).ok();

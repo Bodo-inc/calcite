@@ -7702,8 +7702,6 @@ public class SqlParserTest {
         .fails(ANY);
     expr("INTERVAL '10' ^DECADE^")
         .fails(ANY);
-    expr("INTERVAL '4' ^QUARTER^")
-        .fails(ANY);
   }
 
   /** Tests that plural time units are allowed when not in strict mode. */

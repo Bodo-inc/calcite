@@ -145,8 +145,9 @@ public class SqlIntervalQualifier extends SqlNode {
     case YEAR_TO_MONTH:
       return SqlTypeName.INTERVAL_YEAR_MONTH;
     case MONTH:
-    case QUARTER:
       return SqlTypeName.INTERVAL_MONTH;
+    case QUARTER:
+      return SqlTypeName.INTERVAL_QUARTER;
     case DOW:
     case ISODOW:
     case DOY:
@@ -545,6 +546,41 @@ public class SqlIntervalQualifier extends SqlNode {
 
       // package values up for return
       return fillIntervalValueArray(sign, year, month);
+    } else {
+      throw invalidValueException(pos, originalValue);
+    }
+  }
+
+  /**
+   * Validates an INTERVAL literal against a QUARTER interval qualifier.
+   *
+   * @throws org.apache.calcite.runtime.CalciteContextException if the interval
+   * value is illegal
+   */
+  private int[] evaluateIntervalLiteralAsQuarter(
+      RelDataTypeSystem typeSystem, int sign,
+      String value,
+      String originalValue,
+      SqlParserPos pos) {
+    BigDecimal quarter;
+
+    // validate as MONTH(startPrecision), e.g. 'MM'
+    String intervalPattern = "(\\d+)";
+
+    Matcher m = Pattern.compile(intervalPattern).matcher(value);
+    if (m.matches()) {
+      // Break out  field values
+      try {
+        quarter = parseField(m, 1);
+      } catch (NumberFormatException e) {
+        throw invalidValueException(pos, originalValue);
+      }
+
+      // Validate individual fields
+      checkLeadFieldInRange(typeSystem, sign, quarter, TimeUnit.QUARTER, pos);
+
+      // package values up for return
+      return fillIntervalValueArray(sign, ZERO, quarter);
     } else {
       throw invalidValueException(pos, originalValue);
     }
@@ -1172,6 +1208,9 @@ public class SqlIntervalQualifier extends SqlNode {
     case YEAR_TO_MONTH:
       return evaluateIntervalLiteralAsYearToMonth(typeSystem, sign, value,
           value0, pos);
+    case QUARTER:
+      return evaluateIntervalLiteralAsQuarter(typeSystem, sign, value, value0,
+        pos);
     case MONTH:
       return evaluateIntervalLiteralAsMonth(typeSystem, sign, value, value0,
           pos);

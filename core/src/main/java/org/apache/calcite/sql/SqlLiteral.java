@@ -208,6 +208,7 @@ public class SqlLiteral extends SqlNode {
       return value instanceof TimestampString;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:
@@ -354,6 +355,7 @@ public class SqlLiteral extends SqlNode {
       break;
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
       final SqlIntervalLiteral.IntervalValue valMonth =
           (SqlIntervalLiteral.IntervalValue) value;
@@ -804,6 +806,7 @@ public class SqlLiteral extends SqlNode {
 
     case INTERVAL_YEAR:
     case INTERVAL_YEAR_MONTH:
+    case INTERVAL_QUARTER:
     case INTERVAL_MONTH:
     case INTERVAL_WEEK:
     case INTERVAL_DAY:

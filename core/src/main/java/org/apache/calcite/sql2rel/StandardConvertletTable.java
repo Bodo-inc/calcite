@@ -1081,6 +1081,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         switch (sqlTypeName) {
         case INTERVAL_YEAR:
         case INTERVAL_YEAR_MONTH:
+        case INTERVAL_QUARTER:
         case INTERVAL_MONTH:
         case INTERVAL_WEEK:
         case INTERVAL_DAY:
