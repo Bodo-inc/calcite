@@ -823,6 +823,17 @@ public abstract class SqlTypeUtil {
       return true;
     }
 
+    RelDataTypeFamily fromFamily = fromType.getFamily();
+    RelDataTypeFamily toFamily = toType.getFamily();
+
+    if (toFamily == SqlTypeFamily.TIMESTAMP && fromFamily == SqlTypeFamily.DATE) {
+      return true;
+    }
+    if (toFamily == SqlTypeFamily.DATE && fromFamily == SqlTypeFamily.TIMESTAMP) {
+      return true;
+    }
+
+
     final SqlTypeName fromTypeName = fromType.getSqlTypeName();
     final SqlTypeName toTypeName = toType.getSqlTypeName();
     if (toTypeName == SqlTypeName.UNKNOWN) {
@@ -1444,6 +1455,10 @@ public abstract class SqlTypeUtil {
       return true;
     }
 
+    if ((family1 == SqlTypeFamily.DATE && family2 == SqlTypeFamily.TIMESTAMP)
+        || (family2 == SqlTypeFamily.DATE && family1 == SqlTypeFamily.TIMESTAMP)) {
+      return true;
+    }
     return false;
   }
 
